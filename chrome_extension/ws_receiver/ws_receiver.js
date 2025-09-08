@@ -1,3 +1,7 @@
+setInterval(() => {
+    chrome.runtime.sendMessage("websocketlistener");
+}, 25 * 1000); 
+
 (async () => {
   const sw = (await navigator.serviceWorker.ready).active;
   const connect_websocket = () => {

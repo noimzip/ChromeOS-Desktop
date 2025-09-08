@@ -13,3 +13,11 @@ self.onmessage = e => {
     chrome.windows.create({ url: data.url, type: 'popup' }, win => chrome.windows.remove(win.id));
   }
 };
+
+chrome.runtime.onInstalled.addListener(() => {
+   chrome.runtime.sendMessage("websocketlistener");
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  chrome.runtime.sendMessage("websocketlistener");
+});
