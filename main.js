@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
 
 app.whenReady().then(() => {
@@ -21,6 +21,11 @@ app.whenReady().then(() => {
       sandbox: false
     }
   })
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+      shell.openExternal(url);
+    return { action: 'deny' };
+  });
 
   win.loadFile('index.html')
   //win.webContents.openDevTools()
