@@ -12,3 +12,9 @@ document.getElementById('entry-settings').onclick = () => {
   console.log('???');
   openURL('chrome://os-settings');
 }
+
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'Escape'){
+    
+  }
+})

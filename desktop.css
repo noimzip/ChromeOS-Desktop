@@ -1,3 +1,12 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  width: 100%;
+  height:  100%;
+}
+
 .entry {
   text-align: center;
   cursor: pointer;
@@ -29,4 +38,25 @@
   position: fixed;
   right: 0.2in;
   top: 10px;
+}
+
+#escmenu_modal_overlay {
+  position: absolute;
+  top: 0;
+  height: 100%;              /* 高さ指定 */
+  width: 100%;               /* 幅指定 */
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+#escmenu_modal {
+  position: absolute;
+  top:  0;                     /* 位置指定 */
+  bottom:  0;                  /* 位置指定 */
+  left:  0;                    /* 位置指定 */
+  right:  0;                   /* 位置指定 */
+  margin:  auto;               /* 中央寄せ */
+  width:  350px;               /* 幅指定 */
+  height: 350px;                /* 高さ指定 */
+  background-color: white; 
+  border-radius: 30px;
 }

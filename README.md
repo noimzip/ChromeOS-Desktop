@@ -1,4 +1,4 @@
-# [WIP] ChromeOS Desktop
+# [WIP] CrOS widgets
 ## A project bringing Windows-like desktop experience to ChromeOS
 
 ### Note: This project is still developing, it might not be stable enough
