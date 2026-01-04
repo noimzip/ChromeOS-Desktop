@@ -88,7 +88,24 @@ body {
 }
 
 #settingsmenu_modal {
-  width:  1000px;
-  height: 400px;
+  width:  800px;
+  height: 500px;
+  background-color: white; 
+}
+
+#settings_sidebar {
+  width: 300px;
+}
+
+#change_widget_position_modal_overlay {
+  background-color: white; 
+  background-color: rgba(0, 0, 0, 0.0);
+  z-index: -1;
+}
+
+#change_widget_position_modal {
+  margin-top: 500px;
+  width: 600px;
+  height: 300px;
   background-color: white; 
 }
