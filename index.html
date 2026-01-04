@@ -5,21 +5,21 @@
     <link rel="stylesheet" href="./desktop.css">
     <script src="./desktop.js" defer></script>
 
-    <script type="module" src="/node_modules/@m3e/button/dist/index.js"></script>
-
     <script type="importmap">
       {
         "imports": {
           "lit": "https://cdn.jsdelivr.net/npm/lit@3.3.0/+esm",
-          "@m3e/core": "/node_modules/@m3e/core/dist/index.js",
-          "@m3e/core/a11y": "/node_modules/@m3e/core/dist/a11y.js",
-          "@m3e/core/anchoring": "/node_modules/@m3e/core/dist/anchoring.js",
-          "@m3e/core/bidi": "/node_modules/@m3e/core/dist/bidi.js",
-          "@m3e/core/layout": "/node_modules/@m3e/core/dist/layout.js",
-          "@m3e/core/platform": "/node_modules/@m3e/core/dist/platform.js"
+          "@m3e/core": "./node_modules/@m3e/core/dist/index.js",
+          "@m3e/core/a11y": "./node_modules/@m3e/core/dist/a11y.js",
+          "@m3e/core/anchoring": "./node_modules/@m3e/core/dist/anchoring.js",
+          "@m3e/core/bidi": "./node_modules/@m3e/core/dist/bidi.js",
+          "@m3e/core/layout": "./node_modules/@m3e/core/dist/layout.js",
+          "@m3e/core/platform": "./node_modules/@m3e/core/dist/platform.js"
         }
       }
     </script>
+
+    <script type="module" src="./node_modules/@m3e/button/dist/index.js"></script>
   </head>
   <body>
     <div class="entry" id="entry-chrome">
@@ -34,12 +34,23 @@
       <img src="./assets/settings.webp" height="50" width="50" />
       <p>Settings</p>
     </div>
+    <div class="entry" id="entry-add">
+      <img src="./assets/add.webp" height="50" width="50" />
+      <p>Add an app</p>
+    </div>
     <iframe id="widget" src="https://free.timeanddate.com/clock/i8tygyva/n102/szw210/szh210/hocddd/hbw0/hfc000/cf100/hgr0/fav0/fiv0/mqcfff/mql15/mqw8/mqd100/mhcfff/mhl15/mhw4/mhd100/mmv0/hhcfff/hhw11/hmcfff/hmw6/hsw4" frameborder="0" width="210" height="210"></iframe>
 
-    <div id="escmenu_modal_overlay">
+    <div id="escmenu_modal_overlay" class="modal_overlay">
       <div id="escmenu_modal" class="modal">
-        <m3e-button variant="filled">設定</m3e-button>
-        <m3e-button variant="filled">Elevated</m3e-button>
+        <m3e-button variant="filled" id="open_settingsmenu_modal">設定</m3e-button>
+        <m3e-button variant="filled" id="close_menu_modal">とじる</m3e-button>
+        <m3e-button variant="filled" id="change_widget_position">位置の変更</m3e-button>
+      </div>
+    </div>
+
+    <div id="settingsmenu_modal_overlay" class="modal_overlay">
+      <div id="settingsmenu_modal" class="modal">
+        <m3e-button variant="filled" id="close_settingsmenu_modal">とじる</m3e-button>
       </div>
     </div>
   </body>
