@@ -1,14 +1,14 @@
-document.getElementById('entry-chrome').onclick = () => {
+document.getElementById('appicon-chrome').onclick = () => {
   console.log('???');
   openURL('chrome://newtab');
 }
 
-document.getElementById('entry-files').onclick = () => {
+document.getElementById('appicon-files').onclick = () => {
   console.log('???');
   openURL('chrome://file-manager');
 }
 
-document.getElementById('entry-settings').onclick = () => {
+document.getElementById('appicon-settings').onclick = () => {
   console.log('???');
   openURL('chrome://os-settings');
 }
@@ -36,13 +36,15 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
   escmenu_modal_overlay.style.display = 'none';
   change_widget_position_modal_overlay.style.display = 'block';
 
-  document.getElementById('entry-chrome').onpointermove = function(event){
-    if(event.buttons){
-        this.style.left     = this.offsetLeft + event.movementX + 'px'
-        this.style.top      = this.offsetTop  + event.movementY + 'px'
-        this.style.position = 'absolute'
-        this.draggable      = false
+  document.querySelectorAll(".appicon").forEach(item => {
+    item.onpointermove = function(event){
+      if(event.buttons){
+          this.style.left     = this.offsetLeft + event.movementX + 'px'
+          this.style.top      = this.offsetTop  + event.movementY + 'px'
+          this.style.position = 'absolute'
+          this.draggable      = false
         this.setPointerCapture(event.pointerId)
     }
   }
+});
 }

@@ -7,7 +7,7 @@ body {
   height:  100%;
 }
 
-.entry {
+.appicon {
   text-align: center;
   cursor: pointer;
   margin-bottom: 20px;
@@ -15,11 +15,11 @@ body {
   width: 70px;
 }
 
-.entry > * {
+.appicon > * {
   margin: 0;
 }
 
-.entry > p {
+.appicon > p {
   font-family: Arial, sans-serif;
   width: 100%;
   color: white;
@@ -28,13 +28,13 @@ body {
   font-size: 0.85rem;
 }
 
-.entry > img {
+.appicon > img {
   height: 50px;
   width: 50px;
   object-fit: contain;
 }
 
-#widget {
+.widget {
   position: fixed;
   right: 0.2in;
   top: 10px;
