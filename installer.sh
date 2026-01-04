@@ -13,6 +13,7 @@ if [ "$install_choice" = "y" ] || [ "$install_choice" = "Y" ]; then
     sudo apt install nodejs npm libnss3
     cd CrOS-Widgets
     npm install
+    npm update
     echo "Installation complete! You can find CrOS Widgets in your application menu.";
 else
     echo "Installation canceled.";
