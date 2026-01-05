@@ -36,7 +36,7 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
   escmenu_modal_overlay.style.display = 'none';
   change_widget_position_modal_overlay.style.display = 'block';
 
-  document.querySelectorAll(".appicon").forEach(item => {
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
     item.onpointermove = function(event){
       if(event.buttons){
           this.style.left     = this.offsetLeft + event.movementX + 'px'
@@ -48,3 +48,22 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
   }
 });
 }
+
+document.getElementById('close_change_widget_position_modal').onclick = () => {
+  change_widget_position_modal_overlay.style.display = 'none';
+}
+
+document.getElementById('save_change_widget_position').onclick = () => {
+  
+
+}
+
+document.getElementById('appicon-add').onclick = () => {
+  add_newapp_modal_overlay.style.display = 'block';
+}
+
+document.getElementById('close_add_newapp_modal').onclick = () => {
+  add_newapp_modal_overlay.style.display = 'none';
+}
+
+developer_user_agent.textContent = window.navigator.userAgent.toLowerCase()

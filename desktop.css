@@ -98,7 +98,6 @@ body {
 }
 
 #change_widget_position_modal_overlay {
-  background-color: white; 
   background-color: rgba(0, 0, 0, 0.0);
   z-index: -1;
 }
@@ -106,6 +105,18 @@ body {
 #change_widget_position_modal {
   margin-top: 500px;
   width: 600px;
+  height: 300px;
+  background-color: white; 
+}
+
+#add_newapp_modal_overlay {
+  background-color: rgba(0, 0, 0, 0.0);
+  z-index: -1;
+}
+
+#add_newapp_modal {
+  margin-top: 500px;
+  width: 300px;
   height: 300px;
   background-color: white; 
 }

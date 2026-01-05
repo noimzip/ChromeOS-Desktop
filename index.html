@@ -20,10 +20,12 @@
     </script>
     
     <script type="module" src="./node_modules/@m3e/button/dist/index.min.js"></script>
+    <script type="module" src="./node_modules/@m3e/switch/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/nav-menu/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/icon/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/divider/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/heading/dist/index.min.js"></script>
+    <script type="module" src="./node_modules/@m3e/form-field/dist/index.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0"
       rel="stylesheet"
@@ -48,6 +50,22 @@
     </div>
     <iframe class="widget" src="https://free.timeanddate.com/clock/i8tygyva/n102/szw210/szh210/hocddd/hbw0/hfc000/cf100/hgr0/fav0/fiv0/mqcfff/mql15/mqw8/mqd100/mhcfff/mhl15/mhw4/mhd100/mmv0/hhcfff/hhw11/hmcfff/hmw6/hsw4" frameborder="0" width="210" height="210"></iframe>
 
+    <div id="add_newapp_modal_overlay" class="modal_overlay">
+      <div id="add_newapp_modal" class="modal">
+        <m3e-button variant="filled">アプリ画像をアップロード</m3e-button>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="fld">アプリ名</label>
+          <input id="fld" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="fld">URL</label>
+          <input id="fld" />
+        </m3e-form-field>
+        <m3e-button variant="filled" id="close_add_newapp_modal">とじる</m3e-button>
+        <m3e-button variant="filled">追加</m3e-button>
+      </div>
+    </div>
+
     <div id="escmenu_modal_overlay" class="modal_overlay">
       <div id="escmenu_modal" class="modal">
         <m3e-button variant="filled" id="open_settingsmenu_modal">設定</m3e-button>
@@ -58,9 +76,10 @@
 
     <div id="change_widget_position_modal_overlay" class="modal_overlay">
       <div id="change_widget_position_modal" class="modal">
+        <label>グリッドモード<m3e-switch icons="both"></m3e-switch></label>
+        <m3e-button variant="filled" id="save_change_widget_position">保存</m3e-button>
         <m3e-button variant="filled" id="close_change_widget_position_modal">とじる</m3e-button>
       </div>
-
     </div>
 
     <div id="settingsmenu_modal_overlay" class="modal_overlay">
@@ -101,6 +120,7 @@
   </m3e-nav-menu-item-group>
 </m3e-nav-menu>
 </div>
+        ユーザーエージェント:<span id="developer_user_agent"></span>
         <m3e-button variant="filled" id="close_settingsmenu_modal">とじる</m3e-button>
       </div>
     </div>
