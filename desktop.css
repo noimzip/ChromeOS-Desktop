@@ -61,7 +61,7 @@ body {
 
 #escmenu_modal {
   width:  350px;
-  height: 300px;
+  height: 375px;
   background-color: white; 
 }
 
@@ -87,9 +87,13 @@ body {
   margin-top: 200px;
 }
 
+#escmenu_modal m3e-button:nth-child(4) {
+  margin-top: 275px;
+}
+
 #settingsmenu_modal {
-  width:  800px;
-  height: 500px;
+  width: 800px;
+  height: 600px;
   background-color: white; 
 }
 

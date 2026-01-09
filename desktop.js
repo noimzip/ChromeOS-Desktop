@@ -67,3 +67,7 @@ document.getElementById('close_add_newapp_modal').onclick = () => {
 }
 
 developer_user_agent.textContent = window.navigator.userAgent.toLowerCase()
+
+document.getElementById('refresh_page').onclick = () => {
+  location.reload();
+}
