@@ -124,3 +124,9 @@ body {
   height: 300px;
   background-color: white; 
 }
+
+#test_widget {
+  overflow: scroll;
+  overflow-x: hidden;
+  height: 300px;
+}
