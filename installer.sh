@@ -1,20 +1,29 @@
-echo "------------------------------------------------------------------";
-echo "   ____       ___  ____   __        ___     _            _       ";
-echo "  / ___|_ __ / _ \\/ ___|  \\ \\      / (_) __| | __ _  ___| |_ ___ ";
-echo " | |   | '__| | | \\___ \\   \\ \\ /\\ / /| |/ _\` |/ _\` |/ _ \\ __/ __|";
-echo " | |___| |  | |_| |___) |   \\ V  V / | | (_| | (_| |  __/ |_\\__ \\";
-echo "  \\____|_|   \\___/|____/     \\_/\\_/  |_|\\__,_|\\__, |\\___|\\__|___/";
-echo "                                              |___/              ";
-echo "------------------------------------------------------------------";
-echo "Would you like to install CrOS Widgets? (y/n)";
+echo "---------------------------------------------------------------------------------------------------------";
+echo "  ____              _  __        ___     _            _         __  __                                   ";
+echo " / ___|  ___  _   _| | \\ \\      / (_) __| | __ _  ___| |_ ___  |  \\/  | __ _ _ __   __ _  __ _  ___ _ __ ";
+echo " \\___ \\ / _ \\| | | | |  \\ \\ /\\ / /| |/ _\` |/ _\` |/ _ \\ __/ __| | |\\/| |/ _\` | '_ \\ / _\` |/ _\` |/ _ \\ '__|";
+echo "  ___) | (_) | |_| | |   \\ V  V / | | (_| | (_| |  __/ |_\\__ \\ | |  | | (_| | | | | (_| | (_| |  __/ |   ";
+echo " |____/ \\___/ \\__,_|_|    \\_/\\_/  |_|\\__,_|\\__, |\\___|\\__|___/ |_|  |_|\\__,_|_| |_|\\__,_|\\__, |\\___|_|   ";
+echo "                                           |___/                                         |___/           ";
+echo "---------------------------------------------------------------------------------------------------------";
+echo "Would you like to install Soul Widgets Manager? (y/n)";
 read install_choice
 if [ "$install_choice" = "y" ] || [ "$install_choice" = "Y" ]; then
-    echo "Installing CrOS Widgets...";
-    sudo apt install nodejs npm libnss3
-    cd CrOS-Widgets
+    echo "Installing Soul Widgets Manager...";
+    sudo apt install -y nodejs npm libnss3
     npm install
     npm update
-    echo "Installation complete! You can find CrOS Widgets in your application menu.";
+    echo "Installation complete!";
+    
+    echo "Would you like to download Linux VM AutoStart Extension? (y/n)";
+    read autostart_choice
+    if [ "$autostart_choice" = "y" ] || [ "$autostart_choice" = "Y" ]; then
+        echo "Downloading Linux VM AutoStart Extension...";
+        sudo apt install -y git
+        git clone https://github.com/supechicken/ChromeOS-AutoStart.git
+    else
+        echo "AutoStart extension installation canceled.";
+    fi
 else
     echo "Installation canceled.";
 fi
