@@ -32,34 +32,37 @@
     />
   </head>
   <body>
-    <div class="appicon" id="appicon-chrome">
-      <img src="./assets/chrome.svg" height="50" width="50" />
-      <p>Chrome</p>
-    </div>
-    <div class="appicon" id="appicon-files">
-      <img src="./assets/files.webp" height="50" width="50" />
-      <p>Files</p>
-    </div>
-    <div class="appicon" id="appicon-settings">
-      <img src="./assets/settings.webp" height="50" width="50" />
-      <p>Settings</p>
-    </div>
-    <div class="appicon" id="appicon-x">
-      <img src="./assets/x.svg" height="50" width="50" />
-      <p>X</p>
-    </div>
-    <div class="appicon" id="appicon-add">
-      <img src="./assets/add.webp" height="50" width="50" />
-      <p>Add an app</p>
+    <div id="desktop_icons">
+      <div class="appicon" id="appicon-chrome">
+        <img src="./assets/chrome.svg" height="50" width="50" />
+        <p>Chrome</p>
+      </div>
+      <div class="appicon" id="appicon-files">
+        <img src="./assets/files.webp" height="50" width="50" />
+        <p>Files</p>
+      </div>
+      <div class="appicon" id="appicon-settings">
+        <img src="./assets/settings.webp" height="50" width="50" />
+        <p>Settings</p>
+      </div>
+      <div class="appicon" id="appicon-x">
+        <img src="./assets/x.svg" height="50" width="50" />
+        <p>X</p>
+      </div>
+      <div class="appicon" id="appicon-add">
+        <img src="./assets/add.webp" height="50" width="50" />
+        <p>Add an app</p>
+      </div>
     </div>
     <iframe class="widget" src="https://free.timeanddate.com/clock/i8tygyva/n102/szw210/szh210/hocddd/hbw0/hfc000/cf100/hgr0/fav0/fiv0/mqcfff/mql15/mqw8/mqd100/mhcfff/mhl15/mhw4/mhd100/mmv0/hhcfff/hhw11/hmcfff/hmw6/hsw4" frameborder="0" width="210" height="210"></iframe>
 
+    <!--
 <script src="https://elfsightcdn.com/platform.js" async></script>
 <div class="elfsight-app-136a378d-030d-41fb-9e10-f027d72bc3cc" data-elfsight-app-lazy></div>
 
 <div id="test_widget">
 <div class="elfsight-app-561bf205-b06f-4dc2-bad8-ef405fe25dee" data-elfsight-app-lazy></div>
-</div>
+</div>-->
 
     <div id="add_newapp_modal_overlay" class="modal_overlay">
       <div id="add_newapp_modal" class="modal">
@@ -98,45 +101,49 @@
 
     <div id="settingsmenu_modal_overlay" class="modal_overlay">
       <div id="settingsmenu_modal" class="modal">
-<div id="settings_sidebar">
-<m3e-nav-menu>
-  <m3e-nav-menu-item-group>
-    <m3e-heading slot="label" variant="label" size="large">一般</m3e-heading>
-    <m3e-nav-menu-item>
-      <m3e-icon slot="icon" name="keyboard"></m3e-icon>
-      <span slot="label">キーボードショートカット</span>
-    </m3e-nav-menu-item>
-    <m3e-nav-menu-item>
-      <m3e-icon slot="icon" name="palette"></m3e-icon>
-      <span slot="label">デザインとスタイル</span>
-    </m3e-nav-menu-item>
-    <m3e-nav-menu-item>
-      <m3e-icon slot="icon" name="shield"></m3e-icon>
-      <span slot="label">セキュリティとプライバシー</span>
-    </m3e-nav-menu-item>
-    <m3e-nav-menu-item>
-      <m3e-icon slot="icon" name="account_circle"></m3e-icon>
-      <span slot="label">アカウント</span>
-    </m3e-nav-menu-item>
-    <!-- Additional items omitted for brevity -->
-  </m3e-nav-menu-item-group>
-  <m3e-nav-menu-item-group>
-    <m3e-nav-menu-item>
-      <m3e-icon slot="icon" name="developer_board"></m3e-icon>
-      <span slot="label">デバッグ</span>
-    </m3e-nav-menu-item>
-    <m3e-heading slot="label" variant="label" size="large">開発者向け設定</m3e-heading>
-    <m3e-nav-menu-item>
-      <m3e-icon slot="icon" name="info"></m3e-icon>
-      <span slot="label">バージョン情報</span>
-    </m3e-nav-menu-item>
-    <!-- Additional items omitted for brevity -->
-  </m3e-nav-menu-item-group>
-</m3e-nav-menu>
-</div>
+        <div id="settings_sidebar">
+          <m3e-nav-menu>
+            <m3e-nav-menu-item-group>
+              <m3e-heading slot="label" variant="label" size="large">一般</m3e-heading>
+              <m3e-nav-menu-item>
+                <m3e-icon slot="icon" name="keyboard"></m3e-icon>
+                <span slot="label">キーボードショートカット</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item>
+                <m3e-icon slot="icon" name="palette"></m3e-icon>
+                <span slot="label">デザインとスタイル</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item>
+                <m3e-icon slot="icon" name="shield"></m3e-icon>
+                <span slot="label">セキュリティとプライバシー</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item>
+                <m3e-icon slot="icon" name="account_circle"></m3e-icon>
+                <span slot="label">アカウント</span>
+              </m3e-nav-menu-item>
+              <!-- Additional items omitted for brevity -->
+            </m3e-nav-menu-item-group>
+            <m3e-nav-menu-item-group>
+              <m3e-nav-menu-item>
+                <m3e-icon slot="icon" name="developer_board"></m3e-icon>
+                <span slot="label">デバッグ</span>
+              </m3e-nav-menu-item>
+              <m3e-heading slot="label" variant="label" size="large">開発者向け設定</m3e-heading>
+              <m3e-nav-menu-item>
+                <m3e-icon slot="icon" name="info"></m3e-icon>
+                <span slot="label">バージョン情報</span>
+              </m3e-nav-menu-item>
+              <!-- Additional items omitted for brevity -->
+            </m3e-nav-menu-item-group>
+          </m3e-nav-menu>
+        </div>
 
-        ユーザーエージェント:<span id="developer_user_agent"></span>
-        <m3e-button variant="filled" id="close_settingsmenu_modal">とじる</m3e-button>
+        <div id="settings_content">
+          <p>ユーザーエージェント:<span id="developer_user_agent"></span></p>
+          <div style="margin-top: auto; align-self: flex-end;">
+            <m3e-button variant="filled" id="close_settingsmenu_modal">とじる</m3e-button>
+          </div>
+        </div>
       </div>
     </div>
   </body>

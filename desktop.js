@@ -1,26 +1,22 @@
 document.getElementById('appicon-chrome').onclick = () => {
-  console.log('???');
   openURL('chrome://newtab');
 }
 
 document.getElementById('appicon-files').onclick = () => {
-  console.log('???');
   openURL('chrome://file-manager');
 }
 
 document.getElementById('appicon-settings').onclick = () => {
-  console.log('???');
   openURL('chrome://os-settings');
 }
 
 document.getElementById('appicon-x').onclick = () => {
-  console.log('???');
   window.open('https://x.com');
 }
 
 document.addEventListener('keydown', function(e) {
   if(e.key === 'Escape'){
-    escmenu_modal_overlay.style.display = 'block';
+    escmenu_modal_overlay.style.display = 'flex';
   }
 });
 
@@ -30,7 +26,7 @@ document.getElementById('close_menu_modal').onclick = () => {
 
 document.getElementById('open_settingsmenu_modal').onclick = () => {
   escmenu_modal_overlay.style.display = 'none';
-  settingsmenu_modal_overlay.style.display = 'block';
+  settingsmenu_modal_overlay.style.display = 'flex';
 }
 
 document.getElementById('close_settingsmenu_modal').onclick = () => {
@@ -39,7 +35,7 @@ document.getElementById('close_settingsmenu_modal').onclick = () => {
 
 document.getElementById('open_change_widget_position_modal').onclick = () => {
   escmenu_modal_overlay.style.display = 'none';
-  change_widget_position_modal_overlay.style.display = 'block';
+  change_widget_position_modal_overlay.style.display = 'flex';
 
   document.querySelectorAll(".appicon,.widget").forEach(item => {
     item.onpointermove = function(event){
@@ -64,7 +60,7 @@ document.getElementById('save_change_widget_position').onclick = () => {
 }
 
 document.getElementById('appicon-add').onclick = () => {
-  add_newapp_modal_overlay.style.display = 'block';
+  add_newapp_modal_overlay.style.display = 'flex';
 }
 
 document.getElementById('close_add_newapp_modal').onclick = () => {
