@@ -1,8 +1,19 @@
-chrome.offscreen.createDocument({
-  url: 'ws_receiver/wrapper.html',
-  reasons: ['BLOBS'],
-  justification: 'websocket listener',
+function setUpOffscreen() {
+  chrome.offscreen.createDocument({
+    url: 'ws_receiver/wrapper.html',
+    reasons: ['BLOBS'],
+    justification: 'websocket listener',
+  });
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  setUpOffscreen();
 });
+
+chrome.runtime.onStartup.addListener(() => {
+  setUpOffscreen();
+});
+
 
 self.onmessage = e => {
   const data = JSON.parse(e.data);
