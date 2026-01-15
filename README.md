@@ -1,7 +1,13 @@
+<div align="center">
+
+<img src="assets/soul.png" width="250px" height="250px">
+
 # [WIP] Soul Widgets Manager
 ## A project bringing Windows-like desktop experience to ChromeOS
 
 ### Note: This project is still developing, it might not be stable enough
+
+</div>
 
 ## If you want to try it out...
 - Clone the repository to the Linux VM:

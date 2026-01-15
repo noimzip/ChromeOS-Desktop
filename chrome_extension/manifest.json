@@ -8,5 +8,11 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["offscreen", "tabs"]
+  "permissions": ["offscreen", "tabs"],
+   "icons": {
+    "16": "assets/soul-16.png",
+    "32": "assets/soul-32.png",
+    "48": "assets/soul-48.png",
+    "128": "assets/soul-128.png"
+  }
 }
