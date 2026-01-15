@@ -1,7 +1,7 @@
 
 {
   "manifest_version": 3,
-  "name": "ChromeOS Desktop",
+  "name": "Soul Widgets Manager",
   "version": "0.1",
   "description": "Place your shortcuts and widgets on the desktop",
   "author": "supechicken666@gmail.com",

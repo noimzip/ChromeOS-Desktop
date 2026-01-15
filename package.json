@@ -1,14 +1,16 @@
 {
-  "name": "CrOS widgets",
+  "name": "Soul Widgets Manager",
   "version": "0.1",
   "description": "Place your shortcuts and widgets on the desktop",
   "main": "main.js",
   "scripts": {
     "start": "electron . --ozone-platform-hint=wayland"
   },
-  "author": "SupeChicken666",
+  "author": "SupeChicken666 & Noimzip",
   "license": "GPL3",
   "dependencies": {
-    "@m3e/all": "^1.1.2"
+    "electron": "^39.2.7",
+    "ws": "^8.19.0",
+    "@m3e/all": "^1.1.6"
   }
 }
