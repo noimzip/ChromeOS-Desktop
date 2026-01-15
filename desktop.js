@@ -13,6 +13,11 @@ document.getElementById('appicon-settings').onclick = () => {
   openURL('chrome://os-settings');
 }
 
+document.getElementById('appicon-x').onclick = () => {
+  console.log('???');
+  window.open('https://x.com');
+}
+
 document.addEventListener('keydown', function(e) {
   if(e.key === 'Escape'){
     escmenu_modal_overlay.style.display = 'block';

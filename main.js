@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
 
 app.whenReady().then(() => {
@@ -20,6 +20,13 @@ app.whenReady().then(() => {
       preload: path.join(process.cwd(), 'preload.js'),
       sandbox: false
     }
+  })
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http')) {
+      shell.openExternal(url)
+    }
+    return { action: 'deny' }
   })
 
   win.loadFile('index.html')
