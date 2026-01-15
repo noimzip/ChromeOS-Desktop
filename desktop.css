@@ -5,7 +5,7 @@ body {
 
   width: 100%;
   height:  100%;
-  font-family: 'Roboto', 'Segoe UI', sans-serif;
+  font-family: "Google Sans Flex", "Noto Sans JP", sans-serif;
   user-select: none;
   background-color: transparent; /* Electron window handles transparency */
 }
@@ -50,7 +50,6 @@ body {
 }
 
 .appicon > p {
-  font-family: Arial, sans-serif;
   width: 100%;
   color: white;
   text-shadow: 0 0 5px black;
