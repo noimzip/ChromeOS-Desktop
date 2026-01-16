@@ -1,0 +1,62 @@
+.clock {
+  width: 202px;
+  height: 200px;
+  border-radius: 50%;
+}
+.clock .spike {
+  border-left: 24px solid transparent;
+  border-right: 24px solid transparent;
+  width: 24px;
+  position: absolute;
+  top: calc(50% - 8px);
+  left: calc(50% - 36px);
+  border-radius: 0.5mm;
+}
+.spike::before {
+  position: absolute;
+  content: "";
+  width: 39px;
+  height: 39px;
+  top: -4px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  border-radius: 50%;
+  z-index: -1;
+}
+.seconds {
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top: calc(50% - 8px);
+  left: calc(50% - 8px);
+  background: rgb(189, 233, 252);
+  border-radius: 50%;
+  z-index: 1;
+}
+.minutes,
+.hours {
+  width: 16px;
+  height: 80px;
+  background: rgb(168, 245, 195);
+  border-radius: 3mm;
+  position: absolute;
+  top: calc(50% - 8px);
+  left: calc(50% - 8px);
+  transform-origin: 8px 8px;
+  z-index: 1;
+}
+.hours {
+  height: 64px;
+  background: rgb(131, 149, 136);
+}
+.date {
+  position: absolute;
+  width: 50px;
+  height: 16px;
+  top: calc(50% - 8px);
+  left: calc(50% - 25px);
+  font-size: 16px;
+  color: white;
+  background: none;
+  z-index: 1;
+}
