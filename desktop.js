@@ -155,3 +155,122 @@ if (languageSelector) {
   languageSelector.value = currentLang;
   updateLanguage(currentLang);
 }
+
+// New App Modal Logic
+const newAppImageTrigger = document.getElementById('new_app_image_trigger');
+const newAppFileInput = document.getElementById('new_app_image_file');
+const newAppImagePreview = document.getElementById('new_app_image_preview');
+let newAppIconDataUrl = './assets/settings.webp'; // Default icon
+
+if (newAppImageTrigger && newAppFileInput) {
+  newAppImageTrigger.onclick = () => newAppFileInput.click();
+  newAppFileInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        newAppIconDataUrl = evt.target.result;
+        newAppImagePreview.src = newAppIconDataUrl;
+        newAppImagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+}
+
+function createDesktopIcon(appData) {
+  const div = document.createElement('div');
+  div.className = 'appicon';
+  div.dataset.saveKey = 'custom-app-' + appData.name;
+  div.innerHTML = `
+    <img src="${appData.icon}" height="50" width="50" />
+    <p>${appData.name}</p>
+  `;
+  div.onclick = () => {
+    if (appData.url.startsWith('chrome://')) {
+      if (typeof openURL === 'function') openURL(appData.url);
+    } else {
+      window.open(appData.url);
+    }
+  };
+
+  div.oncontextmenu = (e) => {
+    e.preventDefault();
+    const lang = localStorage.getItem('language') || 'ja';
+    const confirmMsg = lang === 'ja' ? `「${appData.name}」を削除しますか？` : `Delete "${appData.name}"?`;
+
+    if (confirm(confirmMsg)) {
+      div.remove();
+      const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+      const newApps = customApps.filter(a => !(a.name === appData.name && a.url === appData.url));
+      localStorage.setItem('customApps', JSON.stringify(newApps));
+
+      const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+      if (positions[div.dataset.saveKey]) {
+        delete positions[div.dataset.saveKey];
+        localStorage.setItem('widgetPositions', JSON.stringify(positions));
+      }
+    }
+  };
+  
+  const addBtn = document.getElementById('appicon-add');
+  if (addBtn && addBtn.parentNode) {
+    addBtn.parentNode.insertBefore(div, addBtn);
+  }
+}
+
+const saveNewAppBtn = document.getElementById('save_new_app');
+if (saveNewAppBtn) {
+  saveNewAppBtn.onclick = () => {
+    const name = document.getElementById('new_app_name').value;
+    const url = document.getElementById('new_app_url').value;
+    
+    if (!name || !url) {
+      alert('名前とURLを入力してください');
+      return;
+    }
+    
+    const newApp = {
+      name: name,
+      url: url,
+      icon: newAppIconDataUrl
+    };
+    
+    const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+    customApps.push(newApp);
+    localStorage.setItem('customApps', JSON.stringify(customApps));
+    
+    createDesktopIcon(newApp);
+    
+    // Close modal and reset
+    document.getElementById('add_newapp_modal_overlay').style.display = 'none';
+    document.getElementById('new_app_name').value = '';
+    document.getElementById('new_app_url').value = '';
+    newAppImagePreview.style.display = 'none';
+    newAppIconDataUrl = './assets/settings.webp';
+  };
+}
+
+// Load saved apps
+const savedCustomApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+savedCustomApps.forEach(app => createDesktopIcon(app));
+
+// Restore positions
+const clockWidget = document.querySelector('.clock');
+if (clockWidget && !clockWidget.id) clockWidget.id = 'widget-clock';
+
+function restoreWidgetPositions() {
+  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  Object.keys(positions).forEach(key => {
+    let el = document.getElementById(key);
+    if (!el) {
+      el = document.querySelector(`[data-save-key="${key}"]`);
+    }
+    if (el) {
+      el.style.position = positions[key].position;
+      el.style.left = positions[key].left;
+      el.style.top = positions[key].top;
+    }
+  });
+}
+restoreWidgetPositions();
