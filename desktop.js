@@ -55,8 +55,19 @@ document.getElementById('close_change_widget_position_modal').onclick = () => {
 }
 
 document.getElementById('save_change_widget_position').onclick = () => {
-  
-
+  const positions = {};
+  document.querySelectorAll('.appicon, .widget').forEach(el => {
+    const key = el.id || el.dataset.saveKey;
+    if (key) {
+      positions[key] = {
+        left: el.style.left || (el.offsetLeft + 'px'),
+        top: el.style.top || (el.offsetTop + 'px'),
+        position: 'absolute'
+      };
+    }
+  });
+  localStorage.setItem('widgetPositions', JSON.stringify(positions));
+  change_widget_position_modal_overlay.style.display = 'none';
 }
 
 document.getElementById('appicon-add').onclick = () => {
