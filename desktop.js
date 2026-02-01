@@ -1,3 +1,26 @@
+/**
+ * Soul Widgets Manager - Desktop Module
+ * @version 2.0.0
+ * @description ChromeOSスタイルのデスクトップウィジェットマネージャー
+ */
+
+'use strict';
+
+// ========================================
+// 定数定義
+// ========================================
+
+/** グリッドのサイズ（px） */
+const GRID_SIZE = 80;
+/** グリッドの開始位置（paddingに合わせる） */
+const GRID_OFFSET = 20;
+/** ドラッグ開始判定の閾値（px） */
+const DRAG_THRESHOLD = 5;
+/** アイコン重なり判定の閾値（ピクセル面積） */
+const OVERLAP_THRESHOLD = 1600;
+/** デフォルトアイコン */
+const DEFAULT_ICON = './assets/settings.webp';
+
 // ビルトインアイコンのURL定義
 const builtinIconUrls = {
   'appicon-chrome': 'chrome://newtab',
@@ -6,17 +29,363 @@ const builtinIconUrls = {
   'appicon-x': 'https://x.com'
 };
 
-document.getElementById('appicon-chrome').onclick = () => {
-  openURL('chrome://newtab');
+// ========================================
+// Electron API ラッパー
+// ========================================
+
+/**
+ * Linuxアプリを起動する
+ * @param {string} command - 実行するコマンド
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function launchLinuxApp(command) {
+  if (window.electronAPI && window.electronAPI.launchLinuxApp) {
+    return await window.electronAPI.launchLinuxApp(command);
+  }
+  return { success: false, error: 'Electron API not available' };
 }
 
-document.getElementById('appicon-files').onclick = () => {
-  openURL('chrome://file-manager');
+// ========================================
+// メディアプレイヤー機能
+// ========================================
+
+// メディアソース: 'linux' (playerctl) または 'browser' (Chrome拡張機能)
+let currentMediaSource = 'linux';
+let browserMediaInfo = null;
+
+/**
+ * Linuxメディア情報を取得する（playerctl）
+ * @returns {Promise<Object>}
+ */
+async function getLinuxMediaInfo() {
+  if (window.electronAPI && window.electronAPI.getMediaInfo) {
+    return await window.electronAPI.getMediaInfo();
+  }
+  return null;
 }
 
-document.getElementById('appicon-settings').onclick = () => {
-  openURL('chrome://os-settings');
+/**
+ * ブラウザメディア情報を取得する
+ * @returns {Object}
+ */
+function getBrowserMediaInfo() {
+  if (window.electronAPI && window.electronAPI.getBrowserMediaInfo) {
+    return window.electronAPI.getBrowserMediaInfo();
+  }
+  return null;
 }
+
+/**
+ * 最適なメディアソースを選択してメディア情報を取得する
+ * @returns {Promise<Object>}
+ */
+async function getMediaInfo() {
+  // ブラウザのメディア情報を取得
+  const browserInfo = getBrowserMediaInfo();
+  const hasBrowserMedia = browserInfo && 
+    browserInfo.status !== 'No player' && 
+    browserInfo.status !== 'Stopped' &&
+    browserInfo.title;
+  
+  // Linuxのメディア情報を取得
+  const linuxInfo = await getLinuxMediaInfo();
+  const hasLinuxMedia = linuxInfo && 
+    linuxInfo.status !== 'No player' && 
+    linuxInfo.player !== '';
+  
+  // 再生中のソースを優先
+  if (hasBrowserMedia && browserInfo.status === 'Playing') {
+    currentMediaSource = 'browser';
+    return { ...browserInfo, source: 'browser' };
+  }
+  
+  if (hasLinuxMedia && linuxInfo.status === 'Playing') {
+    currentMediaSource = 'linux';
+    return { ...linuxInfo, source: 'linux' };
+  }
+  
+  // どちらも再生中でない場合、情報がある方を返す
+  if (hasBrowserMedia) {
+    currentMediaSource = 'browser';
+    return { ...browserInfo, source: 'browser' };
+  }
+  
+  if (hasLinuxMedia) {
+    currentMediaSource = 'linux';
+    return { ...linuxInfo, source: 'linux' };
+  }
+  
+  // どちらもない場合
+  currentMediaSource = 'none';
+  return { status: 'No player', title: '', artist: '', artUrl: '', source: 'none' };
+}
+
+/**
+ * メディアを制御する
+ * @param {string} action - 'play-pause', 'next', 'previous', 'seek'
+ * @param {number} value - シークの場合の秒数
+ * @returns {Promise<{success: boolean}>}
+ */
+async function mediaControl(action, value) {
+  // 現在のメディアソースに応じて制御
+  if (currentMediaSource === 'browser') {
+    if (window.electronAPI && window.electronAPI.browserMediaControl) {
+      return window.electronAPI.browserMediaControl(action, value);
+    }
+  } else {
+    if (window.electronAPI && window.electronAPI.mediaControl) {
+      return await window.electronAPI.mediaControl(action, value);
+    }
+  }
+  return { success: false };
+}
+
+// メディアプレイヤーUI要素
+const mediaPlayerWidget = document.getElementById('media_player_widget');
+const mediaTitle = document.getElementById('media_title');
+const mediaArtist = document.getElementById('media_artist');
+const mediaArt = document.getElementById('media_art');
+const mediaPlayIcon = document.getElementById('media_play_icon');
+const mediaPrevBtn = document.getElementById('media_prev');
+const mediaPlayPauseBtn = document.getElementById('media_play_pause');
+const mediaNextBtn = document.getElementById('media_next');
+const mediaSeekbar = document.getElementById('media_seekbar');
+const mediaTimeCurrent = document.getElementById('media_time_current');
+const mediaTimeTotal = document.getElementById('media_time_total');
+
+let currentMediaStatus = 'Stopped';
+let currentDuration = 0; // 曲の長さ（秒）
+let isSeeking = false; // シーク中フラグ
+
+/**
+ * 秒数を mm:ss 形式にフォーマット
+ */
+function formatTime(seconds) {
+  if (!seconds || isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * メディアプレイヤーUIを更新
+ */
+async function updateMediaPlayer() {
+  const info = await getMediaInfo();
+  if (!info) return;
+  
+  const hasPlayer = info.status !== 'No player' && info.source !== 'none';
+  
+  if (mediaPlayerWidget) {
+    mediaPlayerWidget.classList.toggle('no-player', !hasPlayer);
+    // ソースに応じてスタイルを変更（オプション）
+    mediaPlayerWidget.dataset.source = info.source || 'none';
+  }
+  
+  if (!hasPlayer) {
+    if (mediaTitle) mediaTitle.textContent = '再生中の音楽なし';
+    if (mediaArtist) mediaArtist.textContent = '';
+    if (mediaArt) mediaArt.style.display = 'none';
+    if (mediaPlayIcon) mediaPlayIcon.setAttribute('name', 'play_arrow');
+    document.querySelector('.media-player-placeholder')?.style.setProperty('display', 'block');
+    return;
+  }
+  
+  // タイトルとアーティストを更新
+  if (mediaTitle) {
+    mediaTitle.textContent = info.title || 'Unknown Title';
+  }
+  if (mediaArtist) {
+    // ソース情報を表示（オプション）
+    const sourceLabel = info.source === 'browser' ? '' : '';
+    mediaArtist.textContent = (info.artist || '') + sourceLabel;
+  }
+  
+  // アルバムアートを更新
+  if (mediaArt && info.artUrl) {
+    mediaArt.src = info.artUrl;
+    mediaArt.style.display = 'block';
+    mediaArt.onerror = () => {
+      mediaArt.style.display = 'none';
+      document.querySelector('.media-player-placeholder')?.style.setProperty('display', 'block');
+    };
+    document.querySelector('.media-player-placeholder')?.style.setProperty('display', 'none');
+  } else if (mediaArt) {
+    mediaArt.style.display = 'none';
+    document.querySelector('.media-player-placeholder')?.style.setProperty('display', 'block');
+  }
+  
+  // 再生状態に応じてアイコンを更新
+  currentMediaStatus = info.status;
+  if (mediaPlayIcon) {
+    mediaPlayIcon.setAttribute('name', info.status === 'Playing' ? 'pause' : 'play_arrow');
+  }
+  
+  // シークバーを更新（シーク中でない場合のみ）
+  if (!isSeeking) {
+    // position と length を取得（Linuxの場合）
+    let position = 0;
+    let duration = 0;
+    
+    if (info.position !== undefined) {
+      position = parseFloat(info.position) || 0;
+    }
+    if (info.length !== undefined) {
+      // mpris:length はマイクロ秒
+      duration = parseFloat(info.length) / 1000000 || 0;
+    }
+    if (info.duration !== undefined) {
+      // ブラウザからの場合は秒
+      duration = parseFloat(info.duration) || 0;
+    }
+    if (info.currentTime !== undefined) {
+      position = parseFloat(info.currentTime) || 0;
+    }
+    
+    currentDuration = duration;
+    
+    // シークバーの値を更新
+    if (mediaSeekbar && duration > 0) {
+      const percent = (position / duration) * 100;
+      mediaSeekbar.value = percent;
+      mediaSeekbar.disabled = false;
+    } else if (mediaSeekbar) {
+      mediaSeekbar.value = 0;
+      mediaSeekbar.disabled = true;
+    }
+    
+    // 時間表示を更新
+    if (mediaTimeCurrent) {
+      mediaTimeCurrent.textContent = formatTime(position);
+    }
+    if (mediaTimeTotal) {
+      mediaTimeTotal.textContent = formatTime(duration);
+    }
+  }
+}
+
+// メディアコントロールボタンのイベント
+// ドラッグイベントと干渉しないように pointerdown + pointerup で処理
+function setupMediaButton(btn, action) {
+  if (!btn) return;
+  
+  let isPointerDown = false;
+  let startX, startY;
+  
+  btn.addEventListener('pointerdown', (e) => {
+    e.stopPropagation(); // ウィジェットのドラッグを防止
+    isPointerDown = true;
+    startX = e.clientX;
+    startY = e.clientY;
+  });
+  
+  btn.addEventListener('pointerup', async (e) => {
+    e.stopPropagation();
+    if (!isPointerDown) return;
+    isPointerDown = false;
+    
+    // ドラッグでないことを確認（5px以内の移動ならクリックとみなす）
+    const dx = Math.abs(e.clientX - startX);
+    const dy = Math.abs(e.clientY - startY);
+    if (dx > 5 || dy > 5) return;
+    
+    // アクションを実行
+    if (typeof action === 'function') {
+      await action();
+    }
+    setTimeout(updateMediaPlayer, 300);
+  });
+  
+  btn.addEventListener('pointercancel', () => {
+    isPointerDown = false;
+  });
+}
+
+setupMediaButton(mediaPrevBtn, async () => {
+  await mediaControl('previous');
+});
+
+setupMediaButton(mediaPlayPauseBtn, async () => {
+  if (currentMediaSource === 'browser') {
+    await mediaControl('playPause');
+  } else {
+    await mediaControl('play-pause');
+  }
+});
+
+setupMediaButton(mediaNextBtn, async () => {
+  await mediaControl('next');
+});
+
+// シークバーのイベント
+if (mediaSeekbar) {
+  // シーク開始（ドラッグ中は更新を止める）
+  mediaSeekbar.addEventListener('pointerdown', (e) => {
+    e.stopPropagation(); // ウィジェットのドラッグを防止
+    isSeeking = true;
+  });
+  
+  // シーク中の値変更（リアルタイムプレビュー）
+  mediaSeekbar.addEventListener('input', (e) => {
+    e.stopPropagation();
+    if (currentDuration > 0 && mediaTimeCurrent) {
+      const position = (mediaSeekbar.value / 100) * currentDuration;
+      mediaTimeCurrent.textContent = formatTime(position);
+    }
+  });
+  
+  // シーク完了（実際にシーク）
+  mediaSeekbar.addEventListener('change', async (e) => {
+    e.stopPropagation();
+    if (currentDuration > 0) {
+      const seekPosition = (mediaSeekbar.value / 100) * currentDuration;
+      await mediaControl('seek', seekPosition);
+    }
+    isSeeking = false;
+    setTimeout(updateMediaPlayer, 300);
+  });
+  
+  // ドラッグキャンセル時
+  mediaSeekbar.addEventListener('pointercancel', () => {
+    isSeeking = false;
+  });
+  
+  // クリックでもシーク可能に
+  mediaSeekbar.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+// ブラウザからのメディア更新を受信
+window.onBrowserMediaUpdate = (info) => {
+  browserMediaInfo = info;
+  updateMediaPlayer();
+};
+
+// 定期的にメディア情報を更新（2秒ごと）
+setInterval(updateMediaPlayer, 500);
+// 初回更新
+setTimeout(updateMediaPlayer, 500);
+// ブラウザメディア情報をリクエスト
+setTimeout(() => {
+  if (window.electronAPI && window.electronAPI.requestBrowserMediaInfo) {
+    window.electronAPI.requestBrowserMediaInfo();
+  }
+}, 1000);
+
+// ========================================
+// ビルトインアイコンのクリックイベント
+// ========================================
+
+/** アイコンクリックハンドラを設定 */
+function setupBuiltinIconClick(id, url) {
+  const el = document.getElementById(id);
+  if (el) el.onclick = () => openURL(url);
+}
+
+setupBuiltinIconClick('appicon-chrome', 'chrome://newtab');
+setupBuiltinIconClick('appicon-files', 'chrome://file-manager');
+setupBuiltinIconClick('appicon-settings', 'chrome://os-settings');
 
 document.addEventListener('keydown', function(e) {
   if(e.key === 'Escape'){
@@ -42,48 +411,84 @@ document.getElementById('close_settingsmenu_modal').onclick = () => {
   settingsmenu_modal_overlay.style.display = 'none';
 }
 
-// グリッドモードの設定
-const GRID_SIZE = 80; // グリッドのサイズ
-const GRID_OFFSET = 20; // グリッドの開始位置（paddingに合わせる）
-let isGridModeEnabled = false;
-let isPositionChangeMode = false; // 位置変更モードの状態
+// ========================================
+// アプリケーション状態
+// ========================================
 
-// フォルダー機能
+let isGridModeEnabled = localStorage.getItem('gridModeEnabled') === 'true';
+let isPositionChangeMode = false;
 let draggedItem = null;
 let folders = JSON.parse(localStorage.getItem('appFolders') || '{}');
+let currentOpenFolderId = null;
 
 // 編集機能用
 let currentEditingApp = null;
 let currentEditingIcon = null;
+let currentContextAppType = null;
 
+// ========================================
+// ユーティリティ関数
+// ========================================
+
+/**
+ * 値をグリッドにスナップさせる
+ * @param {number} value - 元の値
+ * @returns {number} スナップされた値
+ */
 function snapToGrid(value) {
-  // オフセットを考慮してスナップ（グリッド線の間に配置）
   return Math.round((value - GRID_OFFSET) / GRID_SIZE) * GRID_SIZE + GRID_OFFSET;
 }
 
-// アイコン同士の重なりを検出
+/**
+ * フォルダーデータを保存
+ */
+function saveFolders() {
+  localStorage.setItem('appFolders', JSON.stringify(folders));
+}
+
+/**
+ * 現在の言語を取得
+ * @returns {string} 言語コード ('ja' または 'en')
+ */
+function getCurrentLanguage() {
+  return localStorage.getItem('language') || 'ja';
+}
+
+/**
+ * 2つの要素の重なり面積を計算
+ * @param {DOMRect} rect1 - 要素1の矩形
+ * @param {DOMRect} rect2 - 要素2の矩形
+ * @returns {number} 重なり面積
+ */
+function calculateOverlapArea(rect1, rect2) {
+  const overlapX = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
+  const overlapY = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
+  return overlapX * overlapY;
+}
+
+/**
+ * ドラッグ中のアイコンと重なっているアイコンを検出
+ * @param {HTMLElement} draggedEl - ドラッグ中の要素
+ * @returns {HTMLElement|null} 重なっているアイコン
+ */
 function getOverlappingIcon(draggedEl) {
   const draggedRect = draggedEl.getBoundingClientRect();
   const icons = document.querySelectorAll('.appicon:not(.folder)');
   
   for (const icon of icons) {
-    if (icon === draggedEl) continue;
-    if (icon.id === 'appicon-add') continue; // 追加ボタンは除外
+    if (icon === draggedEl || icon.id === 'appicon-add') continue;
     
-    const iconRect = icon.getBoundingClientRect();
-    const overlapX = Math.max(0, Math.min(draggedRect.right, iconRect.right) - Math.max(draggedRect.left, iconRect.left));
-    const overlapY = Math.max(0, Math.min(draggedRect.bottom, iconRect.bottom) - Math.max(draggedRect.top, iconRect.top));
-    const overlapArea = overlapX * overlapY;
-    const threshold = 1600; // 40x40ピクセル以上の重なり
-    
-    if (overlapArea > threshold) {
-      return icon;
-    }
+    const overlapArea = calculateOverlapArea(draggedRect, icon.getBoundingClientRect());
+    if (overlapArea > OVERLAP_THRESHOLD) return icon;
   }
   return null;
 }
 
-// フォルダーとの重なりを検出
+/**
+ * ドラッグ中のアイコンと重なっているフォルダーを検出
+ * @param {HTMLElement} draggedEl - ドラッグ中の要素
+ * @returns {HTMLElement|null} 重なっているフォルダー
+ */
 function getOverlappingFolder(draggedEl) {
   const draggedRect = draggedEl.getBoundingClientRect();
   const folderIcons = document.querySelectorAll('.appicon.folder');
@@ -91,44 +496,61 @@ function getOverlappingFolder(draggedEl) {
   for (const folder of folderIcons) {
     if (folder === draggedEl) continue;
     
-    const folderRect = folder.getBoundingClientRect();
-    const overlapX = Math.max(0, Math.min(draggedRect.right, folderRect.right) - Math.max(draggedRect.left, folderRect.left));
-    const overlapY = Math.max(0, Math.min(draggedRect.bottom, folderRect.bottom) - Math.max(draggedRect.top, folderRect.top));
-    const overlapArea = overlapX * overlapY;
-    const threshold = 1600;
-    
-    if (overlapArea > threshold) {
-      return folder;
-    }
+    const overlapArea = calculateOverlapArea(draggedRect, folder.getBoundingClientRect());
+    if (overlapArea > OVERLAP_THRESHOLD) return folder;
   }
   return null;
 }
 
-// フォルダーを作成
+// ========================================
+// フォルダー機能
+// ========================================
+
+/**
+ * アイコン要素からデータを取得
+ * @param {HTMLElement} icon - アイコン要素
+ * @returns {Object} アイコンデータ
+ */
+function getIconData(icon) {
+  const img = icon.querySelector('img');
+  const name = icon.querySelector('p')?.textContent || '';
+  const isBuiltin = !!icon.id && !icon.dataset.saveKey;
+  const isLinuxApp = icon.classList.contains('linux-app');
+  
+  // URLを取得
+  let url = icon._appUrl || '';
+  if (isBuiltin && icon.id && builtinIconUrls[icon.id]) {
+    url = builtinIconUrls[icon.id];
+  }
+  
+  const data = {
+    id: icon.id || icon.dataset.saveKey,
+    name,
+    icon: img?.src || '',
+    url,
+    isBuiltin
+  };
+  
+  // Linuxアプリの場合は追加情報
+  if (isLinuxApp && icon._appCommand) {
+    data.command = icon._appCommand;
+    data.runInTerminal = icon._runInTerminal || false;
+    data.isLinuxApp = true;
+  }
+  
+  return data;
+}
+
+/**
+ * フォルダーを作成
+ * @param {HTMLElement} icon1 - 1つ目のアイコン
+ * @param {HTMLElement} icon2 - 2つ目のアイコン
+ * @returns {HTMLElement} 作成されたフォルダー要素
+ */
 function createFolder(icon1, icon2) {
   const folderId = 'folder-' + Date.now();
-  const folderName = (localStorage.getItem('language') || 'ja') === 'ja' ? '新規フォルダー' : 'New Folder';
-  
-  // アイコンデータを取得
-  const getIconData = (icon) => {
-    const img = icon.querySelector('img');
-    const name = icon.querySelector('p')?.textContent || '';
-    const isBuiltin = !!icon.id && !icon.dataset.saveKey;
-    
-    // URLを取得（ビルトインアイコンの場合はbuiltinIconUrlsから取得）
-    let url = icon._appUrl || '';
-    if (isBuiltin && icon.id && builtinIconUrls[icon.id]) {
-      url = builtinIconUrls[icon.id];
-    }
-    
-    return {
-      id: icon.id || icon.dataset.saveKey,
-      name: name,
-      icon: img?.src || '',
-      url: url,
-      isBuiltin: isBuiltin
-    };
-  };
+  const lang = getCurrentLanguage();
+  const folderName = lang === 'ja' ? '新規フォルダー' : 'New Folder';
   
   const icon1Data = getIconData(icon1);
   const icon2Data = getIconData(icon2);
@@ -138,7 +560,7 @@ function createFolder(icon1, icon2) {
     name: folderName,
     apps: [icon1Data, icon2Data]
   };
-  localStorage.setItem('appFolders', JSON.stringify(folders));
+  saveFolders();
   
   // フォルダーアイコンを作成
   const folderEl = createFolderIcon(folderId, folders[folderId]);
@@ -196,13 +618,15 @@ function createFolderIcon(folderId, folderData) {
   // 右クリックでフォルダー名を変更
   div.oncontextmenu = (e) => {
     e.preventDefault();
-    const lang = localStorage.getItem('language') || 'ja';
-    // 最新のフォルダーデータから名前を取得
+    const lang = getCurrentLanguage();
     const currentName = folders[folderId]?.name || '';
-    const newName = prompt(lang === 'ja' ? 'フォルダー名を入力:' : 'Enter folder name:', currentName);
-    if (newName && newName.trim()) {
+    const newName = prompt(
+      lang === 'ja' ? 'フォルダー名を入力:' : 'Enter folder name:',
+      currentName
+    );
+    if (newName?.trim()) {
       folders[folderId].name = newName.trim();
-      localStorage.setItem('appFolders', JSON.stringify(folders));
+      saveFolders();
       nameP.textContent = newName.trim();
     }
   };
@@ -212,9 +636,6 @@ function createFolderIcon(folderId, folderData) {
   
   return div;
 }
-
-// 現在開いているフォルダーID
-let currentOpenFolderId = null;
 
 // フォルダーを開く
 function openFolder(folderId) {
@@ -248,7 +669,7 @@ function openFolder(folderId) {
     if (newName && newName !== folderData.name) {
       folderData.name = newName;
       title.textContent = newName;
-      localStorage.setItem('appFolders', JSON.stringify(folders));
+      saveFolders();
       
       // フォルダーアイコンの名前も更新
       const folderIcon = document.querySelector(`[data-save-key="${folderId}"]`);
@@ -302,7 +723,7 @@ function openFolder(folderId) {
       const dy = e.clientY - dragStartY;
       
       // ドラッグ開始判定
-      if (!isDraggingFromFolder && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      if (!isDraggingFromFolder && (Math.abs(dx) > DRAG_THRESHOLD * 2 || Math.abs(dy) > DRAG_THRESHOLD * 2)) {
         isDraggingFromFolder = true;
         
         // ドラッグ用のクローンを作成
@@ -364,7 +785,7 @@ function openFolder(folderId) {
     // 長押しでフォルダーから取り出す
     div.oncontextmenu = (e) => {
       e.preventDefault();
-      const lang = localStorage.getItem('language') || 'ja';
+      const lang = getCurrentLanguage();
       const confirmMsg = lang === 'ja' ? `「${app.name}」をフォルダーから取り出しますか？` : `Remove "${app.name}" from folder?`;
       
       if (confirm(confirmMsg)) {
@@ -395,7 +816,7 @@ async function handleFolderItemClick(app, modal) {
     console.log('Launching Linux app from folder:', command);
     const result = await launchLinuxApp(command);
     if (!result.success) {
-      const lang = localStorage.getItem('language') || 'ja';
+      const lang = getCurrentLanguage();
       const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
       alert(errorMsg);
     }
@@ -496,7 +917,7 @@ function removeFromFolder(folderId, appIndex) {
     delete folders[folderId];
   }
   
-  localStorage.setItem('appFolders', JSON.stringify(folders));
+  saveFolders();
   
   // フォルダーアイコンを更新
   updateFolderIcon(folderId);
@@ -534,7 +955,7 @@ function addToFolder(folderId, icon) {
   }
   
   folderData.apps.push(appData);
-  localStorage.setItem('appFolders', JSON.stringify(folders));
+  saveFolders();
   
   // アイコンを非表示ではなく削除（リロード時の重複を防ぐ）
   icon.remove();
@@ -773,7 +1194,7 @@ function setupDraggableItem(item) {
 function updateGridModeButton() {
   const gridModeBtn = document.getElementById('toggle_grid_mode');
   if (gridModeBtn) {
-    const lang = localStorage.getItem('language') || 'ja';
+    const lang = getCurrentLanguage();
     const key = isGridModeEnabled ? 'grid_mode_on' : 'grid_mode_off';
     gridModeBtn.textContent = translations[lang][key];
   }
@@ -1015,7 +1436,7 @@ function resetWidgetPositions() {
 }
 
 document.getElementById('reset_widget_position').onclick = () => {
-  const lang = localStorage.getItem('language') || 'ja';
+  const lang = getCurrentLanguage();
   const confirmMsg = lang === 'ja' ? 'すべてのウィジェットとアイコンの位置をリセットしますか？' : 'Reset all widget and icon positions?';
   if (confirm(confirmMsg)) {
     resetWidgetPositions();
@@ -1148,11 +1569,24 @@ const translations = {
     blur_effect: "ブラー効果",
     enabled: "有効",
     disabled: "無効",
+    dark_mode: "ダークモード",
     edit: "編集",
     delete: "削除",
     edit_app: "アプリを編集",
     edit_linux_app: "Linuxアプリを編集",
-    change_image: "画像を変更"
+    change_image: "画像を変更",
+    add_web_app: "アプリを追加",
+    confirm_delete: "を削除しますか？",
+    confirm_remove_from_folder: "をフォルダーから取り出しますか？",
+    confirm_reset_position: "すべてのウィジェットとアイコンの位置をリセットしますか？",
+    enter_name_and_url: "名前とURLを入力してください",
+    enter_name_and_command: "名前とコマンドを入力してください",
+    launch_failed: "アプリの起動に失敗しました",
+    enter_folder_name: "フォルダー名を入力",
+    color_scheme: "カラースキーム",
+    delete_all_data: "すべてのデータを削除",
+    confirm_delete_all_data: "すべてのデータ（アプリ、フォルダ、設定など）を削除しますか？\nこの操作は取り消せません。",
+    data_deleted: "すべてのデータを削除しました。ページを再読み込みします。"
   },
   en: {
     files: "Files",
@@ -1192,11 +1626,24 @@ const translations = {
     blur_effect: "Blur Effect",
     enabled: "Enabled",
     disabled: "Disabled",
+    dark_mode: "Dark Mode",
     edit: "Edit",
     delete: "Delete",
     edit_app: "Edit App",
     edit_linux_app: "Edit Linux App",
-    change_image: "Change Image"
+    change_image: "Change Image",
+    add_web_app: "Add App",
+    confirm_delete: "Delete?",
+    confirm_remove_from_folder: "Remove from folder?",
+    confirm_reset_position: "Reset all widget and icon positions?",
+    enter_name_and_url: "Please enter name and URL",
+    enter_name_and_command: "Please enter name and command",
+    launch_failed: "Failed to launch app",
+    enter_folder_name: "Enter folder name",
+    color_scheme: "Color Scheme",
+    delete_all_data: "Delete All Data",
+    confirm_delete_all_data: "Delete all data (apps, folders, settings, etc.)?\nThis action cannot be undone.",
+    data_deleted: "All data has been deleted. Reloading page."
   }
 };
 
@@ -1221,6 +1668,184 @@ if (languageSelector) {
   updateLanguage(currentLang);
 }
 
+// ========================================
+// カラースキーム設定
+// ========================================
+
+const colorSchemes = ['blue', 'red', 'green', 'purple', 'orange', 'teal', 'pink'];
+
+function updateColorScheme(scheme, customColor = null) {
+  // 既存のカラースキームクラスを削除
+  colorSchemes.forEach(s => {
+    document.body.classList.remove(`color-scheme-${s}`);
+  });
+  document.body.classList.remove('color-scheme-custom');
+  
+  if (scheme === 'custom' && customColor) {
+    // カスタムカラーを適用
+    document.body.classList.add('color-scheme-custom');
+    applyCustomColor(customColor);
+    localStorage.setItem('colorScheme', 'custom');
+    localStorage.setItem('customColor', customColor);
+  } else {
+    // プリセットカラースキームを適用
+    document.body.classList.add(`color-scheme-${scheme}`);
+    localStorage.setItem('colorScheme', scheme);
+  }
+  
+  // パレットの選択状態を更新
+  document.querySelectorAll('.color-swatch').forEach(swatch => {
+    if (scheme === 'custom') {
+      swatch.classList.toggle('selected', swatch.classList.contains('color-picker-swatch'));
+    } else {
+      swatch.classList.toggle('selected', swatch.dataset.color === scheme);
+    }
+  });
+}
+
+// カスタムカラーから派生色を生成して適用
+function applyCustomColor(hexColor) {
+  const rgb = hexToRgb(hexColor);
+  if (!rgb) return;
+  
+  // HSLに変換
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  
+  // 派生色を生成
+  const primaryLight = hslToHex(hsl.h, Math.min(hsl.s + 10, 100), Math.min(hsl.l + 15, 85));
+  const primaryDark = hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 15, 15));
+  const clockPrimary = hslToHex(hsl.h, Math.min(hsl.s + 5, 100), Math.min(hsl.l + 10, 70));
+  const clockSecondary = hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 20, 20));
+  const clockAccent = hslToHex(hsl.h, Math.max(hsl.s - 30, 20), Math.min(hsl.l + 30, 90));
+  const clockBackground = hslToHex(hsl.h, Math.max(hsl.s - 20, 10), Math.max(hsl.l - 40, 10));
+  const primaryContainer = hslToHex(hsl.h, Math.max(hsl.s - 40, 20), 90);
+  
+  // 時計背景の明るさに応じて文字色を決定
+  const bgRgb = hexToRgb(clockBackground);
+  const clockTextColor = getContrastColor(bgRgb.r, bgRgb.g, bgRgb.b);
+  
+  // プライマリカラーの明るさに応じてボタン文字色を決定
+  const onPrimaryColor = getContrastColor(rgb.r, rgb.g, rgb.b);
+  
+  // プライマリコンテナの明るさに応じて文字色を決定
+  const containerRgb = hexToRgb(primaryContainer);
+  const onPrimaryContainerColor = getContrastColor(containerRgb.r, containerRgb.g, containerRgb.b);
+  
+  // CSS変数を設定
+  document.documentElement.style.setProperty('--md-sys-color-primary', hexColor);
+  document.documentElement.style.setProperty('--md-sys-color-on-primary', onPrimaryColor);
+  document.documentElement.style.setProperty('--md-sys-color-tertiary', primaryDark);
+  document.documentElement.style.setProperty('--md-sys-color-primary-container', primaryContainer);
+  document.documentElement.style.setProperty('--md-sys-color-on-primary-container', onPrimaryContainerColor);
+  document.documentElement.style.setProperty('--primary-color', hexColor);
+  document.documentElement.style.setProperty('--primary-dark', primaryDark);
+  document.documentElement.style.setProperty('--primary-light', primaryLight);
+  document.documentElement.style.setProperty('--clock-primary', clockPrimary);
+  document.documentElement.style.setProperty('--clock-secondary', clockSecondary);
+  document.documentElement.style.setProperty('--clock-accent', clockAccent);
+  document.documentElement.style.setProperty('--clock-background', clockBackground);
+  document.documentElement.style.setProperty('--clock-text-color', clockTextColor);
+  
+  // カスタムスウォッチの背景色を更新
+  const pickerSwatch = document.querySelector('.color-picker-swatch');
+  if (pickerSwatch) {
+    pickerSwatch.style.setProperty('--custom-color', hexColor);
+    pickerSwatch.style.background = hexColor;
+  }
+}
+
+// 背景色の明るさに応じてコントラスト色（黒/白）を返す
+function getContrastColor(r, g, b) {
+  // 相対輝度を計算（WCAG基準）
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#1f1f1f' : '#ffffff';
+}
+
+// 色変換ユーティリティ
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// カラーパレットの初期化
+const colorPalette = document.getElementById('color_palette');
+const customColorPicker = document.getElementById('custom_color_picker');
+
+if (colorPalette) {
+  colorPalette.addEventListener('click', (e) => {
+    const swatch = e.target.closest('.color-swatch');
+    if (swatch && swatch.dataset.color && !swatch.classList.contains('color-picker-swatch')) {
+      // カスタムカラーのCSS変数をリセット
+      resetCustomColorVars();
+      updateColorScheme(swatch.dataset.color);
+    }
+  });
+  
+  // 保存された設定を復元
+  const savedScheme = localStorage.getItem('colorScheme') || 'blue';
+  const savedCustomColor = localStorage.getItem('customColor');
+  
+  if (savedScheme === 'custom' && savedCustomColor) {
+    if (customColorPicker) {
+      customColorPicker.value = savedCustomColor;
+    }
+    updateColorScheme('custom', savedCustomColor);
+  } else {
+    updateColorScheme(savedScheme);
+  }
+}
+
+if (customColorPicker) {
+  customColorPicker.addEventListener('input', (e) => {
+    updateColorScheme('custom', e.target.value);
+  });
+}
+
+// カスタムカラー変数をリセット
+function resetCustomColorVars() {
+  const vars = [
+    '--md-sys-color-primary', '--md-sys-color-on-primary', '--md-sys-color-tertiary', 
+    '--md-sys-color-primary-container', '--md-sys-color-on-primary-container',
+    '--primary-color', '--primary-dark', '--primary-light',
+    '--clock-primary', '--clock-secondary', '--clock-accent', '--clock-background', '--clock-text-color'
+  ];
+  vars.forEach(v => document.documentElement.style.removeProperty(v));
+}
+
 // 設定ボタン（FAB）の表示/非表示設定
 const settingsFab = document.getElementById('settings_fab');
 const toggleSettingsFabBtn = document.getElementById('toggle_settings_fab');
@@ -1233,7 +1858,7 @@ function updateSettingsFabVisibility(isVisible) {
   
   // ボタンのテキストを更新
   if (toggleSettingsFabBtn) {
-    const lang = localStorage.getItem('language') || 'ja';
+    const lang = getCurrentLanguage();
     const key = isVisible ? 'hide_settings_button' : 'show_settings_button';
     toggleSettingsFabBtn.textContent = translations[lang][key];
   }
@@ -1263,7 +1888,7 @@ function updateBlurEffect(isEnabled) {
   
   // ボタンのテキストを更新
   if (toggleBlurEffectBtn) {
-    const lang = localStorage.getItem('language') || 'ja';
+    const lang = getCurrentLanguage();
     const key = isEnabled ? 'enabled' : 'disabled';
     toggleBlurEffectBtn.textContent = translations[lang][key];
   }
@@ -1277,6 +1902,36 @@ if (toggleBlurEffectBtn) {
   toggleBlurEffectBtn.onclick = () => {
     const currentlyEnabled = !document.body.classList.contains('no-blur');
     updateBlurEffect(!currentlyEnabled);
+  };
+}
+
+// ダークモードの設定
+const toggleDarkModeBtn = document.getElementById('toggle_dark_mode');
+
+function updateDarkMode(isEnabled) {
+  if (isEnabled) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  localStorage.setItem('darkModeEnabled', isEnabled);
+  
+  // ボタンのテキストを更新
+  if (toggleDarkModeBtn) {
+    const lang = getCurrentLanguage();
+    const key = isEnabled ? 'enabled' : 'disabled';
+    toggleDarkModeBtn.textContent = translations[lang][key];
+  }
+}
+
+if (toggleDarkModeBtn) {
+  // 保存された設定を復元（デフォルトは無効）
+  const darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
+  updateDarkMode(darkModeEnabled);
+  
+  toggleDarkModeBtn.onclick = () => {
+    const currentlyEnabled = document.body.classList.contains('dark-mode');
+    updateDarkMode(!currentlyEnabled);
   };
 }
 
@@ -1302,12 +1957,43 @@ if (newAppImageTrigger && newAppFileInput) {
   };
 }
 
+// 全データ削除機能
+const deleteAllDataBtn = document.getElementById('delete_all_data_btn');
+if (deleteAllDataBtn) {
+  deleteAllDataBtn.onclick = () => {
+    const lang = getCurrentLanguage();
+    const confirmMsg = translations[lang].confirm_delete_all_data;
+    
+    if (confirm(confirmMsg)) {
+      // localStorageの全データを削除
+      localStorage.clear();
+      
+      // 削除完了メッセージを表示してページをリロード
+      alert(translations[lang].data_deleted);
+      location.reload();
+    }
+  };
+}
+
 function createDesktopIcon(appData) {
   const div = document.createElement('div');
   div.className = 'appicon custom-app';
-  div.dataset.saveKey = 'custom-app-' + appData.name;
+  // saveKeyが既にある場合はそれを使用、ない場合は新規作成
+  const saveKey = appData.saveKey || ('custom-app-' + appData.name.replace(/\s+/g, '-') + '-' + Date.now());
+  div.dataset.saveKey = saveKey;
   div._appUrl = appData.url; // フォルダー機能用にURLを保存
-  div._appData = appData; // 編集用にデータを保存
+  div._appData = { ...appData, saveKey }; // saveKeyも含めて保存
+  
+  // saveKeyがなかった場合はlocalStorageを更新
+  if (!appData.saveKey) {
+    const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+    const index = customApps.findIndex(a => a.name === appData.name && a.url === appData.url);
+    if (index !== -1) {
+      customApps[index].saveKey = saveKey;
+      localStorage.setItem('customApps', JSON.stringify(customApps));
+    }
+  }
+  
   div.innerHTML = `
     <img src="${appData.icon}" height="50" width="50" />
     <p>${appData.name}</p>
@@ -1330,6 +2016,14 @@ function createDesktopIcon(appData) {
     addBtn.parentNode.insertBefore(div, addBtn);
   }
   
+  // 保存された位置を復元
+  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  if (positions[saveKey]) {
+    div.style.position = positions[saveKey].position;
+    div.style.left = positions[saveKey].left;
+    div.style.top = positions[saveKey].top;
+  }
+  
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
 }
@@ -1348,7 +2042,8 @@ if (saveNewAppBtn) {
     const newApp = {
       name: name,
       url: url,
-      icon: newAppIconDataUrl
+      icon: newAppIconDataUrl,
+      saveKey: 'custom-app-' + name.replace(/\s+/g, '-') + '-' + Date.now()
     };
     
     const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
@@ -1390,10 +2085,22 @@ savedCustomApps.forEach(app => {
 function createLinuxAppIcon(appData) {
   const div = document.createElement('div');
   div.className = 'appicon linux-app';
-  div.dataset.saveKey = 'linux-app-' + appData.name.replace(/\s+/g, '-') + '-' + Date.now();
+  // saveKeyが既にある場合はそれを使用、ない場合は新規作成
+  const saveKey = appData.saveKey || ('linux-app-' + appData.name.replace(/\s+/g, '-') + '-' + Date.now());
+  div.dataset.saveKey = saveKey;
   div._appCommand = appData.command;
   div._runInTerminal = appData.runInTerminal || false;
-  div._appData = appData; // 編集用にデータを保存
+  div._appData = { ...appData, saveKey }; // saveKeyも含めて保存
+  
+  // saveKeyがなかった場合はlocalStorageを更新
+  if (!appData.saveKey) {
+    const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+    const index = linuxApps.findIndex(a => a.name === appData.name && a.command === appData.command);
+    if (index !== -1) {
+      linuxApps[index].saveKey = saveKey;
+      localStorage.setItem('linuxApps', JSON.stringify(linuxApps));
+    }
+  }
   
   div.innerHTML = `
     <img src="${appData.icon || './assets/settings.webp'}" height="50" width="50" />
@@ -1412,7 +2119,7 @@ function createLinuxAppIcon(appData) {
     console.log('Launching Linux app:', command);
     const result = await launchLinuxApp(command);
     if (!result.success) {
-      const lang = localStorage.getItem('language') || 'ja';
+      const lang = getCurrentLanguage();
       const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
       alert(errorMsg);
     }
@@ -1426,6 +2133,14 @@ function createLinuxAppIcon(appData) {
   const addBtn = document.getElementById('appicon-add');
   if (addBtn && addBtn.parentNode) {
     addBtn.parentNode.insertBefore(div, addBtn);
+  }
+  
+  // 保存された位置を復元
+  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  if (positions[saveKey]) {
+    div.style.position = positions[saveKey].position;
+    div.style.left = positions[saveKey].left;
+    div.style.top = positions[saveKey].top;
   }
   
   // 通常モードのドラッグを設定
@@ -1469,7 +2184,7 @@ if (saveLinuxAppBtn) {
     const runInTerminal = document.getElementById('linux_app_run_in_terminal').checked;
     
     if (!name || !command) {
-      const lang = localStorage.getItem('language') || 'ja';
+      const lang = getCurrentLanguage();
       alert(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
       return;
     }
@@ -1478,7 +2193,8 @@ if (saveLinuxAppBtn) {
       name: name,
       command: command,
       icon: linuxAppIconDataUrl,
-      runInTerminal: runInTerminal
+      runInTerminal: runInTerminal,
+      saveKey: 'linux-app-' + name.replace(/\s+/g, '-') + '-' + Date.now()
     };
     
     const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
@@ -1526,6 +2242,9 @@ savedLinuxApps.forEach(app => {
 const clockWidget = document.querySelector('.clock');
 if (clockWidget && !clockWidget.id) clockWidget.id = 'widget-clock';
 
+const mediaPlayerWidgetEl = document.querySelector('.media-player');
+if (mediaPlayerWidgetEl && !mediaPlayerWidgetEl.id) mediaPlayerWidgetEl.id = 'widget-media-player';
+
 function restoreWidgetPositions() {
   const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
   Object.keys(positions).forEach(key => {
@@ -1550,7 +2269,6 @@ initNormalModeDrag();
 // ========================================
 
 const contextMenu = document.getElementById('app_context_menu');
-let currentContextAppType = null;
 
 // コンテキストメニューを表示
 function showContextMenu(e, iconEl, appType) {
@@ -1599,7 +2317,7 @@ document.getElementById('context_delete').onclick = (e) => {
   
   if (!currentEditingIcon || !currentEditingApp) return;
   
-  const lang = localStorage.getItem('language') || 'ja';
+  const lang = getCurrentLanguage();
   const confirmMsg = lang === 'ja' ? `「${currentEditingApp.name}」を削除しますか？` : `Delete "${currentEditingApp.name}"?`;
   
   if (confirm(confirmMsg)) {
@@ -1669,7 +2387,7 @@ document.getElementById('save_edit_webapp').onclick = () => {
   const url = document.getElementById('edit_webapp_url').value.trim();
   
   if (!name || !url) {
-    const lang = localStorage.getItem('language') || 'ja';
+    const lang = getCurrentLanguage();
     alert(lang === 'ja' ? '名前とURLを入力してください' : 'Please enter name and URL');
     return;
   }
@@ -1755,7 +2473,7 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
   const runInTerminal = document.getElementById('edit_linuxapp_run_in_terminal').checked;
   
   if (!name || !command) {
-    const lang = localStorage.getItem('language') || 'ja';
+    const lang = getCurrentLanguage();
     alert(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
     return;
   }
@@ -1793,7 +2511,7 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
       console.log('Launching Linux app:', cmd);
       const result = await launchLinuxApp(cmd);
       if (!result.success) {
-        const lang = localStorage.getItem('language') || 'ja';
+        const lang = getCurrentLanguage();
         const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
         alert(errorMsg);
       }
