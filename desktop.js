@@ -56,6 +56,13 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
       };
     });
 
+    // 画像のドラッグを無効化
+    const images = item.querySelectorAll('img');
+    images.forEach(img => {
+      img.draggable = false;
+      img.style.pointerEvents = 'none';
+    });
+
     item.onpointermove = function(event){
       if(event.buttons){
           this.style.left     = this.offsetLeft + event.movementX + 'px'
@@ -85,6 +92,13 @@ document.getElementById('close_change_widget_position_modal').onclick = () => {
     const links = item.querySelectorAll('a');
     links.forEach(link => {
       link.onclick = null;
+    });
+    
+    // 画像のドラッグ設定を復元
+    const images = item.querySelectorAll('img');
+    images.forEach(img => {
+      img.draggable = true;
+      img.style.pointerEvents = '';
     });
     
     // ポインター移動イベントを削除
@@ -121,6 +135,13 @@ document.getElementById('save_change_widget_position').onclick = () => {
     const links = item.querySelectorAll('a');
     links.forEach(link => {
       link.onclick = null;
+    });
+    
+    // 画像のドラッグ設定を復元
+    const images = item.querySelectorAll('img');
+    images.forEach(img => {
+      img.draggable = true;
+      img.style.pointerEvents = '';
     });
     
     // ポインター移動イベントを削除
