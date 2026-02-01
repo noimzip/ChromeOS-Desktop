@@ -33,9 +33,31 @@ document.getElementById('close_settingsmenu_modal').onclick = () => {
   settingsmenu_modal_overlay.style.display = 'none';
 }
 
+// グリッドモードの設定
+const GRID_SIZE = 100; // グリッドのサイズ（ピクセル）
+let isGridModeEnabled = false;
+
+function snapToGrid(value) {
+  return Math.round(value / GRID_SIZE) * GRID_SIZE;
+}
+
 document.getElementById('open_change_widget_position_modal').onclick = () => {
   escmenu_modal_overlay.style.display = 'none';
   change_widget_position_modal_overlay.style.display = 'flex';
+  
+  // グリッドモードのスイッチの状態を復元
+  const gridSwitch = document.getElementById('grid_mode_switch');
+  if (gridSwitch) {
+    isGridModeEnabled = localStorage.getItem('gridModeEnabled') === 'true';
+    gridSwitch.selected = isGridModeEnabled;
+    
+    // グリッド線の表示/非表示
+    if (isGridModeEnabled) {
+      change_widget_position_modal_overlay.classList.add('grid-mode');
+    } else {
+      change_widget_position_modal_overlay.classList.remove('grid-mode');
+    }
+  }
 
   document.querySelectorAll(".appicon,.widget").forEach(item => {
     // 位置変更モード中はクリックイベントを無効化
@@ -65,14 +87,58 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
 
     item.onpointermove = function(event){
       if(event.buttons){
-          this.style.left     = this.offsetLeft + event.movementX + 'px'
-          this.style.top      = this.offsetTop  + event.movementY + 'px'
-          this.style.position = 'absolute'
-          this.draggable      = false
-        this.setPointerCapture(event.pointerId)
+        let newLeft = this.offsetLeft + event.movementX;
+        let newTop = this.offsetTop + event.movementY;
+        
+        // グリッドモードが有効な場合はスナップ
+        if (isGridModeEnabled) {
+          newLeft = snapToGrid(newLeft);
+          newTop = snapToGrid(newTop);
+        }
+        
+        this.style.left = newLeft + 'px';
+        this.style.top = newTop + 'px';
+        this.style.position = 'absolute';
+        this.draggable = false;
+        this.setPointerCapture(event.pointerId);
+      }
+    };
+    
+    // グリッドモードが有効な場合、ドラッグ終了時にスナップ
+    item.onpointerup = function() {
+      if (isGridModeEnabled && this.style.position === 'absolute') {
+        this.style.left = snapToGrid(this.offsetLeft) + 'px';
+        this.style.top = snapToGrid(this.offsetTop) + 'px';
+      }
+    };
+  });
+}
+
+// グリッドモードスイッチのイベント
+const gridModeSwitch = document.getElementById('grid_mode_switch');
+if (gridModeSwitch) {
+  gridModeSwitch.addEventListener('change', (e) => {
+    isGridModeEnabled = e.target.selected;
+    localStorage.setItem('gridModeEnabled', isGridModeEnabled);
+    
+    // グリッド線の表示/非表示
+    const overlay = document.getElementById('change_widget_position_modal_overlay');
+    if (isGridModeEnabled) {
+      overlay.classList.add('grid-mode');
+    } else {
+      overlay.classList.remove('grid-mode');
     }
-  }
-});
+    
+    // グリッドモードが有効になったら、現在の位置をグリッドにスナップ
+    if (isGridModeEnabled) {
+      document.querySelectorAll(".appicon,.widget").forEach(item => {
+        if (item.style.position === 'absolute') {
+          item.style.left = snapToGrid(item.offsetLeft) + 'px';
+          item.style.top = snapToGrid(item.offsetTop) + 'px';
+        }
+      });
+    }
+  });
 }
 
 document.getElementById('close_change_widget_position_modal').onclick = () => {
@@ -103,7 +169,60 @@ document.getElementById('close_change_widget_position_modal').onclick = () => {
     
     // ポインター移動イベントを削除
     item.onpointermove = null;
+    item.onpointerup = null;
   });
+}
+
+// 位置をリセットする関数
+function resetWidgetPositions() {
+  // localStorageから位置データを削除
+  localStorage.removeItem('widgetPositions');
+  
+  // すべてのアイコンとウィジェットの位置をリセット
+  document.querySelectorAll('.appicon, .widget').forEach(el => {
+    el.style.position = '';
+    el.style.left = '';
+    el.style.top = '';
+  });
+  
+  // モーダルを閉じる
+  change_widget_position_modal_overlay.style.display = 'none';
+  
+  // 位置変更モード終了時にクリックイベントを復元
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
+    if (item._savedOnclick) {
+      item.onclick = item._savedOnclick;
+    } else if (!item.dataset.originalOnclick) {
+      item.onclick = null;
+    }
+    delete item._savedOnclick;
+    delete item.dataset.originalOnclick;
+    
+    // リンクタグのクリックイベントを復元
+    const links = item.querySelectorAll('a');
+    links.forEach(link => {
+      link.onclick = null;
+    });
+    
+    // 画像のドラッグ設定を復元
+    const images = item.querySelectorAll('img');
+    images.forEach(img => {
+      img.draggable = true;
+      img.style.pointerEvents = '';
+    });
+    
+    // ポインター移動イベントを削除
+    item.onpointermove = null;
+    item.onpointerup = null;
+  });
+}
+
+document.getElementById('reset_widget_position').onclick = () => {
+  const lang = localStorage.getItem('language') || 'ja';
+  const confirmMsg = lang === 'ja' ? 'すべてのウィジェットとアイコンの位置をリセットしますか？' : 'Reset all widget and icon positions?';
+  if (confirm(confirmMsg)) {
+    resetWidgetPositions();
+  }
 }
 
 document.getElementById('save_change_widget_position').onclick = () => {
@@ -146,6 +265,7 @@ document.getElementById('save_change_widget_position').onclick = () => {
     
     // ポインター移動イベントを削除
     item.onpointermove = null;
+    item.onpointerup = null;
   });
 }
 
@@ -177,6 +297,7 @@ const translations = {
     refresh_dev: "リフレッシュ(開発者向け)",
     grid_mode: "グリッドモード",
     save: "保存",
+    reset_position: "位置をリセット",
     general: "一般",
     keyboard_shortcuts: "キーボードショートカット",
     design_style: "デザインとスタイル",
@@ -201,6 +322,7 @@ const translations = {
     refresh_dev: "Refresh (Dev)",
     grid_mode: "Grid Mode",
     save: "Save",
+    reset_position: "Reset Position",
     general: "General",
     keyboard_shortcuts: "Keyboard Shortcuts",
     design_style: "Design & Style",
