@@ -748,7 +748,22 @@ document.getElementById('save_change_widget_position').onclick = () => {
 }
 
 document.getElementById('appicon-add').onclick = () => {
+  add_app_type_modal_overlay.style.display = 'flex';
+}
+
+// アプリ追加タイプ選択
+document.getElementById('add_web_app_btn').onclick = () => {
+  add_app_type_modal_overlay.style.display = 'none';
   add_newapp_modal_overlay.style.display = 'flex';
+}
+
+document.getElementById('add_linux_app_btn').onclick = () => {
+  add_app_type_modal_overlay.style.display = 'none';
+  add_linuxapp_modal_overlay.style.display = 'flex';
+}
+
+document.getElementById('close_add_app_type_modal').onclick = () => {
+  add_app_type_modal_overlay.style.display = 'none';
 }
 
 document.getElementById('close_add_newapp_modal').onclick = () => {
@@ -790,7 +805,13 @@ const translations = {
     language: "言語",
     settings_button_label: "設定ボタン",
     show_settings_button: "表示",
-    hide_settings_button: "非表示"
+    hide_settings_button: "非表示",
+    select_app_type: "追加するアプリの種類を選択",
+    web_app: "Webアプリ / URL",
+    linux_app: "Linuxアプリ",
+    add_linux_app: "Linuxアプリを追加",
+    command: "コマンド",
+    run_in_terminal: "ターミナルで実行"
   },
   en: {
     files: "Files",
@@ -820,7 +841,13 @@ const translations = {
     language: "Language",
     settings_button_label: "Settings Button",
     show_settings_button: "Show",
-    hide_settings_button: "Hide"
+    hide_settings_button: "Hide",
+    select_app_type: "Select app type to add",
+    web_app: "Web App / URL",
+    linux_app: "Linux App",
+    add_linux_app: "Add Linux App",
+    command: "Command",
+    run_in_terminal: "Run in terminal"
   }
 };
 
@@ -973,6 +1000,131 @@ if (saveNewAppBtn) {
 // Load saved apps
 const savedCustomApps = JSON.parse(localStorage.getItem('customApps') || '[]');
 savedCustomApps.forEach(app => createDesktopIcon(app));
+
+// Linuxアプリのアイコン作成
+function createLinuxAppIcon(appData) {
+  const div = document.createElement('div');
+  div.className = 'appicon linux-app';
+  div.dataset.saveKey = 'linux-app-' + appData.name.replace(/\s+/g, '-') + '-' + Date.now();
+  div._appCommand = appData.command;
+  div._runInTerminal = appData.runInTerminal || false;
+  
+  div.innerHTML = `
+    <img src="${appData.icon || './assets/settings.webp'}" height="50" width="50" />
+    <p>${appData.name}</p>
+  `;
+  
+  div.onclick = async () => {
+    let command = appData.command;
+    
+    // ターミナルで実行する場合
+    if (appData.runInTerminal) {
+      // xterm を使用
+      command = `xterm -hold -e "${appData.command}"`;
+    }
+    
+    console.log('Launching Linux app:', command);
+    const result = await launchLinuxApp(command);
+    if (!result.success) {
+      const lang = localStorage.getItem('language') || 'ja';
+      const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
+      alert(errorMsg);
+    }
+  };
+  
+  div.oncontextmenu = (e) => {
+    e.preventDefault();
+    const lang = localStorage.getItem('language') || 'ja';
+    const confirmMsg = lang === 'ja' ? `「${appData.name}」を削除しますか？` : `Delete "${appData.name}"?`;
+    
+    if (confirm(confirmMsg)) {
+      div.remove();
+      const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+      const newApps = linuxApps.filter(a => !(a.name === appData.name && a.command === appData.command));
+      localStorage.setItem('linuxApps', JSON.stringify(newApps));
+      
+      const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+      if (positions[div.dataset.saveKey]) {
+        delete positions[div.dataset.saveKey];
+        localStorage.setItem('widgetPositions', JSON.stringify(positions));
+      }
+    }
+  };
+  
+  const addBtn = document.getElementById('appicon-add');
+  if (addBtn && addBtn.parentNode) {
+    addBtn.parentNode.insertBefore(div, addBtn);
+  }
+  
+  return div;
+}
+
+// Linuxアプリモーダルの処理
+const linuxAppImageInput = document.getElementById('linux_app_image_file');
+const linuxAppImageTrigger = document.getElementById('linux_app_image_trigger');
+const linuxAppImagePreview = document.getElementById('linux_app_image_preview');
+let linuxAppIconDataUrl = './assets/settings.webp';
+
+if (linuxAppImageTrigger && linuxAppImageInput) {
+  linuxAppImageTrigger.onclick = () => linuxAppImageInput.click();
+  
+  linuxAppImageInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        linuxAppIconDataUrl = e.target.result;
+        linuxAppImagePreview.src = linuxAppIconDataUrl;
+        linuxAppImagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+}
+
+document.getElementById('close_add_linuxapp_modal').onclick = () => {
+  add_linuxapp_modal_overlay.style.display = 'none';
+}
+
+const saveLinuxAppBtn = document.getElementById('save_linux_app');
+if (saveLinuxAppBtn) {
+  saveLinuxAppBtn.onclick = () => {
+    const name = document.getElementById('linux_app_name').value;
+    const command = document.getElementById('linux_app_command').value;
+    const runInTerminal = document.getElementById('linux_app_run_in_terminal').checked;
+    
+    if (!name || !command) {
+      const lang = localStorage.getItem('language') || 'ja';
+      alert(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
+      return;
+    }
+    
+    const newApp = {
+      name: name,
+      command: command,
+      icon: linuxAppIconDataUrl,
+      runInTerminal: runInTerminal
+    };
+    
+    const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+    linuxApps.push(newApp);
+    localStorage.setItem('linuxApps', JSON.stringify(linuxApps));
+    
+    createLinuxAppIcon(newApp);
+    
+    // Close modal and reset
+    document.getElementById('add_linuxapp_modal_overlay').style.display = 'none';
+    document.getElementById('linux_app_name').value = '';
+    document.getElementById('linux_app_command').value = '';
+    document.getElementById('linux_app_run_in_terminal').checked = false;
+    linuxAppImagePreview.style.display = 'none';
+    linuxAppIconDataUrl = './assets/settings.webp';
+  };
+}
+
+// Load saved Linux apps
+const savedLinuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+savedLinuxApps.forEach(app => createLinuxAppIcon(app));
 
 // Load saved folders
 loadFolders();

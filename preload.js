@@ -1,4 +1,4 @@
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 const { WebSocketServer } = require('ws');
 
 const wss = new WebSocketServer({ port: 25600 });
@@ -23,6 +23,17 @@ window.addEventListener('DOMContentLoaded', () => {
       alert('Cannot communicate with the integration extension. (wait a few seconds and try again?)');
     } else {
       sendRequestToChrome({request: 'openURL', url: url});
+    }
+  });
+  
+  // Linuxアプリを起動する関数を公開
+  contextBridge.exposeInMainWorld('launchLinuxApp', async (command) => {
+    try {
+      const result = await ipcRenderer.invoke('launch-linux-app', command);
+      return { success: true, result };
+    } catch (error) {
+      console.error('Failed to launch Linux app:', error);
+      return { success: false, error };
     }
   });
 })
