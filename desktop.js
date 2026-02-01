@@ -24,6 +24,11 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
+// 右下の設定ボタン
+document.getElementById('settings_fab').onclick = () => {
+  escmenu_modal_overlay.style.display = 'flex';
+}
+
 document.getElementById('close_menu_modal').onclick = () => {
   escmenu_modal_overlay.style.display = 'none';
 }
@@ -782,7 +787,10 @@ const translations = {
     dev_settings: "開発者向け設定",
     about: "バージョン情報",
     user_agent: "ユーザーエージェント:",
-    language: "言語"
+    language: "言語",
+    settings_button_label: "設定ボタン",
+    show_settings_button: "表示",
+    hide_settings_button: "非表示"
   },
   en: {
     files: "Files",
@@ -809,7 +817,10 @@ const translations = {
     dev_settings: "Developer Settings",
     about: "About",
     user_agent: "User Agent:",
-    language: "Language"
+    language: "Language",
+    settings_button_label: "Settings Button",
+    show_settings_button: "Show",
+    hide_settings_button: "Hide"
   }
 };
 
@@ -832,6 +843,35 @@ if (languageSelector) {
   const currentLang = localStorage.getItem('language') || 'ja';
   languageSelector.value = currentLang;
   updateLanguage(currentLang);
+}
+
+// 設定ボタン（FAB）の表示/非表示設定
+const settingsFab = document.getElementById('settings_fab');
+const toggleSettingsFabBtn = document.getElementById('toggle_settings_fab');
+
+function updateSettingsFabVisibility(isVisible) {
+  if (settingsFab) {
+    settingsFab.style.display = isVisible ? 'flex' : 'none';
+  }
+  localStorage.setItem('showSettingsFab', isVisible);
+  
+  // ボタンのテキストを更新
+  if (toggleSettingsFabBtn) {
+    const lang = localStorage.getItem('language') || 'ja';
+    const key = isVisible ? 'hide_settings_button' : 'show_settings_button';
+    toggleSettingsFabBtn.textContent = translations[lang][key];
+  }
+}
+
+if (toggleSettingsFabBtn) {
+  // 保存された設定を復元（デフォルトは表示）
+  const showFab = localStorage.getItem('showSettingsFab') !== 'false';
+  updateSettingsFabVisibility(showFab);
+  
+  toggleSettingsFabBtn.onclick = () => {
+    const currentlyVisible = settingsFab && settingsFab.style.display !== 'none';
+    updateSettingsFabVisibility(!currentlyVisible);
+  };
 }
 
 // New App Modal Logic

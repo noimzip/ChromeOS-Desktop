@@ -66,6 +66,11 @@
         <div class="hours"></div>
         <div class="date"></div>
     </div>
+
+    <!-- 右下の設定ボタン -->
+    <button id="settings_fab" title="設定">
+      <m3e-icon name="settings"></m3e-icon>
+    </button>
     <!--
 <script src="https://elfsightcdn.com/platform.js" async></script>
 <div class="elfsight-app-136a378d-030d-41fb-9e10-f027d72bc3cc" data-elfsight-app-lazy></div>
@@ -115,10 +120,7 @@
 
     <div id="change_widget_position_modal_overlay" class="modal_overlay">
       <div id="change_widget_position_modal" class="modal">
-        <div class="settings_row">
-          <span data-i18n="grid_mode">グリッドモード</span>
-          <m3e-button variant="filled" id="toggle_grid_mode" data-i18n="grid_mode_off">OFF</m3e-button>
-        </div>
+        <label><span data-i18n="grid_mode">グリッドモード</span><m3e-switch icons="both"></m3e-switch></label>
         <m3e-button variant="filled" id="save_change_widget_position" data-i18n="save">保存</m3e-button>
         <m3e-button variant="filled" id="reset_widget_position" data-i18n="reset_position">位置をリセット</m3e-button>
         <m3e-button variant="filled" id="close_change_widget_position_modal" data-i18n="close">とじる</m3e-button>
@@ -173,6 +175,10 @@
               <option value="ja">日本語</option>
               <option value="en">English</option>
             </select>
+          </div>
+          <div class="settings_row">
+            <span data-i18n="settings_button_label">設定ボタン</span>
+            <m3e-button variant="filled" id="toggle_settings_fab" data-i18n="show_settings_button">表示</m3e-button>
           </div>
           <p><span data-i18n="user_agent">ユーザーエージェント:</span><span id="developer_user_agent"></span></p>
           <div style="margin-top: auto; align-self: flex-end;">
