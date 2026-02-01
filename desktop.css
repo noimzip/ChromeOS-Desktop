@@ -138,6 +138,14 @@ body {
   z-index: -1;
 }
 
+#change_widget_position_modal_overlay.grid-mode {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 100px 100px;
+  background-position: 0 0;
+}
+
 #change_widget_position_modal {
   margin-top: 400px;
   width: 300px;
@@ -145,6 +153,13 @@ body {
   padding: 24px;
   gap: 25px;
   justify-content: center;
+}
+
+#change_widget_position_modal label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 #add_newapp_modal_overlay {
