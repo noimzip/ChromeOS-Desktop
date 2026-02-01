@@ -66,6 +66,11 @@
         <div class="hours"></div>
         <div class="date"></div>
     </div>
+
+    <!-- 右下の設定ボタン -->
+    <button id="settings_fab" title="設定">
+      <m3e-icon name="settings"></m3e-icon>
+    </button>
     <!--
 <script src="https://elfsightcdn.com/platform.js" async></script>
 <div class="elfsight-app-136a378d-030d-41fb-9e10-f027d72bc3cc" data-elfsight-app-lazy></div>
@@ -158,6 +163,10 @@
               <option value="ja">日本語</option>
               <option value="en">English</option>
             </select>
+          </div>
+          <div class="settings_row">
+            <span data-i18n="settings_button_label">設定ボタン</span>
+            <m3e-button variant="filled" id="toggle_settings_fab" data-i18n="show_settings_button">表示</m3e-button>
           </div>
           <p><span data-i18n="user_agent">ユーザーエージェント:</span><span id="developer_user_agent"></span></p>
           <div style="margin-top: auto; align-self: flex-end;">

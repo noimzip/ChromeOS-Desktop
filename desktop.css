@@ -133,6 +133,13 @@ body {
   overflow-y: auto;
 }
 
+.settings_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 #change_widget_position_modal_overlay {
   background-color: rgba(0, 0, 0, 0.2);
   z-index: -1;
@@ -178,4 +185,38 @@ body {
   bottom: 20px;
   left: 20px;
   z-index: 0;
+}
+
+/* 右下の設定ボタン (FAB) */
+#settings_fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+#settings_fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 1);
+}
+
+#settings_fab:active {
+  transform: scale(0.95);
+}
+
+#settings_fab m3e-icon {
+  font-size: 24px;
+  color: #333;
 }
