@@ -1,5 +1,21 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
+const { exec } = require('child_process');
+
+// Linuxアプリを起動するIPCハンドラ
+ipcMain.handle('launch-linux-app', async (event, command) => {
+  return new Promise((resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error launching app: ${error.message}`);
+        reject(error.message);
+        return;
+      }
+      console.log(`App launched: ${command}`);
+      resolve({ stdout, stderr });
+    });
+  });
+});
 
 app.whenReady().then(() => {
   const { screen } = require('electron');

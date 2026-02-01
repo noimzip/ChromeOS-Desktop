@@ -56,6 +56,16 @@
         <p data-i18n="add_app">Add an app</p>
       </div>
     </div>
+
+    <!-- アプリ追加タイプ選択メニュー -->
+    <div id="add_app_type_modal_overlay" class="modal_overlay">
+      <div id="add_app_type_modal" class="modal">
+        <h3 data-i18n="select_app_type">追加するアプリの種類を選択</h3>
+        <m3e-button variant="filled" id="add_web_app_btn" data-i18n="web_app">Webアプリ / URL</m3e-button>
+        <m3e-button variant="filled" id="add_linux_app_btn" data-i18n="linux_app">Linuxアプリ</m3e-button>
+        <m3e-button variant="filled" id="close_add_app_type_modal" data-i18n="close">とじる</m3e-button>
+      </div>
+    </div>
     
     <div class="clock widget">
     <svg width="202" height="200" fill="#25352a" viewBox="0 0 192 190" xmlns="http://www.w3.org/2000/svg">
@@ -94,6 +104,30 @@
         </m3e-form-field>
         <m3e-button variant="filled" id="close_add_newapp_modal" data-i18n="close">とじる</m3e-button>
         <m3e-button variant="filled" data-i18n="add" id="save_new_app">追加</m3e-button>
+      </div>
+    </div>
+
+    <!-- Linuxアプリ追加モーダル -->
+    <div id="add_linuxapp_modal_overlay" class="modal_overlay">
+      <div id="add_linuxapp_modal" class="modal">
+        <h3 data-i18n="add_linux_app">Linuxアプリを追加</h3>
+        <input type="file" id="linux_app_image_file" accept="image/*" style="display: none;">
+        <m3e-button variant="filled" data-i18n="upload_image" id="linux_app_image_trigger">アプリ画像をアップロード</m3e-button>
+        <img id="linux_app_image_preview" src="" style="display: none; max-width: 50px; max-height: 50px; margin: 0 auto;">
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="linux_app_name" data-i18n="app_name">アプリ名</label>
+          <input id="linux_app_name" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="linux_app_command" data-i18n="command">コマンド</label>
+          <input id="linux_app_command" placeholder="例: code, firefox, gimp" />
+        </m3e-form-field>
+        <div style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
+          <input type="checkbox" id="linux_app_run_in_terminal" />
+          <label for="linux_app_run_in_terminal" data-i18n="run_in_terminal">ターミナルで実行</label>
+        </div>
+        <m3e-button variant="filled" id="close_add_linuxapp_modal" data-i18n="close">とじる</m3e-button>
+        <m3e-button variant="filled" data-i18n="add" id="save_linux_app">追加</m3e-button>
       </div>
     </div>
 
