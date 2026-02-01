@@ -140,10 +140,10 @@ body {
 
 #change_widget_position_modal_overlay.grid-mode {
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-  background-size: 100px 100px;
-  background-position: 0 0;
+    linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 80px 80px;
+  background-position: 20px 20px;
 }
 
 #change_widget_position_modal {

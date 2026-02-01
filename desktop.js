@@ -30,29 +30,28 @@ document.getElementById('close_settingsmenu_modal').onclick = () => {
 }
 
 // グリッドモードの設定
-const GRID_SIZE = 100; // グリッドのサイズ（ピクセル）
+const GRID_SIZE = 80; // グリッドのサイズ
+const GRID_OFFSET = 20; // グリッドの開始位置（paddingに合わせる）
 let isGridModeEnabled = false;
 
 function snapToGrid(value) {
-  return Math.round(value / GRID_SIZE) * GRID_SIZE;
+  // オフセットを考慮してスナップ（グリッド線の間に配置）
+  return Math.round((value - GRID_OFFSET) / GRID_SIZE) * GRID_SIZE + GRID_OFFSET;
 }
 
 document.getElementById('open_change_widget_position_modal').onclick = () => {
   escmenu_modal_overlay.style.display = 'none';
   change_widget_position_modal_overlay.style.display = 'flex';
   
-  // グリッドモードのスイッチの状態を復元
-  const gridSwitch = document.getElementById('grid_mode_switch');
-  if (gridSwitch) {
-    isGridModeEnabled = localStorage.getItem('gridModeEnabled') === 'true';
-    gridSwitch.selected = isGridModeEnabled;
-    
-    // グリッド線の表示/非表示
-    if (isGridModeEnabled) {
-      change_widget_position_modal_overlay.classList.add('grid-mode');
-    } else {
-      change_widget_position_modal_overlay.classList.remove('grid-mode');
-    }
+  // グリッドモードのボタンの状態を復元
+  isGridModeEnabled = localStorage.getItem('gridModeEnabled') === 'true';
+  updateGridModeButton();
+  
+  // グリッド線の表示/非表示
+  if (isGridModeEnabled) {
+    change_widget_position_modal_overlay.classList.add('grid-mode');
+  } else {
+    change_widget_position_modal_overlay.classList.remove('grid-mode');
   }
 
   document.querySelectorAll(".appicon,.widget").forEach(item => {
@@ -86,12 +85,7 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
         let newLeft = this.offsetLeft + event.movementX;
         let newTop = this.offsetTop + event.movementY;
         
-        // グリッドモードが有効な場合はスナップ
-        if (isGridModeEnabled) {
-          newLeft = snapToGrid(newLeft);
-          newTop = snapToGrid(newTop);
-        }
-        
+        // グリッドモードでも移動中はスムーズに動かす
         this.style.left = newLeft + 'px';
         this.style.top = newTop + 'px';
         this.style.position = 'absolute';
@@ -110,12 +104,23 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
   });
 }
 
-// グリッドモードスイッチのイベント
-const gridModeSwitch = document.getElementById('grid_mode_switch');
-if (gridModeSwitch) {
-  gridModeSwitch.addEventListener('change', (e) => {
-    isGridModeEnabled = e.target.selected;
+// グリッドモードボタンのテキスト更新関数
+function updateGridModeButton() {
+  const gridModeBtn = document.getElementById('toggle_grid_mode');
+  if (gridModeBtn) {
+    const lang = localStorage.getItem('language') || 'ja';
+    const key = isGridModeEnabled ? 'grid_mode_on' : 'grid_mode_off';
+    gridModeBtn.textContent = translations[lang][key];
+  }
+}
+
+// グリッドモードボタンのイベント
+const gridModeBtn = document.getElementById('toggle_grid_mode');
+if (gridModeBtn) {
+  gridModeBtn.onclick = () => {
+    isGridModeEnabled = !isGridModeEnabled;
     localStorage.setItem('gridModeEnabled', isGridModeEnabled);
+    updateGridModeButton();
     
     // グリッド線の表示/非表示
     const overlay = document.getElementById('change_widget_position_modal_overlay');
@@ -125,16 +130,20 @@ if (gridModeSwitch) {
       overlay.classList.remove('grid-mode');
     }
     
-    // グリッドモードが有効になったら、現在の位置をグリッドにスナップ
+    // グリッドモードが有効になったら、すべてのアイコンの位置をグリッドにスナップ
     if (isGridModeEnabled) {
       document.querySelectorAll(".appicon,.widget").forEach(item => {
-        if (item.style.position === 'absolute') {
-          item.style.left = snapToGrid(item.offsetLeft) + 'px';
-          item.style.top = snapToGrid(item.offsetTop) + 'px';
-        }
+        // 現在の位置を取得（absoluteでない場合はoffsetLeftを使用）
+        const currentLeft = item.offsetLeft;
+        const currentTop = item.offsetTop;
+        
+        // グリッドにスナップ
+        item.style.position = 'absolute';
+        item.style.left = snapToGrid(currentLeft) + 'px';
+        item.style.top = snapToGrid(currentTop) + 'px';
       });
     }
-  });
+  };
 }
 
 document.getElementById('close_change_widget_position_modal').onclick = () => {
@@ -292,6 +301,8 @@ const translations = {
     change_position: "位置の変更",
     refresh_dev: "リフレッシュ(開発者向け)",
     grid_mode: "グリッドモード",
+    grid_mode_on: "ON",
+    grid_mode_off: "OFF",
     save: "保存",
     reset_position: "位置をリセット",
     general: "一般",
@@ -317,6 +328,8 @@ const translations = {
     change_position: "Change Position",
     refresh_dev: "Refresh (Dev)",
     grid_mode: "Grid Mode",
+    grid_mode_on: "ON",
+    grid_mode_off: "OFF",
     save: "Save",
     reset_position: "Reset Position",
     general: "General",
