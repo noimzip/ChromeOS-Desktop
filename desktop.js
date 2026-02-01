@@ -1255,7 +1255,10 @@ const translations = {
     enter_name_and_command: "名前とコマンドを入力してください",
     launch_failed: "アプリの起動に失敗しました",
     enter_folder_name: "フォルダー名を入力",
-    color_scheme: "カラースキーム"
+    color_scheme: "カラースキーム",
+    delete_all_data: "すべてのデータを削除",
+    confirm_delete_all_data: "すべてのデータ（アプリ、フォルダ、設定など）を削除しますか？\nこの操作は取り消せません。",
+    data_deleted: "すべてのデータを削除しました。ページを再読み込みします。"
   },
   en: {
     files: "Files",
@@ -1309,7 +1312,10 @@ const translations = {
     enter_name_and_command: "Please enter name and command",
     launch_failed: "Failed to launch app",
     enter_folder_name: "Enter folder name",
-    color_scheme: "Color Scheme"
+    color_scheme: "Color Scheme",
+    delete_all_data: "Delete All Data",
+    confirm_delete_all_data: "Delete all data (apps, folders, settings, etc.)?\nThis action cannot be undone.",
+    data_deleted: "All data has been deleted. Reloading page."
   }
 };
 
@@ -1619,6 +1625,24 @@ if (newAppImageTrigger && newAppFileInput) {
         newAppImagePreview.style.display = 'block';
       };
       reader.readAsDataURL(file);
+    }
+  };
+}
+
+// 全データ削除機能
+const deleteAllDataBtn = document.getElementById('delete_all_data_btn');
+if (deleteAllDataBtn) {
+  deleteAllDataBtn.onclick = () => {
+    const lang = getCurrentLanguage();
+    const confirmMsg = translations[lang].confirm_delete_all_data;
+    
+    if (confirm(confirmMsg)) {
+      // localStorageの全データを削除
+      localStorage.clear();
+      
+      // 削除完了メッセージを表示してページをリロード
+      alert(translations[lang].data_deleted);
+      location.reload();
     }
   };
 }

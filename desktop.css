@@ -688,6 +688,21 @@ body.no-blur .modal_overlay {
   border-bottom: none;
 }
 
+.settings_row_danger {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--error-color);
+}
+
+.settings_row_danger span {
+  color: var(--error-color);
+}
+
+.danger-button {
+  --md-sys-color-primary: var(--error-color) !important;
+  --md-sys-color-on-primary: #ffffff !important;
+}
+
 .settings_row label {
   font-size: 0.95rem;
   color: var(--on-surface);
