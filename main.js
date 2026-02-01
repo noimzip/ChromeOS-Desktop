@@ -16,6 +16,68 @@ ipcMain.handle('launch-linux-app', async (event, command) => {
   });
 });
 
+// メディア情報取得用IPCハンドラ
+ipcMain.handle('get-media-info', async () => {
+  return new Promise((resolve) => {
+    // playerctlでメディア情報を取得
+    const commands = {
+      status: 'playerctl status 2>/dev/null || echo "No player"',
+      title: 'playerctl metadata title 2>/dev/null || echo ""',
+      artist: 'playerctl metadata artist 2>/dev/null || echo ""',
+      album: 'playerctl metadata album 2>/dev/null || echo ""',
+      artUrl: 'playerctl metadata mpris:artUrl 2>/dev/null || echo ""',
+      position: 'playerctl position 2>/dev/null || echo "0"',
+      length: 'playerctl metadata mpris:length 2>/dev/null || echo "0"',
+      player: 'playerctl -l 2>/dev/null | head -1 || echo ""'
+    };
+    
+    const results = {};
+    let completed = 0;
+    const total = Object.keys(commands).length;
+    
+    for (const [key, cmd] of Object.entries(commands)) {
+      exec(cmd, (error, stdout) => {
+        results[key] = stdout.trim();
+        completed++;
+        if (completed === total) {
+          resolve(results);
+        }
+      });
+    }
+  });
+});
+
+// メディア制御用IPCハンドラ
+ipcMain.handle('media-control', async (event, action, value) => {
+  return new Promise((resolve) => {
+    // シーク操作の場合
+    if (action === 'seek' && value !== undefined) {
+      exec(`playerctl position ${value}`, (error) => {
+        resolve({ success: !error, error: error?.message });
+      });
+      return;
+    }
+    
+    const commands = {
+      'play-pause': 'playerctl play-pause',
+      'play': 'playerctl play',
+      'pause': 'playerctl pause',
+      'next': 'playerctl next',
+      'previous': 'playerctl previous'
+    };
+    
+    const cmd = commands[action];
+    if (!cmd) {
+      resolve({ success: false, error: 'Unknown action' });
+      return;
+    }
+    
+    exec(cmd, (error) => {
+      resolve({ success: !error, error: error?.message });
+    });
+  });
+});
+
 app.whenReady().then(() => {
   const { screen } = require('electron');
   // Create a window that fills the screen's available work area.
