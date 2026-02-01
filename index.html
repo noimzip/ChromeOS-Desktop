@@ -92,6 +92,18 @@
       </div>
     </div>
 
+    <!-- フォルダーモーダル -->
+    <div id="folder_modal_overlay" class="modal_overlay">
+      <div id="folder_modal" class="modal">
+        <div id="folder_title_container">
+          <h3 id="folder_title" title="クリックで名前を変更">フォルダー</h3>
+          <input type="text" id="folder_title_input" style="display: none;" />
+        </div>
+        <div id="folder_contents"></div>
+        <m3e-button variant="filled" id="close_folder_modal" data-i18n="close">とじる</m3e-button>
+      </div>
+    </div>
+
     <div id="escmenu_modal_overlay" class="modal_overlay">
       <div id="escmenu_modal" class="modal">
         <m3e-button variant="filled" id="open_settingsmenu_modal" data-i18n="settings">設定</m3e-button>
