@@ -10,10 +10,6 @@ document.getElementById('appicon-settings').onclick = () => {
   openURL('chrome://os-settings');
 }
 
-document.getElementById('appicon-x').onclick = () => {
-  window.open('https://x.com');
-}
-
 document.addEventListener('keydown', function(e) {
   if(e.key === 'Escape'){
     escmenu_modal_overlay.style.display = 'flex';
