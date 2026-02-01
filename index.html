@@ -131,6 +131,56 @@
       </div>
     </div>
 
+    <!-- アプリコンテキストメニュー -->
+    <div id="app_context_menu" class="context-menu" style="display: none;">
+      <div class="context-menu-item" id="context_edit" data-i18n="edit">編集</div>
+      <div class="context-menu-item" id="context_delete" data-i18n="delete">削除</div>
+    </div>
+
+    <!-- Webアプリ編集モーダル -->
+    <div id="edit_webapp_modal_overlay" class="modal_overlay">
+      <div id="edit_webapp_modal" class="modal">
+        <h3 data-i18n="edit_app">アプリを編集</h3>
+        <input type="file" id="edit_webapp_image_file" accept="image/*" style="display: none;">
+        <m3e-button variant="filled" data-i18n="change_image" id="edit_webapp_image_trigger">画像を変更</m3e-button>
+        <img id="edit_webapp_image_preview" src="" style="max-width: 50px; max-height: 50px; margin: 0 auto;">
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_webapp_name" data-i18n="app_name">アプリ名</label>
+          <input id="edit_webapp_name" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_webapp_url" data-i18n="url">URL</label>
+          <input id="edit_webapp_url" />
+        </m3e-form-field>
+        <m3e-button variant="filled" id="close_edit_webapp_modal" data-i18n="close">とじる</m3e-button>
+        <m3e-button variant="filled" data-i18n="save" id="save_edit_webapp">保存</m3e-button>
+      </div>
+    </div>
+
+    <!-- Linuxアプリ編集モーダル -->
+    <div id="edit_linuxapp_modal_overlay" class="modal_overlay">
+      <div id="edit_linuxapp_modal" class="modal">
+        <h3 data-i18n="edit_linux_app">Linuxアプリを編集</h3>
+        <input type="file" id="edit_linuxapp_image_file" accept="image/*" style="display: none;">
+        <m3e-button variant="filled" data-i18n="change_image" id="edit_linuxapp_image_trigger">画像を変更</m3e-button>
+        <img id="edit_linuxapp_image_preview" src="" style="max-width: 50px; max-height: 50px; margin: 0 auto;">
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_linuxapp_name" data-i18n="app_name">アプリ名</label>
+          <input id="edit_linuxapp_name" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_linuxapp_command" data-i18n="command">コマンド</label>
+          <input id="edit_linuxapp_command" />
+        </m3e-form-field>
+        <div style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
+          <input type="checkbox" id="edit_linuxapp_run_in_terminal" />
+          <label for="edit_linuxapp_run_in_terminal" data-i18n="run_in_terminal">ターミナルで実行</label>
+        </div>
+        <m3e-button variant="filled" id="close_edit_linuxapp_modal" data-i18n="close">とじる</m3e-button>
+        <m3e-button variant="filled" data-i18n="save" id="save_edit_linuxapp">保存</m3e-button>
+      </div>
+    </div>
+
     <!-- フォルダーモーダル -->
     <div id="folder_modal_overlay" class="modal_overlay">
       <div id="folder_modal" class="modal">
@@ -143,6 +193,7 @@
       </div>
     </div>
 
+
     <div id="escmenu_modal_overlay" class="modal_overlay">
       <div id="escmenu_modal" class="modal">
         <m3e-button variant="filled" id="open_settingsmenu_modal" data-i18n="settings">設定</m3e-button>
@@ -154,10 +205,12 @@
 
     <div id="change_widget_position_modal_overlay" class="modal_overlay">
       <div id="change_widget_position_modal" class="modal">
-        <label><span data-i18n="grid_mode">グリッドモード</span><m3e-switch icons="both"></m3e-switch></label>
+        <div class="settings_row">
+          <span data-i18n="grid_mode">グリッドモード</span>
+          <m3e-button variant="filled" id="toggle_grid_mode" data-i18n="grid_mode_off">OFF</m3e-button>
+        </div>
         <m3e-button variant="filled" id="save_change_widget_position" data-i18n="save">保存</m3e-button>
         <m3e-button variant="filled" id="reset_widget_position" data-i18n="reset_position">位置をリセット</m3e-button>
-        <m3e-button variant="filled" id="close_change_widget_position_modal" data-i18n="close">とじる</m3e-button>
       </div>
     </div>
 
@@ -213,6 +266,10 @@
           <div class="settings_row">
             <span data-i18n="settings_button_label">設定ボタン</span>
             <m3e-button variant="filled" id="toggle_settings_fab" data-i18n="show_settings_button">表示</m3e-button>
+          </div>
+          <div class="settings_row">
+            <span data-i18n="blur_effect">ブラー効果</span>
+            <m3e-button variant="filled" id="toggle_blur_effect" data-i18n="enabled">有効</m3e-button>
           </div>
           <p><span data-i18n="user_agent">ユーザーエージェント:</span><span id="developer_user_agent"></span></p>
           <div style="margin-top: auto; align-self: flex-end;">
