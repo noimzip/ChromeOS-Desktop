@@ -48,6 +48,319 @@
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
+  
+  /* M3E Color Scheme - Default (Blue) */
+  --md-sys-color-primary: #4285f4;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #d3e3fd;
+  --md-sys-color-on-primary-container: #041e49;
+  --md-sys-color-secondary: #5f6368;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #e8eaed;
+  --md-sys-color-on-secondary-container: #1f1f1f;
+  --md-sys-color-tertiary: #1a73e8;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-surface: #ffffff;
+  --md-sys-color-on-surface: #1f1f1f;
+  --md-sys-color-surface-variant: #f1f3f4;
+  --md-sys-color-on-surface-variant: #5f6368;
+  --md-sys-color-outline: #dadce0;
+  --md-sys-color-outline-variant: #e8eaed;
+  
+  /* Default Clock colors */
+  --clock-primary: #64b5f6;
+  --clock-secondary: #1976d2;
+  --clock-accent: #bbdefb;
+  --clock-background: #1a365d;
+  --clock-text-color: #ffffff;
+}
+
+/* ========================================
+   Color Schemes
+   ======================================== */
+
+/* Blue (Default) */
+body.color-scheme-blue {
+  --md-sys-color-primary: #4285f4;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #d3e3fd;
+  --md-sys-color-on-primary-container: #041e49;
+  --md-sys-color-secondary: #5f6368;
+  --md-sys-color-tertiary: #1a73e8;
+  --primary-color: #4285f4;
+  --primary-dark: #1a73e8;
+  --primary-light: #6ba5f7;
+  /* Clock colors */
+  --clock-primary: #64b5f6;
+  --clock-secondary: #1976d2;
+  --clock-accent: #bbdefb;
+  --clock-background: #1a365d;
+  --clock-text-color: #ffffff;
+}
+
+/* Red */
+body.color-scheme-red {
+  --md-sys-color-primary: #ea4335;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #fce8e6;
+  --md-sys-color-on-primary-container: #5c0011;
+  --md-sys-color-secondary: #7c7c7c;
+  --md-sys-color-tertiary: #d93025;
+  --primary-color: #ea4335;
+  --primary-dark: #d93025;
+  --primary-light: #f28b82;
+  /* Clock colors */
+  --clock-primary: #ef5350;
+  --clock-secondary: #c62828;
+  --clock-accent: #ffcdd2;
+  --clock-background: #4a1515;
+  --clock-text-color: #ffffff;
+}
+
+/* Green */
+body.color-scheme-green {
+  --md-sys-color-primary: #34a853;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #ceead6;
+  --md-sys-color-on-primary-container: #0d3b1a;
+  --md-sys-color-secondary: #5f6368;
+  --md-sys-color-tertiary: #1e8e3e;
+  --primary-color: #34a853;
+  --primary-dark: #1e8e3e;
+  --primary-light: #81c995;
+  /* Clock colors */
+  --clock-primary: #66bb6a;
+  --clock-secondary: #2e7d32;
+  --clock-accent: #c8e6c9;
+  --clock-background: #1b3d1b;
+  --clock-text-color: #ffffff;
+}
+
+/* Purple */
+body.color-scheme-purple {
+  --md-sys-color-primary: #9334e6;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #e9d5ff;
+  --md-sys-color-on-primary-container: #3b0764;
+  --md-sys-color-secondary: #7c7c7c;
+  --md-sys-color-tertiary: #7c3aed;
+  --primary-color: #9334e6;
+  --primary-dark: #7c3aed;
+  --primary-light: #a855f7;
+  /* Clock colors */
+  --clock-primary: #ab47bc;
+  --clock-secondary: #7b1fa2;
+  --clock-accent: #e1bee7;
+  --clock-background: #2d1b36;
+  --clock-text-color: #ffffff;
+}
+
+/* Orange */
+body.color-scheme-orange {
+  --md-sys-color-primary: #fa7b17;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #fef3c7;
+  --md-sys-color-on-primary-container: #5c2d00;
+  --md-sys-color-secondary: #7c7c7c;
+  --md-sys-color-tertiary: #e8710a;
+  --primary-color: #fa7b17;
+  --primary-dark: #e8710a;
+  --primary-light: #fb923c;
+  /* Clock colors */
+  --clock-primary: #ffa726;
+  --clock-secondary: #f57c00;
+  --clock-accent: #ffe0b2;
+  --clock-background: #3d2814;
+  --clock-text-color: #ffffff;
+}
+
+/* Teal */
+body.color-scheme-teal {
+  --md-sys-color-primary: #14b8a6;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #ccfbf1;
+  --md-sys-color-on-primary-container: #042f2e;
+  --md-sys-color-secondary: #5f6368;
+  --md-sys-color-tertiary: #0d9488;
+  --primary-color: #14b8a6;
+  --primary-dark: #0d9488;
+  --primary-light: #2dd4bf;
+  /* Clock colors */
+  --clock-primary: #26a69a;
+  --clock-secondary: #00897b;
+  --clock-accent: #b2dfdb;
+  --clock-background: #0d3331;
+  --clock-text-color: #ffffff;
+}
+
+/* Pink */
+body.color-scheme-pink {
+  --md-sys-color-primary: #ec4899;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #fce7f3;
+  --md-sys-color-on-primary-container: #5c0029;
+  --md-sys-color-secondary: #7c7c7c;
+  --md-sys-color-tertiary: #db2777;
+  --primary-color: #ec4899;
+  --primary-dark: #db2777;
+  --primary-light: #f472b6;
+  /* Clock colors */
+  --clock-primary: #ec407a;
+  --clock-secondary: #c2185b;
+  --clock-accent: #f8bbd9;
+  --clock-background: #3d1428;
+  --clock-text-color: #ffffff;
+}
+
+/* ========================================
+   Dark Mode
+   ======================================== */
+
+body.dark-mode {
+  /* Surfaces */
+  --surface-color: #1f1f1f;
+  --surface-variant: #2d2d2d;
+  --surface-dim: #171717;
+  --on-surface: #e3e3e3;
+  --on-surface-variant: #c4c4c4;
+  --outline: #444444;
+  --outline-variant: #333333;
+  
+  /* M3E Dark Surface */
+  --md-sys-color-surface: #1f1f1f;
+  --md-sys-color-on-surface: #e3e3e3;
+  --md-sys-color-surface-variant: #2d2d2d;
+  --md-sys-color-on-surface-variant: #c4c4c4;
+  --md-sys-color-outline: #444444;
+  --md-sys-color-outline-variant: #333333;
+  --md-sys-color-secondary-container: #3d3d3d;
+  --md-sys-color-on-secondary-container: #e3e3e3;
+  
+  /* Shadows for dark mode */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5), 0 5px 10px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Dark mode specific overrides */
+body.dark-mode .modal_overlay {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode #settings_sidebar {
+  background: linear-gradient(180deg, var(--surface-variant) 0%, #252525 100%);
+}
+
+body.dark-mode #settings_content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .settings_row span,
+body.dark-mode .settings_row label,
+body.dark-mode label {
+  color: var(--on-surface);
+}
+
+body.dark-mode select {
+  background-color: var(--surface-variant);
+  color: var(--on-surface);
+  border-color: var(--outline);
+}
+
+body.dark-mode input[type="text"],
+body.dark-mode input[type="url"] {
+  background-color: var(--surface-variant);
+  color: var(--on-surface);
+}
+
+body.dark-mode .color-swatch {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .color-swatch.selected {
+  border-color: var(--on-surface);
+  box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--on-surface);
+}
+
+body.dark-mode .icon-label {
+  color: var(--on-surface);
+}
+
+/* ========================================
+   Color Palette UI
+   ======================================== */
+
+.color-palette {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.color-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
+}
+
+.color-swatch:active {
+  transform: scale(0.95);
+}
+
+.color-swatch.selected {
+  border-color: var(--on-surface);
+  box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--on-surface);
+}
+
+.color-swatch.selected::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Color Picker Swatch */
+.color-picker-swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+  overflow: hidden;
+}
+
+.color-picker-swatch input[type="color"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.color-picker-swatch.selected {
+  background: var(--custom-color, linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%));
+}
+
+/* Clock Background */
+.clock-background {
+  fill: var(--clock-background, #25352a);
+  transition: fill 0.3s ease;
 }
 
 body {

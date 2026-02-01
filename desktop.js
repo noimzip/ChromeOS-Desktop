@@ -1241,6 +1241,7 @@ const translations = {
     blur_effect: "ブラー効果",
     enabled: "有効",
     disabled: "無効",
+    dark_mode: "ダークモード",
     edit: "編集",
     delete: "削除",
     edit_app: "アプリを編集",
@@ -1253,7 +1254,8 @@ const translations = {
     enter_name_and_url: "名前とURLを入力してください",
     enter_name_and_command: "名前とコマンドを入力してください",
     launch_failed: "アプリの起動に失敗しました",
-    enter_folder_name: "フォルダー名を入力"
+    enter_folder_name: "フォルダー名を入力",
+    color_scheme: "カラースキーム"
   },
   en: {
     files: "Files",
@@ -1293,6 +1295,7 @@ const translations = {
     blur_effect: "Blur Effect",
     enabled: "Enabled",
     disabled: "Disabled",
+    dark_mode: "Dark Mode",
     edit: "Edit",
     delete: "Delete",
     edit_app: "Edit App",
@@ -1305,7 +1308,8 @@ const translations = {
     enter_name_and_url: "Please enter name and URL",
     enter_name_and_command: "Please enter name and command",
     launch_failed: "Failed to launch app",
-    enter_folder_name: "Enter folder name"
+    enter_folder_name: "Enter folder name",
+    color_scheme: "Color Scheme"
   }
 };
 
@@ -1328,6 +1332,184 @@ if (languageSelector) {
   const currentLang = localStorage.getItem('language') || 'ja';
   languageSelector.value = currentLang;
   updateLanguage(currentLang);
+}
+
+// ========================================
+// カラースキーム設定
+// ========================================
+
+const colorSchemes = ['blue', 'red', 'green', 'purple', 'orange', 'teal', 'pink'];
+
+function updateColorScheme(scheme, customColor = null) {
+  // 既存のカラースキームクラスを削除
+  colorSchemes.forEach(s => {
+    document.body.classList.remove(`color-scheme-${s}`);
+  });
+  document.body.classList.remove('color-scheme-custom');
+  
+  if (scheme === 'custom' && customColor) {
+    // カスタムカラーを適用
+    document.body.classList.add('color-scheme-custom');
+    applyCustomColor(customColor);
+    localStorage.setItem('colorScheme', 'custom');
+    localStorage.setItem('customColor', customColor);
+  } else {
+    // プリセットカラースキームを適用
+    document.body.classList.add(`color-scheme-${scheme}`);
+    localStorage.setItem('colorScheme', scheme);
+  }
+  
+  // パレットの選択状態を更新
+  document.querySelectorAll('.color-swatch').forEach(swatch => {
+    if (scheme === 'custom') {
+      swatch.classList.toggle('selected', swatch.classList.contains('color-picker-swatch'));
+    } else {
+      swatch.classList.toggle('selected', swatch.dataset.color === scheme);
+    }
+  });
+}
+
+// カスタムカラーから派生色を生成して適用
+function applyCustomColor(hexColor) {
+  const rgb = hexToRgb(hexColor);
+  if (!rgb) return;
+  
+  // HSLに変換
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  
+  // 派生色を生成
+  const primaryLight = hslToHex(hsl.h, Math.min(hsl.s + 10, 100), Math.min(hsl.l + 15, 85));
+  const primaryDark = hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 15, 15));
+  const clockPrimary = hslToHex(hsl.h, Math.min(hsl.s + 5, 100), Math.min(hsl.l + 10, 70));
+  const clockSecondary = hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 20, 20));
+  const clockAccent = hslToHex(hsl.h, Math.max(hsl.s - 30, 20), Math.min(hsl.l + 30, 90));
+  const clockBackground = hslToHex(hsl.h, Math.max(hsl.s - 20, 10), Math.max(hsl.l - 40, 10));
+  const primaryContainer = hslToHex(hsl.h, Math.max(hsl.s - 40, 20), 90);
+  
+  // 時計背景の明るさに応じて文字色を決定
+  const bgRgb = hexToRgb(clockBackground);
+  const clockTextColor = getContrastColor(bgRgb.r, bgRgb.g, bgRgb.b);
+  
+  // プライマリカラーの明るさに応じてボタン文字色を決定
+  const onPrimaryColor = getContrastColor(rgb.r, rgb.g, rgb.b);
+  
+  // プライマリコンテナの明るさに応じて文字色を決定
+  const containerRgb = hexToRgb(primaryContainer);
+  const onPrimaryContainerColor = getContrastColor(containerRgb.r, containerRgb.g, containerRgb.b);
+  
+  // CSS変数を設定
+  document.documentElement.style.setProperty('--md-sys-color-primary', hexColor);
+  document.documentElement.style.setProperty('--md-sys-color-on-primary', onPrimaryColor);
+  document.documentElement.style.setProperty('--md-sys-color-tertiary', primaryDark);
+  document.documentElement.style.setProperty('--md-sys-color-primary-container', primaryContainer);
+  document.documentElement.style.setProperty('--md-sys-color-on-primary-container', onPrimaryContainerColor);
+  document.documentElement.style.setProperty('--primary-color', hexColor);
+  document.documentElement.style.setProperty('--primary-dark', primaryDark);
+  document.documentElement.style.setProperty('--primary-light', primaryLight);
+  document.documentElement.style.setProperty('--clock-primary', clockPrimary);
+  document.documentElement.style.setProperty('--clock-secondary', clockSecondary);
+  document.documentElement.style.setProperty('--clock-accent', clockAccent);
+  document.documentElement.style.setProperty('--clock-background', clockBackground);
+  document.documentElement.style.setProperty('--clock-text-color', clockTextColor);
+  
+  // カスタムスウォッチの背景色を更新
+  const pickerSwatch = document.querySelector('.color-picker-swatch');
+  if (pickerSwatch) {
+    pickerSwatch.style.setProperty('--custom-color', hexColor);
+    pickerSwatch.style.background = hexColor;
+  }
+}
+
+// 背景色の明るさに応じてコントラスト色（黒/白）を返す
+function getContrastColor(r, g, b) {
+  // 相対輝度を計算（WCAG基準）
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#1f1f1f' : '#ffffff';
+}
+
+// 色変換ユーティリティ
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// カラーパレットの初期化
+const colorPalette = document.getElementById('color_palette');
+const customColorPicker = document.getElementById('custom_color_picker');
+
+if (colorPalette) {
+  colorPalette.addEventListener('click', (e) => {
+    const swatch = e.target.closest('.color-swatch');
+    if (swatch && swatch.dataset.color && !swatch.classList.contains('color-picker-swatch')) {
+      // カスタムカラーのCSS変数をリセット
+      resetCustomColorVars();
+      updateColorScheme(swatch.dataset.color);
+    }
+  });
+  
+  // 保存された設定を復元
+  const savedScheme = localStorage.getItem('colorScheme') || 'blue';
+  const savedCustomColor = localStorage.getItem('customColor');
+  
+  if (savedScheme === 'custom' && savedCustomColor) {
+    if (customColorPicker) {
+      customColorPicker.value = savedCustomColor;
+    }
+    updateColorScheme('custom', savedCustomColor);
+  } else {
+    updateColorScheme(savedScheme);
+  }
+}
+
+if (customColorPicker) {
+  customColorPicker.addEventListener('input', (e) => {
+    updateColorScheme('custom', e.target.value);
+  });
+}
+
+// カスタムカラー変数をリセット
+function resetCustomColorVars() {
+  const vars = [
+    '--md-sys-color-primary', '--md-sys-color-on-primary', '--md-sys-color-tertiary', 
+    '--md-sys-color-primary-container', '--md-sys-color-on-primary-container',
+    '--primary-color', '--primary-dark', '--primary-light',
+    '--clock-primary', '--clock-secondary', '--clock-accent', '--clock-background', '--clock-text-color'
+  ];
+  vars.forEach(v => document.documentElement.style.removeProperty(v));
 }
 
 // 設定ボタン（FAB）の表示/非表示設定
@@ -1386,6 +1568,36 @@ if (toggleBlurEffectBtn) {
   toggleBlurEffectBtn.onclick = () => {
     const currentlyEnabled = !document.body.classList.contains('no-blur');
     updateBlurEffect(!currentlyEnabled);
+  };
+}
+
+// ダークモードの設定
+const toggleDarkModeBtn = document.getElementById('toggle_dark_mode');
+
+function updateDarkMode(isEnabled) {
+  if (isEnabled) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  localStorage.setItem('darkModeEnabled', isEnabled);
+  
+  // ボタンのテキストを更新
+  if (toggleDarkModeBtn) {
+    const lang = getCurrentLanguage();
+    const key = isEnabled ? 'enabled' : 'disabled';
+    toggleDarkModeBtn.textContent = translations[lang][key];
+  }
+}
+
+if (toggleDarkModeBtn) {
+  // 保存された設定を復元（デフォルトは無効）
+  const darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
+  updateDarkMode(darkModeEnabled);
+  
+  toggleDarkModeBtn.onclick = () => {
+    const currentlyEnabled = document.body.classList.contains('dark-mode');
+    updateDarkMode(!currentlyEnabled);
   };
 }
 
