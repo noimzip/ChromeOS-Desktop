@@ -1,14 +1,71 @@
+/* ========================================
+   Soul Widgets Manager - Modern Design
+   Version: 2.0
+   ======================================== */
+
+:root {
+  /* Colors */
+  --primary-color: #4285f4;
+  --primary-dark: #1a73e8;
+  --primary-light: #6ba5f7;
+  --success-color: #34a853;
+  --error-color: #ea4335;
+  --warning-color: #fbbc04;
+  
+  /* Surfaces */
+  --surface-color: #ffffff;
+  --surface-variant: #f8f9fa;
+  --surface-dim: #e8eaed;
+  --on-surface: #202124;
+  --on-surface-variant: #5f6368;
+  --outline: #dadce0;
+  --outline-variant: #e8eaed;
+  
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+  
+  /* Border Radius */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
 body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-
   width: 100%;
-  height:  100%;
-  font-family: "Google Sans Flex", "Noto Sans JP", sans-serif;
+  height: 100%;
+  font-family: "Google Sans", "Google Sans Flex", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
   user-select: none;
-  background-color: transparent; /* Electron window handles transparency */
+  background-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ========================================
+   Desktop Icons Grid
+   ======================================== */
 
 #desktop_icons {
   position: absolute;
@@ -21,28 +78,55 @@ body {
   flex-direction: column;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 25px;
+  gap: 20px;
   box-sizing: border-box;
   pointer-events: none;
   z-index: 0;
 }
 
+/* ========================================
+   App Icons
+   ======================================== */
+
 .appicon {
   text-align: center;
   cursor: pointer;
-  height: 80px;
+  height: 85px;
   width: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+  padding: 8px 4px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
   pointer-events: auto;
+  box-sizing: border-box;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ドラッグ中のスタイル */
+.appicon[style*="position: absolute"] {
+  transition: none;
+  will-change: left, top;
 }
 
 .appicon:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  transform: translateY(-2px);
+}
+
+/* ブラー無効時 */
+body.no-blur .appicon:hover {
+  backdrop-filter: none;
+}
+
+.appicon:active {
+  transform: scale(0.95);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .appicon > * {
@@ -52,127 +136,36 @@ body {
 .appicon > p {
   width: 100%;
   color: white;
-  text-shadow: 0 0 5px black;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3);
   text-align: center;
-  font-size: 0.85rem;
-  margin-top: 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 6px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .appicon > img {
   height: 48px;
   width: 48px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  transition: transform var(--transition-fast);
 }
 
-.widget {
-  position: fixed;
-  right: 20px;
-  top: 20px;
-  z-index: 0;
+.appicon:hover > img {
+  transform: scale(1.08);
 }
 
-.modal_overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 100;
-  justify-content: center;
-  align-items: center;
-}
+/* ========================================
+   Folder Icons
+   ======================================== */
 
-.modal {
-  position: relative;
-  background-color: white;
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-#escmenu_modal {
-  width: 320px;
-  height: auto;
-  padding: 30px;
-  gap: 25px;
-  align-items: center;
-  justify-content: center;
-}
-
-#escmenu_modal m3e-button {
-  position: static;
-  margin: 0;
-  width: 100%;
-}
-
-#settingsmenu_modal {
-  width: 800px;
-  height: 600px;
-  flex-direction: row;
-}
-
-#settings_sidebar {
-  width: 260px;
-  background-color: #f5f5f5;
-  border-right: 1px solid #e0e0e0;
-  display: flex;
-  flex-direction: column;
-}
-
-#settings_content {
-  flex: 1;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  overflow-y: auto;
-}
-
-.settings_row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-#change_widget_position_modal_overlay {
-  background-color: rgba(0, 0, 0, 0.2);
-  z-index: -1;
-}
-
-#change_widget_position_modal {
-  margin-top: 400px;
-  width: 300px;
-  height: auto;
-  padding: 24px;
-  gap: 25px;
-  justify-content: center;
-}
-
-#change_widget_position_modal label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-#add_newapp_modal_overlay {
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-#add_newapp_modal {
-  width: 300px;
-  height: auto;
-  padding: 24px;
-  gap: 25px;
-}
-
-/* フォルダーアイコン */
 .appicon.folder {
   position: relative;
 }
@@ -183,11 +176,25 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 2px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 4px;
+  gap: 3px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  padding: 5px;
   box-sizing: border-box;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+/* ブラー無効時 */
+body.no-blur .appicon.folder .folder-preview {
+  backdrop-filter: none;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.appicon.folder:hover .folder-preview {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
+  transform: scale(1.05);
 }
 
 .appicon.folder .folder-preview img {
@@ -197,22 +204,303 @@ body {
   border-radius: 4px;
 }
 
-.appicon.folder.drag-over {
-  background-color: rgba(100, 200, 255, 0.4);
+.appicon.folder.drag-over,
+.appicon.drag-over:not(.folder) {
+  background-color: rgba(66, 133, 244, 0.3);
+  border-radius: var(--radius-md);
   transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--primary-color), var(--shadow-md);
 }
 
-/* フォルダーモーダル */
+/* ========================================
+   Widget Styles
+   ======================================== */
+
+.widget {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  z-index: 0;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ドラッグ中のウィジェット */
+.widget[style*="position: absolute"] {
+  transition: none;
+  will-change: left, top;
+}
+
+/* ========================================
+   Modal Overlay
+   ======================================== */
+
+.modal_overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn var(--transition-fast);
+}
+
+/* ブラー無効時 */
+body.no-blur .modal_overlay {
+  backdrop-filter: none;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ========================================
+   Modal Base Styles
+   ======================================== */
+
+.modal {
+  position: relative;
+  background-color: var(--surface-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp var(--transition-normal) ease-out;
+}
+
+.modal h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+/* ========================================
+   Escape Menu Modal
+   ======================================== */
+
+#escmenu_modal {
+  width: 340px;
+  padding: 32px;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+#escmenu_modal m3e-button {
+  position: static;
+  margin: 0;
+  width: 100%;
+  --m3e-button-height: 48px;
+}
+
+/* ========================================
+   Settings Modal
+   ======================================== */
+
+#settingsmenu_modal {
+  width: 850px;
+  height: 620px;
+  flex-direction: row;
+}
+
+#settings_sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, var(--surface-variant) 0%, #eef1f5 100%);
+  border-right: 1px solid var(--outline);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+#settings_sidebar m3e-nav-menu {
+  --m3e-nav-item-radius: 100px;
+  --m3e-nav-item-padding: 0 24px 0 16px;
+}
+
+#settings_content {
+  flex: 1;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  background-color: var(--surface-color);
+}
+
+#settings_content::-webkit-scrollbar {
+  width: 8px;
+}
+
+#settings_content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#settings_content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.settings_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--outline);
+}
+
+.settings_row:last-child {
+  border-bottom: none;
+}
+
+.settings_row label {
+  font-size: 0.95rem;
+  color: var(--on-surface);
+  font-weight: 500;
+}
+
+/* ========================================
+   Position Change Modal
+   ======================================== */
+
+#change_widget_position_modal_overlay {
+  background-color: rgba(0, 0, 0, 0.15);
+  backdrop-filter: none;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#change_widget_position_modal_overlay.grid-mode {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 80px 80px;
+  background-position: 20px 20px;
+}
+
+#change_widget_position_modal {
+  position: absolute;
+  bottom: 40px;
+  margin: 0;
+  width: 320px;
+  padding: 24px;
+  gap: 16px;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+#change_widget_position_modal .settings_row {
+  width: 100%;
+}
+
+#change_widget_position_modal m3e-button {
+  width: 100%;
+  --m3e-button-height: 44px;
+}
+
+/* ========================================
+   Add App Modal
+   ======================================== */
+
+#add_app_type_modal_overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#add_app_type_modal {
+  width: 340px;
+  padding: 32px;
+  gap: 16px;
+  align-items: center;
+}
+
+#add_app_type_modal h3 {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+#add_app_type_modal m3e-button {
+  width: 100%;
+  --m3e-button-height: 48px;
+}
+
+#add_newapp_modal_overlay,
+#add_linuxapp_modal_overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#add_newapp_modal,
+#add_linuxapp_modal {
+  width: 360px;
+  padding: 28px;
+  gap: 20px;
+}
+
+#add_newapp_modal h3,
+#add_linuxapp_modal h3 {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+#add_newapp_modal m3e-button,
+#add_linuxapp_modal m3e-button {
+  --m3e-button-height: 44px;
+}
+
+#add_newapp_modal img,
+#add_linuxapp_modal img {
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Checkbox styling */
+#add_linuxapp_modal input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+#add_linuxapp_modal label[for="linux_app_run_in_terminal"] {
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+/* ========================================
+   Folder Modal
+   ======================================== */
+
 #folder_modal_overlay {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
 #folder_modal {
-  width: 350px;
-  height: auto;
-  max-height: 500px;
-  padding: 24px;
-  gap: 16px;
+  width: 380px;
+  max-height: 520px;
+  padding: 28px;
+  gap: 20px;
 }
 
 #folder_title_container {
@@ -220,54 +508,179 @@ body {
 }
 
 #folder_modal h3 {
-  margin: 0;
-  text-align: center;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+  display: inline-block;
 }
 
 #folder_modal h3:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
 #folder_title_input {
-  font-size: 1.17em;
-  font-weight: bold;
+  font-size: 1.25rem;
+  font-weight: 500;
   text-align: center;
-  border: 2px solid #1976d2;
-  border-radius: 8px;
-  padding: 4px 8px;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
   width: 200px;
   outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+#folder_title_input:focus {
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
 }
 
 #folder_contents {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
-  padding: 16px;
-  min-height: 100px;
-  background-color: #f5f5f5;
-  border-radius: 12px;
+  padding: 20px;
+  min-height: 120px;
+  background: linear-gradient(135deg, var(--surface-variant) 0%, #eef1f5 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--outline);
 }
 
 #folder_contents .appicon {
   background-color: transparent;
 }
 
-#folder_contents .appicon:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+#folder_contents .appicon > p {
+  color: var(--on-surface);
+  text-shadow: none;
 }
 
-/* ドラッグオーバー時のハイライト */
-.appicon.drag-over:not(.folder) {
-  background-color: rgba(100, 200, 255, 0.4);
-  border-radius: 12px;
-  transform: scale(1.1);
+#folder_contents .appicon:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
+
+#folder_modal m3e-button {
+  width: 100%;
+  --m3e-button-height: 44px;
+}
+
+/* ========================================
+   Edit App Modals
+   ======================================== */
+
+#edit_webapp_modal_overlay,
+#edit_linuxapp_modal_overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#edit_webapp_modal,
+#edit_linuxapp_modal {
+  width: 360px;
+  padding: 28px;
+  gap: 20px;
+}
+
+#edit_webapp_modal h3,
+#edit_linuxapp_modal h3 {
+  text-align: center;
+  margin-bottom: var(--space-sm);
+}
+
+#edit_webapp_modal m3e-button,
+#edit_linuxapp_modal m3e-button {
+  --m3e-button-height: 44px;
+}
+
+#edit_webapp_modal img,
+#edit_linuxapp_modal img {
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  display: block;
+}
+
+/* Checkbox styling for edit modals */
+#edit_linuxapp_modal input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+#edit_linuxapp_modal label[for="edit_linuxapp_run_in_terminal"] {
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+/* ========================================
+   Modal Button Layout
+   ======================================== */
+
+.modal-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.modal-buttons m3e-button {
+  flex: 1;
+}
+
+/* ========================================
+   Settings FAB Button
+   ======================================== */
+
+#settings_fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  transition: all var(--transition-normal);
+}
+
+/* ブラー無効時 */
+body.no-blur #settings_fab {
+  backdrop-filter: none;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+#settings_fab:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+#settings_fab:active {
+  transform: scale(0.95);
+  box-shadow: var(--shadow-md);
+}
+
+#settings_fab m3e-icon {
+  font-size: 24px;
+  color: var(--on-surface-variant);
+  transition: transform var(--transition-slow);
+}
+
+#settings_fab:hover m3e-icon {
+  transform: rotate(45deg);
+}
+
+/* ========================================
+   Test Widget
+   ======================================== */
 
 #test_widget {
   position: fixed;
@@ -276,36 +689,230 @@ body {
   z-index: 0;
 }
 
-/* 右下の設定ボタン (FAB) */
-#settings_fab {
+/* ========================================
+   Scrollbar Styling
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+/* ========================================
+   Context Menu
+   ======================================== */
+
+.context-menu {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  border: none;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(40, 40, 45, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: contextMenuIn var(--transition-fast) ease-out;
+  transform-origin: top left;
+}
+
+@keyframes contextMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.context-menu-item {
+  padding: 12px 16px;
   cursor: pointer;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  font-weight: 450;
+  transition: all var(--transition-fast);
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 50;
-  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+  gap: var(--space-sm);
 }
 
-#settings_fab:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  background-color: rgba(255, 255, 255, 1);
+.context-menu-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
 }
 
-#settings_fab:active {
-  transform: scale(0.95);
+.context-menu-item:active {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(0.98);
 }
 
-#settings_fab m3e-icon {
-  font-size: 24px;
-  color: #333;
+.context-menu-item.danger {
+  color: #ff6b6b;
+}
+
+.context-menu-item.danger:hover {
+  background: rgba(255, 107, 107, 0.15);
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: var(--space-xs) 0;
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.hidden {
+  display: none !important;
+}
+
+.fade-in {
+  animation: fadeIn var(--transition-normal);
+}
+
+/* ========================================
+   Folder Item Drag
+   ======================================== */
+
+.folder-item {
+  cursor: grab;
+  touch-action: none;
+}
+
+.folder-item:active {
+  cursor: grabbing;
+}
+
+.folder-drag-clone {
+  background: rgba(40, 40, 45, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* ブラー無効時のコンテキストメニュー */
+body.no-blur .context-menu {
+  backdrop-filter: none;
+  background: rgba(40, 40, 45, 0.98);
+}
+
+body.no-blur .folder-drag-clone {
+  backdrop-filter: none;
+}
+
+/* ========================================
+   Form Field Improvements
+   ======================================== */
+
+m3e-form-field {
+  --m3e-form-field-border-radius: var(--radius-sm);
+}
+
+/* Select styling */
+select {
+  appearance: none;
+  background-color: var(--surface-variant);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  padding: 10px 36px 10px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235f6368' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+select:hover {
+  border-color: var(--primary-color);
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.15);
+}
+
+/* Checkbox label styling */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+  padding: var(--space-sm) 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-label span {
+  user-select: none;
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ========================================
+   Accessibility Focus States
+   ======================================== */
+
+.appicon:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+m3e-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+  .modal_overlay,
+  #settings_fab,
+  .context-menu {
+    display: none !important;
+  }
 }

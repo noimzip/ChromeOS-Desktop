@@ -1,4 +1,4 @@
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 const { WebSocketServer } = require('ws');
 
 const wss = new WebSocketServer({ port: 25600 });
@@ -15,6 +15,11 @@ wss.on('connection', ws => {
   sendRequestToChrome = data => {
     ws.send(JSON.stringify(data));
   };
+});
+
+// Linuxアプリ起動用関数をグローバルに公開
+contextBridge.exposeInMainWorld('electronAPI', {
+  launchLinuxApp: (command) => ipcRenderer.invoke('launch-linux-app', command)
 });
 
 window.addEventListener('DOMContentLoaded', () => {
