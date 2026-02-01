@@ -38,6 +38,24 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
   change_widget_position_modal_overlay.style.display = 'flex';
 
   document.querySelectorAll(".appicon,.widget").forEach(item => {
+    // 位置変更モード中はクリックイベントを無効化
+    item.dataset.originalOnclick = item.onclick ? 'has-onclick' : '';
+    item._savedOnclick = item.onclick;
+    item.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    
+    // リンクタグのデフォルト動作も無効化
+    const links = item.querySelectorAll('a');
+    links.forEach(link => {
+      link.dataset.originalHref = link.href;
+      link.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+    });
+
     item.onpointermove = function(event){
       if(event.buttons){
           this.style.left     = this.offsetLeft + event.movementX + 'px'
@@ -52,6 +70,26 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
 
 document.getElementById('close_change_widget_position_modal').onclick = () => {
   change_widget_position_modal_overlay.style.display = 'none';
+  
+  // 位置変更モード終了時にクリックイベントを復元
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
+    if (item._savedOnclick) {
+      item.onclick = item._savedOnclick;
+    } else if (!item.dataset.originalOnclick) {
+      item.onclick = null;
+    }
+    delete item._savedOnclick;
+    delete item.dataset.originalOnclick;
+    
+    // リンクタグのクリックイベントを復元
+    const links = item.querySelectorAll('a');
+    links.forEach(link => {
+      link.onclick = null;
+    });
+    
+    // ポインター移動イベントを削除
+    item.onpointermove = null;
+  });
 }
 
 document.getElementById('save_change_widget_position').onclick = () => {
@@ -68,6 +106,26 @@ document.getElementById('save_change_widget_position').onclick = () => {
   });
   localStorage.setItem('widgetPositions', JSON.stringify(positions));
   change_widget_position_modal_overlay.style.display = 'none';
+  
+  // 位置変更モード終了時にクリックイベントを復元
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
+    if (item._savedOnclick) {
+      item.onclick = item._savedOnclick;
+    } else if (!item.dataset.originalOnclick) {
+      item.onclick = null;
+    }
+    delete item._savedOnclick;
+    delete item.dataset.originalOnclick;
+    
+    // リンクタグのクリックイベントを復元
+    const links = item.querySelectorAll('a');
+    links.forEach(link => {
+      link.onclick = null;
+    });
+    
+    // ポインター移動イベントを削除
+    item.onpointermove = null;
+  });
 }
 
 document.getElementById('appicon-add').onclick = () => {
