@@ -271,6 +271,80 @@
       </div>
     </div>
 
+    <!-- Linuxアプリ追加モーダル -->
+    <div id="add_linuxapp_modal_overlay" class="modal_overlay">
+      <div id="add_linuxapp_modal" class="modal">
+        <h3 data-i18n="add_linux_app">Linuxアプリを追加</h3>
+        <input type="file" id="linux_app_image_file" accept="image/*" style="display: none;">
+        <m3e-button variant="filled" data-i18n="upload_image" id="linux_app_image_trigger">アプリ画像をアップロード</m3e-button>
+        <img id="linux_app_image_preview" src="" style="display: none; max-width: 50px; max-height: 50px; margin: 0 auto;">
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="linux_app_name" data-i18n="app_name">アプリ名</label>
+          <input id="linux_app_name" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="linux_app_command" data-i18n="command">コマンド</label>
+          <input id="linux_app_command" placeholder="例: code, firefox, gimp" />
+        </m3e-form-field>
+        <div style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
+          <input type="checkbox" id="linux_app_run_in_terminal" />
+          <label for="linux_app_run_in_terminal" data-i18n="run_in_terminal">ターミナルで実行</label>
+        </div>
+        <m3e-button variant="filled" id="close_add_linuxapp_modal" data-i18n="close">とじる</m3e-button>
+        <m3e-button variant="filled" data-i18n="add" id="save_linux_app">追加</m3e-button>
+      </div>
+    </div>
+
+    <!-- アプリコンテキストメニュー -->
+    <div id="app_context_menu" class="context-menu" style="display: none;">
+      <div class="context-menu-item" id="context_edit" data-i18n="edit">編集</div>
+      <div class="context-menu-item" id="context_delete" data-i18n="delete">削除</div>
+    </div>
+
+    <!-- Webアプリ編集モーダル -->
+    <div id="edit_webapp_modal_overlay" class="modal_overlay">
+      <div id="edit_webapp_modal" class="modal">
+        <h3 data-i18n="edit_app">アプリを編集</h3>
+        <input type="file" id="edit_webapp_image_file" accept="image/*" style="display: none;">
+        <m3e-button variant="filled" data-i18n="change_image" id="edit_webapp_image_trigger">画像を変更</m3e-button>
+        <img id="edit_webapp_image_preview" src="" style="max-width: 50px; max-height: 50px; margin: 0 auto;">
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_webapp_name" data-i18n="app_name">アプリ名</label>
+          <input id="edit_webapp_name" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_webapp_url" data-i18n="url">URL</label>
+          <input id="edit_webapp_url" />
+        </m3e-form-field>
+        <m3e-button variant="filled" id="close_edit_webapp_modal" data-i18n="close">とじる</m3e-button>
+        <m3e-button variant="filled" data-i18n="save" id="save_edit_webapp">保存</m3e-button>
+      </div>
+    </div>
+
+    <!-- Linuxアプリ編集モーダル -->
+    <div id="edit_linuxapp_modal_overlay" class="modal_overlay">
+      <div id="edit_linuxapp_modal" class="modal">
+        <h3 data-i18n="edit_linux_app">Linuxアプリを編集</h3>
+        <input type="file" id="edit_linuxapp_image_file" accept="image/*" style="display: none;">
+        <m3e-button variant="filled" data-i18n="change_image" id="edit_linuxapp_image_trigger">画像を変更</m3e-button>
+        <img id="edit_linuxapp_image_preview" src="" style="max-width: 50px; max-height: 50px; margin: 0 auto;">
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_linuxapp_name" data-i18n="app_name">アプリ名</label>
+          <input id="edit_linuxapp_name" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="edit_linuxapp_command" data-i18n="command">コマンド</label>
+          <input id="edit_linuxapp_command" />
+        </m3e-form-field>
+        <div style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
+          <input type="checkbox" id="edit_linuxapp_run_in_terminal" />
+          <label for="edit_linuxapp_run_in_terminal" data-i18n="run_in_terminal">ターミナルで実行</label>
+        </div>
+        <m3e-button variant="filled" id="close_edit_linuxapp_modal" data-i18n="close">とじる</m3e-button>
+        <m3e-button variant="filled" data-i18n="save" id="save_edit_linuxapp">保存</m3e-button>
+      </div>
+    </div>
+
     <!-- フォルダーモーダル -->
     <div id="folder_modal_overlay" class="modal_overlay">
       <div id="folder_modal" class="modal">
