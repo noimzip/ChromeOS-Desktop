@@ -2467,6 +2467,264 @@ document.getElementById('close_edit_linuxapp_modal').onclick = () => {
   document.getElementById('edit_linuxapp_modal_overlay').style.display = 'none';
 };
 
+// ========================================
+// GitHub Contribution ウィジェット
+// ========================================
+
+const githubContributionWidget = document.getElementById('github_contribution_widget');
+const githubGraph = document.getElementById('github_contribution_graph');
+const githubTotalContributions = document.getElementById('github_total_contributions');
+const githubCurrentStreak = document.getElementById('github_current_streak');
+const githubLongestStreak = document.getElementById('github_longest_streak');
+const githubUsernameDisplay = document.getElementById('github_username_display');
+const githubSettingsBtn = document.getElementById('github_settings_btn');
+const githubSettingsModal = document.getElementById('github_settings_modal_overlay');
+const githubUsernameInput = document.getElementById('github_username_input');
+
+/**
+ * GitHub コントリビューションデータを取得
+ * @param {string} username - GitHubユーザー名
+ * @returns {Promise<Object>}
+ */
+async function fetchGitHubContributions(username) {
+  if (!username) return null;
+  
+  try {
+    // GitHub GraphQL API または スクレイピング用のプロキシサービスを使用
+    // ここでは github-contributions-api を使用
+    const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=last`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch GitHub data');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('GitHub API error:', error);
+    return null;
+  }
+}
+
+/**
+ * コントリビューションレベルを計算（0-4）
+ * @param {number} count - コントリビューション数
+ * @returns {number}
+ */
+function getContributionLevel(count) {
+  if (count === 0) return 0;
+  if (count <= 3) return 1;
+  if (count <= 6) return 2;
+  if (count <= 9) return 3;
+  return 4;
+}
+
+/**
+ * ストリーク（連続日数）を計算
+ * @param {Array} contributions - コントリビューションデータの配列
+ * @returns {{current: number, longest: number}}
+ */
+function calculateStreaks(contributions) {
+  if (!contributions || contributions.length === 0) {
+    return { current: 0, longest: 0 };
+  }
+  
+  // 日付順にソート（新しい順）
+  const sorted = [...contributions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // 現在のストリークを計算
+  for (let i = 0; i < sorted.length; i++) {
+    const date = new Date(sorted[i].date);
+    date.setHours(0, 0, 0, 0);
+    const daysDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff === i || (daysDiff === i + 1 && i === 0)) {
+      if (sorted[i].count > 0) {
+        currentStreak++;
+      } else if (daysDiff > 0) {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  
+  // 最長ストリークを計算
+  const chronological = [...contributions].sort((a, b) => new Date(a.date) - new Date(b.date));
+  for (const day of chronological) {
+    if (day.count > 0) {
+      tempStreak++;
+      longestStreak = Math.max(longestStreak, tempStreak);
+    } else {
+      tempStreak = 0;
+    }
+  }
+  
+  return { current: currentStreak, longest: longestStreak };
+}
+
+/**
+ * GitHubコントリビューショングラフを描画
+ * @param {Object} data - GitHubのコントリビューションデータ
+ */
+function renderGitHubGraph(data) {
+  if (!githubGraph) return;
+  
+  githubGraph.innerHTML = '';
+  
+  if (!data || !data.contributions) {
+    githubGraph.innerHTML = `
+      <div class="github-error">
+        <m3e-icon name="error"></m3e-icon>
+        <span>データの取得に失敗しました</span>
+      </div>
+    `;
+    return;
+  }
+  
+  const contributions = data.contributions;
+  const total = data.total?.lastYear || contributions.reduce((sum, day) => sum + day.count, 0);
+  
+  // 過去52週+今週分のデータを表示
+  const today = new Date();
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - 364);
+  startDate.setDate(startDate.getDate() - startDate.getDay()); // 週の始めに調整
+  
+  // 日付でインデックスを作成
+  const contributionMap = {};
+  contributions.forEach(day => {
+    contributionMap[day.date] = day.count;
+  });
+  
+  // グラフを描画（週ごと列、日ごと行）
+  const fragment = document.createDocumentFragment();
+  let currentDate = new Date(startDate);
+  
+  for (let week = 0; week < 53; week++) {
+    for (let day = 0; day < 7; day++) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const count = contributionMap[dateStr] || 0;
+      const level = getContributionLevel(count);
+      
+      const dayEl = document.createElement('div');
+      dayEl.className = 'github-day';
+      dayEl.dataset.level = level;
+      dayEl.dataset.date = dateStr;
+      dayEl.dataset.count = count;
+      dayEl.title = `${dateStr}: ${count} contributions`;
+      
+      fragment.appendChild(dayEl);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+  
+  githubGraph.appendChild(fragment);
+  
+  // 統計を更新
+  const streaks = calculateStreaks(contributions);
+  
+  if (githubTotalContributions) {
+    githubTotalContributions.textContent = total.toLocaleString();
+  }
+  if (githubCurrentStreak) {
+    githubCurrentStreak.textContent = streaks.current;
+  }
+  if (githubLongestStreak) {
+    githubLongestStreak.textContent = streaks.longest;
+  }
+}
+
+/**
+ * GitHubウィジェットを更新
+ */
+async function updateGitHubWidget() {
+  const username = localStorage.getItem('githubUsername');
+  
+  if (!username) {
+    if (githubGraph) {
+      githubGraph.innerHTML = `
+        <div class="github-no-user">
+          <m3e-icon name="person_add"></m3e-icon>
+          <span>設定ボタンからユーザー名を設定してください</span>
+        </div>
+      `;
+    }
+    if (githubUsernameDisplay) {
+      githubUsernameDisplay.textContent = 'ユーザー名を設定してください';
+    }
+    return;
+  }
+  
+  if (githubUsernameDisplay) {
+    githubUsernameDisplay.textContent = `@${username}`;
+  }
+  
+  // ローディング表示
+  if (githubGraph) {
+    githubGraph.innerHTML = `
+      <div class="github-loading">
+        <m3e-icon name="hourglass_empty"></m3e-icon>
+        <span>読み込み中...</span>
+      </div>
+    `;
+  }
+  
+  const data = await fetchGitHubContributions(username);
+  renderGitHubGraph(data);
+}
+
+// GitHub設定モーダル
+if (githubSettingsBtn) {
+  // ドラッグイベントとの競合を防ぐ
+  githubSettingsBtn.onpointerdown = (e) => {
+    e.stopPropagation();
+  };
+  
+  githubSettingsBtn.onclick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const savedUsername = localStorage.getItem('githubUsername') || '';
+    if (githubUsernameInput) {
+      githubUsernameInput.value = savedUsername;
+    }
+    if (githubSettingsModal) {
+      githubSettingsModal.style.display = 'flex';
+    }
+  };
+}
+
+document.getElementById('close_github_settings_modal')?.addEventListener('click', () => {
+  if (githubSettingsModal) {
+    githubSettingsModal.style.display = 'none';
+  }
+});
+
+document.getElementById('save_github_settings')?.addEventListener('click', async () => {
+  const username = githubUsernameInput?.value?.trim();
+  if (username) {
+    localStorage.setItem('githubUsername', username);
+  } else {
+    localStorage.removeItem('githubUsername');
+  }
+  
+  if (githubSettingsModal) {
+    githubSettingsModal.style.display = 'none';
+  }
+  
+  await updateGitHubWidget();
+});
+
+// 初期化時にGitHubウィジェットを更新
+setTimeout(updateGitHubWidget, 1000);
+
+// 1時間ごとにGitHubウィジェットを更新
+setInterval(updateGitHubWidget, 60 * 60 * 1000);
+
 document.getElementById('save_edit_linuxapp').onclick = () => {
   const name = document.getElementById('edit_linuxapp_name').value.trim();
   const command = document.getElementById('edit_linuxapp_command').value.trim();

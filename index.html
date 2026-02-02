@@ -105,6 +105,57 @@
       </div>
     </div>
 
+    <!-- GitHubコントリビューションウィジェット -->
+    <div id="github_contribution_widget" class="github-contribution widget">
+      <div class="github-contribution-header">
+        <m3e-icon name="code" class="github-icon"></m3e-icon>
+        <span class="github-title">GitHub Contributions</span>
+        <button id="github_settings_btn" class="github-settings-btn" title="設定">
+          <m3e-icon name="settings"></m3e-icon>
+        </button>
+      </div>
+      <div class="github-contribution-content">
+        <div id="github_contribution_graph" class="github-graph">
+          <div class="github-loading">
+            <m3e-icon name="hourglass_empty"></m3e-icon>
+            <span>読み込み中...</span>
+          </div>
+        </div>
+        <div class="github-stats">
+          <div class="github-stat">
+            <span class="github-stat-value" id="github_total_contributions">-</span>
+            <span class="github-stat-label">contributions</span>
+          </div>
+          <div class="github-stat">
+            <span class="github-stat-value" id="github_current_streak">-</span>
+            <span class="github-stat-label">day streak</span>
+          </div>
+          <div class="github-stat">
+            <span class="github-stat-value" id="github_longest_streak">-</span>
+            <span class="github-stat-label">longest</span>
+          </div>
+        </div>
+      </div>
+      <div class="github-contribution-footer">
+        <span id="github_username_display">ユーザー名を設定してください</span>
+      </div>
+    </div>
+
+    <!-- GitHub設定モーダル -->
+    <div id="github_settings_modal_overlay" class="modal_overlay">
+      <div id="github_settings_modal" class="modal">
+        <h3>GitHub設定</h3>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="github_username_input">GitHubユーザー名</label>
+          <input id="github_username_input" placeholder="例: octocat" />
+        </m3e-form-field>
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="close_github_settings_modal">とじる</m3e-button>
+          <m3e-button variant="filled" id="save_github_settings">保存</m3e-button>
+        </div>
+      </div>
+    </div>
+
     <!-- 右下の設定ボタン -->
     <button id="settings_fab" title="設定">
       <m3e-icon name="settings"></m3e-icon>
