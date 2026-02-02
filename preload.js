@@ -64,6 +64,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   launchLinuxApp: (command) => ipcRenderer.invoke('launch-linux-app', command),
   getMediaInfo: () => ipcRenderer.invoke('get-media-info'),
   mediaControl: (action, value) => ipcRenderer.invoke('media-control', action, value),
+  // ファイル/フォルダ用API
+  openFileOrFolder: (filePath) => ipcRenderer.invoke('open-file-or-folder', filePath),
+  selectFile: () => ipcRenderer.invoke('select-file'),
+  selectFolder: () => ipcRenderer.invoke('select-folder'),
   // ブラウザメディア用API
   getBrowserMediaInfo: () => browserMediaInfo,
   browserMediaControl: (action, value) => {

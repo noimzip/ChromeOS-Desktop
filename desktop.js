@@ -1586,7 +1586,10 @@ const translations = {
     color_scheme: "カラースキーム",
     delete_all_data: "すべてのデータを削除",
     confirm_delete_all_data: "すべてのデータ（アプリ、フォルダ、設定など）を削除しますか？\nこの操作は取り消せません。",
-    data_deleted: "すべてのデータを削除しました。ページを再読み込みします。"
+    data_deleted: "すべてのデータを削除しました。ページを再読み込みします。",
+    file_shortcut: "ファイルのショートカット",
+    folder_shortcut: "フォルダのショートカット",
+    open_failed: "ファイル/フォルダを開けませんでした"
   },
   en: {
     files: "Files",
@@ -1643,7 +1646,10 @@ const translations = {
     color_scheme: "Color Scheme",
     delete_all_data: "Delete All Data",
     confirm_delete_all_data: "Delete all data (apps, folders, settings, etc.)?\nThis action cannot be undone.",
-    data_deleted: "All data has been deleted. Reloading page."
+    data_deleted: "All data has been deleted. Reloading page.",
+    file_shortcut: "File Shortcut",
+    folder_shortcut: "Folder Shortcut",
+    open_failed: "Failed to open file/folder"
   }
 };
 
@@ -2307,6 +2313,11 @@ document.getElementById('context_edit').onclick = (e) => {
     openEditWebappModal();
   } else if (currentContextAppType === 'linuxapp') {
     openEditLinuxappModal();
+  } else if (currentContextAppType === 'file' || currentContextAppType === 'folder-shortcut') {
+    // ファイル/フォルダショートカットは編集不可（パスは変更できない）
+    const lang = getCurrentLanguage();
+    const msg = lang === 'ja' ? 'ファイル/フォルダのショートカットは編集できません。削除して再度追加してください。' : 'File/folder shortcuts cannot be edited. Please delete and add again.';
+    alert(msg);
   }
 };
 
@@ -2315,10 +2326,11 @@ document.getElementById('context_delete').onclick = (e) => {
   e.stopPropagation();
   hideContextMenu();
   
-  if (!currentEditingIcon || !currentEditingApp) return;
+  if (!currentEditingIcon) return;
   
   const lang = getCurrentLanguage();
-  const confirmMsg = lang === 'ja' ? `「${currentEditingApp.name}」を削除しますか？` : `Delete "${currentEditingApp.name}"?`;
+  const appName = currentEditingApp?.name || currentEditingIcon._fileData?.name || 'Unknown';
+  const confirmMsg = lang === 'ja' ? `「${appName}」を削除しますか？` : `Delete "${appName}"?`;
   
   if (confirm(confirmMsg)) {
     const saveKey = currentEditingIcon.dataset.saveKey;
@@ -2332,6 +2344,14 @@ document.getElementById('context_delete').onclick = (e) => {
       const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
       const newApps = linuxApps.filter(a => !(a.name === currentEditingApp.name && a.command === currentEditingApp.command));
       localStorage.setItem('linuxApps', JSON.stringify(newApps));
+    } else if (currentContextAppType === 'file') {
+      const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+      const newShortcuts = fileShortcuts.filter(f => f.path !== currentEditingIcon._filePath);
+      localStorage.setItem('fileShortcuts', JSON.stringify(newShortcuts));
+    } else if (currentContextAppType === 'folder-shortcut') {
+      const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+      const newShortcuts = folderShortcuts.filter(f => f.path !== currentEditingIcon._filePath);
+      localStorage.setItem('folderShortcuts', JSON.stringify(newShortcuts));
     }
     
     // 位置データも削除
@@ -2778,3 +2798,250 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
   
   document.getElementById('edit_linuxapp_modal_overlay').style.display = 'none';
 };
+
+// ========================================
+// ファイル/フォルダショートカット機能
+// ========================================
+
+/**
+ * ファイルまたはフォルダを開く
+ * @param {string} filePath - ファイル/フォルダのパス
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function openFileOrFolder(filePath) {
+  if (window.electronAPI && window.electronAPI.openFileOrFolder) {
+    return await window.electronAPI.openFileOrFolder(filePath);
+  }
+  return { success: false, error: 'Electron API not available' };
+}
+
+/**
+ * ファイルショートカットのアイコンを作成
+ * @param {Object} fileData - ファイルデータ
+ */
+function createFileShortcutIcon(fileData) {
+  const div = document.createElement('div');
+  div.className = 'appicon file-shortcut';
+  const saveKey = fileData.saveKey || ('file-shortcut-' + fileData.name.replace(/\s+/g, '-') + '-' + Date.now());
+  div.dataset.saveKey = saveKey;
+  div._filePath = fileData.path;
+  div._fileData = { ...fileData, saveKey };
+  
+  // saveKeyがなかった場合はlocalStorageを更新
+  if (!fileData.saveKey) {
+    const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+    const index = fileShortcuts.findIndex(f => f.path === fileData.path);
+    if (index !== -1) {
+      fileShortcuts[index].saveKey = saveKey;
+      localStorage.setItem('fileShortcuts', JSON.stringify(fileShortcuts));
+    }
+  }
+  
+  // ファイルタイプに応じたアイコンを設定
+  const iconSrc = fileData.icon || getFileIcon(fileData.path, fileData.isDirectory);
+  
+  div.innerHTML = `
+    <img src="${iconSrc}" height="50" width="50" />
+    <p>${fileData.name}</p>
+  `;
+  
+  div.onclick = async () => {
+    console.log('Opening file/folder:', fileData.path);
+    const result = await openFileOrFolder(fileData.path);
+    if (!result.success) {
+      const lang = getCurrentLanguage();
+      alert(translations[lang].open_failed + ': ' + result.error);
+    }
+  };
+  
+  div.oncontextmenu = (e) => {
+    e.preventDefault();
+    showContextMenu(e, div, 'file');
+  };
+  
+  const addBtn = document.getElementById('appicon-add');
+  if (addBtn && addBtn.parentNode) {
+    addBtn.parentNode.insertBefore(div, addBtn);
+  }
+  
+  // 保存された位置を復元
+  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  if (positions[saveKey]) {
+    div.style.position = positions[saveKey].position;
+    div.style.left = positions[saveKey].left;
+    div.style.top = positions[saveKey].top;
+  }
+  
+  // 通常モードのドラッグを設定
+  setupNormalModeDrag(div);
+}
+
+/**
+ * フォルダショートカットのアイコンを作成
+ * @param {Object} folderData - フォルダデータ
+ */
+function createFolderShortcutIcon(folderData) {
+  const div = document.createElement('div');
+  div.className = 'appicon folder-shortcut';
+  const saveKey = folderData.saveKey || ('folder-shortcut-' + folderData.name.replace(/\s+/g, '-') + '-' + Date.now());
+  div.dataset.saveKey = saveKey;
+  div._filePath = folderData.path;
+  div._fileData = { ...folderData, saveKey };
+  
+  // saveKeyがなかった場合はlocalStorageを更新
+  if (!folderData.saveKey) {
+    const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+    const index = folderShortcuts.findIndex(f => f.path === folderData.path);
+    if (index !== -1) {
+      folderShortcuts[index].saveKey = saveKey;
+      localStorage.setItem('folderShortcuts', JSON.stringify(folderShortcuts));
+    }
+  }
+  
+  // フォルダアイコン
+  const iconSrc = folderData.icon || './assets/folder.svg';
+  
+  div.innerHTML = `
+    <img src="${iconSrc}" height="50" width="50" />
+    <p>${folderData.name}</p>
+  `;
+  
+  div.onclick = async () => {
+    console.log('Opening folder:', folderData.path);
+    const result = await openFileOrFolder(folderData.path);
+    if (!result.success) {
+      const lang = getCurrentLanguage();
+      alert(translations[lang].open_failed + ': ' + result.error);
+    }
+  };
+  
+  div.oncontextmenu = (e) => {
+    e.preventDefault();
+    showContextMenu(e, div, 'folder-shortcut');
+  };
+  
+  const addBtn = document.getElementById('appicon-add');
+  if (addBtn && addBtn.parentNode) {
+    addBtn.parentNode.insertBefore(div, addBtn);
+  }
+  
+  // 保存された位置を復元
+  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  if (positions[saveKey]) {
+    div.style.position = positions[saveKey].position;
+    div.style.left = positions[saveKey].left;
+    div.style.top = positions[saveKey].top;
+  }
+  
+  // 通常モードのドラッグを設定
+  setupNormalModeDrag(div);
+}
+
+/**
+ * ファイルの拡張子からアイコンを取得
+ * @param {string} filePath - ファイルパス
+ * @param {boolean} isDirectory - ディレクトリかどうか
+ * @returns {string} アイコンのパス
+ */
+function getFileIcon(filePath, isDirectory) {
+  if (isDirectory) {
+    return './assets/folder.svg';
+  }
+  
+  // デフォルトはファイルアイコン
+  return './assets/file.svg';
+}
+
+// ファイル追加ボタンのイベント
+document.getElementById('add_file_btn')?.addEventListener('click', async () => {
+  // モーダルを閉じる
+  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  
+  // ファイル選択ダイアログを開く
+  if (window.electronAPI && window.electronAPI.selectFile) {
+    const result = await window.electronAPI.selectFile();
+    if (!result.canceled) {
+      const fileData = {
+        name: result.name,
+        path: result.path,
+        isDirectory: result.isDirectory,
+        saveKey: 'file-shortcut-' + result.name.replace(/\s+/g, '-') + '-' + Date.now()
+      };
+      
+      // localStorageに保存
+      const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+      fileShortcuts.push(fileData);
+      localStorage.setItem('fileShortcuts', JSON.stringify(fileShortcuts));
+      
+      // アイコンを作成
+      createFileShortcutIcon(fileData);
+    }
+  }
+});
+
+// フォルダ追加ボタンのイベント
+document.getElementById('add_folder_btn')?.addEventListener('click', async () => {
+  // モーダルを閉じる
+  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  
+  // フォルダ選択ダイアログを開く
+  if (window.electronAPI && window.electronAPI.selectFolder) {
+    const result = await window.electronAPI.selectFolder();
+    if (!result.canceled) {
+      const folderData = {
+        name: result.name,
+        path: result.path,
+        isDirectory: true,
+        saveKey: 'folder-shortcut-' + result.name.replace(/\s+/g, '-') + '-' + Date.now()
+      };
+      
+      // localStorageに保存
+      const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+      folderShortcuts.push(folderData);
+      localStorage.setItem('folderShortcuts', JSON.stringify(folderShortcuts));
+      
+      // アイコンを作成
+      createFolderShortcutIcon(folderData);
+    }
+  }
+});
+
+// Helper function to check if a file shortcut is in any folder
+function isFileShortcutInFolder(file) {
+  for (const folderId in folders) {
+    const folderData = folders[folderId];
+    const found = folderData.apps.some(folderApp => 
+      folderApp.path && folderApp.path === file.path
+    );
+    if (found) return true;
+  }
+  return false;
+}
+
+// Helper function to check if a folder shortcut is in any folder
+function isFolderShortcutInFolder(folder) {
+  for (const folderId in folders) {
+    const folderData = folders[folderId];
+    const found = folderData.apps.some(folderApp => 
+      folderApp.path && folderApp.path === folder.path
+    );
+    if (found) return true;
+  }
+  return false;
+}
+
+// 保存されたファイルショートカットを読み込み
+const savedFileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+savedFileShortcuts.forEach(file => {
+  if (!isFileShortcutInFolder(file)) {
+    createFileShortcutIcon(file);
+  }
+});
+
+// 保存されたフォルダショートカットを読み込み
+const savedFolderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+savedFolderShortcuts.forEach(folder => {
+  if (!isFolderShortcutInFolder(folder)) {
+    createFolderShortcutIcon(folder);
+  }
+});
