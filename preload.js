@@ -92,15 +92,4 @@ window.addEventListener('DOMContentLoaded', () => {
       sendRequestToChrome({request: 'openURL', url: url});
     }
   });
-  
-  // Linuxアプリを起動する関数を公開
-  contextBridge.exposeInMainWorld('launchLinuxApp', async (command) => {
-    try {
-      const result = await ipcRenderer.invoke('launch-linux-app', command);
-      return { success: true, result };
-    } catch (error) {
-      console.error('Failed to launch Linux app:', error);
-      return { success: false, error };
-    }
-  });
 })
