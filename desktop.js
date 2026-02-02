@@ -1592,7 +1592,10 @@ const translations = {
     open_failed: "ファイル/フォルダを開けませんでした",
     icon_shape: "アイコンの形",
     square: "正方形",
-    circle: "円形"
+    circle: "円形",
+    window_count: "ウィンドウ数（仮想デスクトップ用）",
+    apply_restart: "適用して再起動",
+    confirm_restart: "ウィンドウ数を変更するにはアプリを再起動する必要があります。再起動しますか？"
   },
   en: {
     files: "Files",
@@ -1655,7 +1658,10 @@ const translations = {
     open_failed: "Failed to open file/folder",
     icon_shape: "Icon Shape",
     square: "Square",
-    circle: "Circle"
+    circle: "Circle",
+    window_count: "Window Count (for Virtual Desktops)",
+    apply_restart: "Apply & Restart",
+    confirm_restart: "The app needs to restart to change window count. Restart now?"
   }
 };
 
@@ -1971,6 +1977,42 @@ if (iconShapeSelector) {
   
   iconShapeSelector.onchange = () => {
     updateIconShape(iconShapeSelector.value);
+  };
+}
+
+// ウィンドウ数の設定
+const windowCountSelector = document.getElementById('window_count_selector');
+const applyWindowCountBtn = document.getElementById('apply_window_count');
+
+// ウィンドウ数セレクターの初期化
+async function initWindowCountSelector() {
+  if (windowCountSelector && window.electronAPI && window.electronAPI.getWindowCount) {
+    try {
+      const currentCount = await window.electronAPI.getWindowCount();
+      windowCountSelector.value = currentCount.toString();
+    } catch (e) {
+      console.error('Failed to get window count:', e);
+    }
+  }
+}
+
+// 初期化実行
+initWindowCountSelector();
+
+// 適用ボタンのイベント
+if (applyWindowCountBtn && windowCountSelector) {
+  applyWindowCountBtn.onclick = async () => {
+    const newCount = parseInt(windowCountSelector.value, 10);
+    const lang = getCurrentLanguage();
+    
+    if (confirm(translations[lang].confirm_restart)) {
+      if (window.electronAPI && window.electronAPI.setWindowCount) {
+        await window.electronAPI.setWindowCount(newCount);
+      }
+      if (window.electronAPI && window.electronAPI.restartApp) {
+        await window.electronAPI.restartApp();
+      }
+    }
   };
 }
 
