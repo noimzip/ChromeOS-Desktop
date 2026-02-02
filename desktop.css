@@ -468,11 +468,30 @@ body.no-blur .appicon:hover {
   width: 48px;
   object-fit: contain;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-fast), border-radius var(--transition-normal);
+  border-radius: var(--radius-sm);
 }
 
 .appicon:hover > img {
   transform: scale(1.08);
+}
+
+/* 円形アイコンモード */
+body.icon-shape-circle .appicon > img {
+  border-radius: 50%;
+}
+
+body.icon-shape-circle .appicon.folder .folder-preview {
+  border-radius: 50%;
+}
+
+/* 正方形アイコンモード（デフォルト） */
+body.icon-shape-square .appicon > img {
+  border-radius: var(--radius-sm);
+}
+
+body.icon-shape-square .appicon.folder .folder-preview {
+  border-radius: var(--radius-md);
 }
 
 /* ========================================

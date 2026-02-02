@@ -1589,7 +1589,10 @@ const translations = {
     data_deleted: "すべてのデータを削除しました。ページを再読み込みします。",
     file_shortcut: "ファイルのショートカット",
     folder_shortcut: "フォルダのショートカット",
-    open_failed: "ファイル/フォルダを開けませんでした"
+    open_failed: "ファイル/フォルダを開けませんでした",
+    icon_shape: "アイコンの形",
+    square: "正方形",
+    circle: "円形"
   },
   en: {
     files: "Files",
@@ -1649,7 +1652,10 @@ const translations = {
     data_deleted: "All data has been deleted. Reloading page.",
     file_shortcut: "File Shortcut",
     folder_shortcut: "Folder Shortcut",
-    open_failed: "Failed to open file/folder"
+    open_failed: "Failed to open file/folder",
+    icon_shape: "Icon Shape",
+    square: "Square",
+    circle: "Circle"
   }
 };
 
@@ -1938,6 +1944,33 @@ if (toggleDarkModeBtn) {
   toggleDarkModeBtn.onclick = () => {
     const currentlyEnabled = document.body.classList.contains('dark-mode');
     updateDarkMode(!currentlyEnabled);
+  };
+}
+
+// アイコン形状の設定
+const iconShapeSelector = document.getElementById('icon_shape_selector');
+
+function updateIconShape(shape) {
+  // 既存のshapeクラスを削除
+  document.body.classList.remove('icon-shape-circle', 'icon-shape-square');
+  
+  // 新しいshapeクラスを追加
+  document.body.classList.add(`icon-shape-${shape}`);
+  localStorage.setItem('iconShape', shape);
+  
+  // セレクターの値を更新
+  if (iconShapeSelector) {
+    iconShapeSelector.value = shape;
+  }
+}
+
+if (iconShapeSelector) {
+  // 保存された設定を復元（デフォルトは正方形）
+  const savedShape = localStorage.getItem('iconShape') || 'square';
+  updateIconShape(savedShape);
+  
+  iconShapeSelector.onchange = () => {
+    updateIconShape(iconShapeSelector.value);
   };
 }
 
