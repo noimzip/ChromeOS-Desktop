@@ -3,6 +3,50 @@ const path = require('path');
 const { exec } = require('child_process');
 const fs = require('fs');
 
+// 設定ファイルのパス
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+
+// 設定を読み込む
+function loadSettings() {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Failed to load settings:', e);
+  }
+  return { windowCount: 1 };
+}
+
+// 設定を保存
+function saveSettings(settings) {
+  try {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  } catch (e) {
+    console.error('Failed to save settings:', e);
+  }
+}
+
+// ウィンドウ数を取得するIPCハンドラ
+ipcMain.handle('get-window-count', async () => {
+  const settings = loadSettings();
+  return settings.windowCount || 1;
+});
+
+// ウィンドウ数を設定するIPCハンドラ
+ipcMain.handle('set-window-count', async (event, count) => {
+  const settings = loadSettings();
+  settings.windowCount = Math.max(1, Math.min(10, count)); // 1-10の範囲に制限
+  saveSettings(settings);
+  return settings.windowCount;
+});
+
+// アプリを再起動するIPCハンドラ
+ipcMain.handle('restart-app', async () => {
+  app.relaunch();
+  app.exit(0);
+});
+
 // ファイル/フォルダを開くIPCハンドラ
 ipcMain.handle('open-file-or-folder', async (event, filePath) => {
   return new Promise((resolve) => {
@@ -137,32 +181,48 @@ ipcMain.handle('media-control', async (event, action, value) => {
 
 app.whenReady().then(() => {
   const { screen } = require('electron');
-  // Create a window that fills the screen's available work area.
-  const primaryDisplay = screen.getPrimaryDisplay()
+  const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.workAreaSize;
 
-  console.log(width, height);
+  console.log('Screen size:', width, height);
 
-  const win = new BrowserWindow({
-    x: 0,
-    y: 0,
-    width: width,
-    height: height,
-    frame: false,
-    transparent: true,
-    webPreferences: {
-      preload: path.join(process.cwd(), 'preload.js'),
-      sandbox: false
+  // 設定からウィンドウ数を取得
+  const settings = loadSettings();
+  const windowCount = settings.windowCount || 1;
+  
+  console.log('Creating', windowCount, 'window(s)');
+
+  // 複数のウィンドウを作成
+  const windows = [];
+  for (let i = 0; i < windowCount; i++) {
+    const win = new BrowserWindow({
+      x: 0,
+      y: 0,
+      width: width,
+      height: height,
+      frame: false,
+      transparent: true,
+      webPreferences: {
+        preload: path.join(process.cwd(), 'preload.js'),
+        sandbox: false
+      }
+    });
+
+    win.webContents.setWindowOpenHandler(({ url }) => {
+      if (url.startsWith('http')) {
+        shell.openExternal(url);
+      }
+      return { action: 'deny' };
+    });
+
+    // ウィンドウIDを渡してロード
+    win.loadFile('index.html', { query: { windowId: i.toString() } });
+    
+    // 最初のウィンドウのみDevToolsを開く
+    if (i === 0) {
+      win.webContents.openDevTools();
     }
-  })
-
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('http')) {
-      shell.openExternal(url)
-    }
-    return { action: 'deny' }
-  })
-
-  win.loadFile('index.html')
-  win.webContents.openDevTools()
-})
+    
+    windows.push(win);
+  }
+});

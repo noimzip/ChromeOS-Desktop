@@ -68,6 +68,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openFileOrFolder: (filePath) => ipcRenderer.invoke('open-file-or-folder', filePath),
   selectFile: () => ipcRenderer.invoke('select-file'),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
+  // ウィンドウ数設定用API
+  getWindowCount: () => ipcRenderer.invoke('get-window-count'),
+  setWindowCount: (count) => ipcRenderer.invoke('set-window-count', count),
+  restartApp: () => ipcRenderer.invoke('restart-app'),
   // ブラウザメディア用API
   getBrowserMediaInfo: () => browserMediaInfo,
   browserMediaControl: (action, value) => {

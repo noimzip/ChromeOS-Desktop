@@ -438,6 +438,22 @@
               <option value="circle" data-i18n="circle">円形</option>
             </select>
           </div>
+          <div class="settings_row">
+            <span data-i18n="window_count">ウィンドウ数（仮想デスクトップ用）</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <select id="window_count_selector">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
+              <m3e-button variant="outlined" id="apply_window_count" data-i18n="apply_restart">適用して再起動</m3e-button>
+            </div>
+          </div>
           <div class="settings_row settings_row_danger">
             <span data-i18n="delete_all_data">すべてのデータを削除</span>
             <m3e-button variant="filled" id="delete_all_data_btn" class="danger-button" data-i18n="delete">削除</m3e-button>
