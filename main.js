@@ -1,6 +1,63 @@
-const { app, BrowserWindow, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { exec } = require('child_process');
+const fs = require('fs');
+
+// ファイル/フォルダを開くIPCハンドラ
+ipcMain.handle('open-file-or-folder', async (event, filePath) => {
+  return new Promise((resolve) => {
+    // xdg-openを使ってデフォルトアプリケーションで開く
+    exec(`xdg-open "${filePath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Open error:', error.message);
+        resolve({ success: false, error: error.message });
+      } else {
+        resolve({ success: true });
+      }
+    });
+  });
+});
+
+// ファイル選択ダイアログ
+ipcMain.handle('select-file', async (event) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    title: 'ファイルを選択'
+  });
+  
+  if (result.canceled || result.filePaths.length === 0) {
+    return { canceled: true };
+  }
+  
+  const filePath = result.filePaths[0];
+  const stats = fs.statSync(filePath);
+  return {
+    canceled: false,
+    path: filePath,
+    name: path.basename(filePath),
+    isDirectory: stats.isDirectory()
+  };
+});
+
+// フォルダ選択ダイアログ
+ipcMain.handle('select-folder', async (event) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory'],
+    title: 'フォルダを選択'
+  });
+  
+  if (result.canceled || result.filePaths.length === 0) {
+    return { canceled: true };
+  }
+  
+  const folderPath = result.filePaths[0];
+  return {
+    canceled: false,
+    path: folderPath,
+    name: path.basename(folderPath),
+    isDirectory: true
+  };
+});
 
 // Linuxアプリ起動用IPCハンドラ
 ipcMain.handle('launch-linux-app', async (event, command) => {

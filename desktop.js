@@ -1586,7 +1586,10 @@ const translations = {
     color_scheme: "カラースキーム",
     delete_all_data: "すべてのデータを削除",
     confirm_delete_all_data: "すべてのデータ（アプリ、フォルダ、設定など）を削除しますか？\nこの操作は取り消せません。",
-    data_deleted: "すべてのデータを削除しました。ページを再読み込みします。"
+    data_deleted: "すべてのデータを削除しました。ページを再読み込みします。",
+    file_shortcut: "ファイルのショートカット",
+    folder_shortcut: "フォルダのショートカット",
+    open_failed: "ファイル/フォルダを開けませんでした"
   },
   en: {
     files: "Files",
@@ -1643,7 +1646,10 @@ const translations = {
     color_scheme: "Color Scheme",
     delete_all_data: "Delete All Data",
     confirm_delete_all_data: "Delete all data (apps, folders, settings, etc.)?\nThis action cannot be undone.",
-    data_deleted: "All data has been deleted. Reloading page."
+    data_deleted: "All data has been deleted. Reloading page.",
+    file_shortcut: "File Shortcut",
+    folder_shortcut: "Folder Shortcut",
+    open_failed: "Failed to open file/folder"
   }
 };
 
@@ -2307,6 +2313,11 @@ document.getElementById('context_edit').onclick = (e) => {
     openEditWebappModal();
   } else if (currentContextAppType === 'linuxapp') {
     openEditLinuxappModal();
+  } else if (currentContextAppType === 'file' || currentContextAppType === 'folder-shortcut') {
+    // ファイル/フォルダショートカットは編集不可（パスは変更できない）
+    const lang = getCurrentLanguage();
+    const msg = lang === 'ja' ? 'ファイル/フォルダのショートカットは編集できません。削除して再度追加してください。' : 'File/folder shortcuts cannot be edited. Please delete and add again.';
+    alert(msg);
   }
 };
 
@@ -2315,10 +2326,11 @@ document.getElementById('context_delete').onclick = (e) => {
   e.stopPropagation();
   hideContextMenu();
   
-  if (!currentEditingIcon || !currentEditingApp) return;
+  if (!currentEditingIcon) return;
   
   const lang = getCurrentLanguage();
-  const confirmMsg = lang === 'ja' ? `「${currentEditingApp.name}」を削除しますか？` : `Delete "${currentEditingApp.name}"?`;
+  const appName = currentEditingApp?.name || currentEditingIcon._fileData?.name || 'Unknown';
+  const confirmMsg = lang === 'ja' ? `「${appName}」を削除しますか？` : `Delete "${appName}"?`;
   
   if (confirm(confirmMsg)) {
     const saveKey = currentEditingIcon.dataset.saveKey;
@@ -2332,6 +2344,14 @@ document.getElementById('context_delete').onclick = (e) => {
       const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
       const newApps = linuxApps.filter(a => !(a.name === currentEditingApp.name && a.command === currentEditingApp.command));
       localStorage.setItem('linuxApps', JSON.stringify(newApps));
+    } else if (currentContextAppType === 'file') {
+      const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+      const newShortcuts = fileShortcuts.filter(f => f.path !== currentEditingIcon._filePath);
+      localStorage.setItem('fileShortcuts', JSON.stringify(newShortcuts));
+    } else if (currentContextAppType === 'folder-shortcut') {
+      const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+      const newShortcuts = folderShortcuts.filter(f => f.path !== currentEditingIcon._filePath);
+      localStorage.setItem('folderShortcuts', JSON.stringify(newShortcuts));
     }
     
     // 位置データも削除
@@ -2467,6 +2487,264 @@ document.getElementById('close_edit_linuxapp_modal').onclick = () => {
   document.getElementById('edit_linuxapp_modal_overlay').style.display = 'none';
 };
 
+// ========================================
+// GitHub Contribution ウィジェット
+// ========================================
+
+const githubContributionWidget = document.getElementById('github_contribution_widget');
+const githubGraph = document.getElementById('github_contribution_graph');
+const githubTotalContributions = document.getElementById('github_total_contributions');
+const githubCurrentStreak = document.getElementById('github_current_streak');
+const githubLongestStreak = document.getElementById('github_longest_streak');
+const githubUsernameDisplay = document.getElementById('github_username_display');
+const githubSettingsBtn = document.getElementById('github_settings_btn');
+const githubSettingsModal = document.getElementById('github_settings_modal_overlay');
+const githubUsernameInput = document.getElementById('github_username_input');
+
+/**
+ * GitHub コントリビューションデータを取得
+ * @param {string} username - GitHubユーザー名
+ * @returns {Promise<Object>}
+ */
+async function fetchGitHubContributions(username) {
+  if (!username) return null;
+  
+  try {
+    // GitHub GraphQL API または スクレイピング用のプロキシサービスを使用
+    // ここでは github-contributions-api を使用
+    const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=last`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch GitHub data');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('GitHub API error:', error);
+    return null;
+  }
+}
+
+/**
+ * コントリビューションレベルを計算（0-4）
+ * @param {number} count - コントリビューション数
+ * @returns {number}
+ */
+function getContributionLevel(count) {
+  if (count === 0) return 0;
+  if (count <= 3) return 1;
+  if (count <= 6) return 2;
+  if (count <= 9) return 3;
+  return 4;
+}
+
+/**
+ * ストリーク（連続日数）を計算
+ * @param {Array} contributions - コントリビューションデータの配列
+ * @returns {{current: number, longest: number}}
+ */
+function calculateStreaks(contributions) {
+  if (!contributions || contributions.length === 0) {
+    return { current: 0, longest: 0 };
+  }
+  
+  // 日付順にソート（新しい順）
+  const sorted = [...contributions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // 現在のストリークを計算
+  for (let i = 0; i < sorted.length; i++) {
+    const date = new Date(sorted[i].date);
+    date.setHours(0, 0, 0, 0);
+    const daysDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff === i || (daysDiff === i + 1 && i === 0)) {
+      if (sorted[i].count > 0) {
+        currentStreak++;
+      } else if (daysDiff > 0) {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  
+  // 最長ストリークを計算
+  const chronological = [...contributions].sort((a, b) => new Date(a.date) - new Date(b.date));
+  for (const day of chronological) {
+    if (day.count > 0) {
+      tempStreak++;
+      longestStreak = Math.max(longestStreak, tempStreak);
+    } else {
+      tempStreak = 0;
+    }
+  }
+  
+  return { current: currentStreak, longest: longestStreak };
+}
+
+/**
+ * GitHubコントリビューショングラフを描画
+ * @param {Object} data - GitHubのコントリビューションデータ
+ */
+function renderGitHubGraph(data) {
+  if (!githubGraph) return;
+  
+  githubGraph.innerHTML = '';
+  
+  if (!data || !data.contributions) {
+    githubGraph.innerHTML = `
+      <div class="github-error">
+        <m3e-icon name="error"></m3e-icon>
+        <span>データの取得に失敗しました</span>
+      </div>
+    `;
+    return;
+  }
+  
+  const contributions = data.contributions;
+  const total = data.total?.lastYear || contributions.reduce((sum, day) => sum + day.count, 0);
+  
+  // 過去52週+今週分のデータを表示
+  const today = new Date();
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - 364);
+  startDate.setDate(startDate.getDate() - startDate.getDay()); // 週の始めに調整
+  
+  // 日付でインデックスを作成
+  const contributionMap = {};
+  contributions.forEach(day => {
+    contributionMap[day.date] = day.count;
+  });
+  
+  // グラフを描画（週ごと列、日ごと行）
+  const fragment = document.createDocumentFragment();
+  let currentDate = new Date(startDate);
+  
+  for (let week = 0; week < 53; week++) {
+    for (let day = 0; day < 7; day++) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const count = contributionMap[dateStr] || 0;
+      const level = getContributionLevel(count);
+      
+      const dayEl = document.createElement('div');
+      dayEl.className = 'github-day';
+      dayEl.dataset.level = level;
+      dayEl.dataset.date = dateStr;
+      dayEl.dataset.count = count;
+      dayEl.title = `${dateStr}: ${count} contributions`;
+      
+      fragment.appendChild(dayEl);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+  
+  githubGraph.appendChild(fragment);
+  
+  // 統計を更新
+  const streaks = calculateStreaks(contributions);
+  
+  if (githubTotalContributions) {
+    githubTotalContributions.textContent = total.toLocaleString();
+  }
+  if (githubCurrentStreak) {
+    githubCurrentStreak.textContent = streaks.current;
+  }
+  if (githubLongestStreak) {
+    githubLongestStreak.textContent = streaks.longest;
+  }
+}
+
+/**
+ * GitHubウィジェットを更新
+ */
+async function updateGitHubWidget() {
+  const username = localStorage.getItem('githubUsername');
+  
+  if (!username) {
+    if (githubGraph) {
+      githubGraph.innerHTML = `
+        <div class="github-no-user">
+          <m3e-icon name="person_add"></m3e-icon>
+          <span>設定ボタンからユーザー名を設定してください</span>
+        </div>
+      `;
+    }
+    if (githubUsernameDisplay) {
+      githubUsernameDisplay.textContent = 'ユーザー名を設定してください';
+    }
+    return;
+  }
+  
+  if (githubUsernameDisplay) {
+    githubUsernameDisplay.textContent = `@${username}`;
+  }
+  
+  // ローディング表示
+  if (githubGraph) {
+    githubGraph.innerHTML = `
+      <div class="github-loading">
+        <m3e-icon name="hourglass_empty"></m3e-icon>
+        <span>読み込み中...</span>
+      </div>
+    `;
+  }
+  
+  const data = await fetchGitHubContributions(username);
+  renderGitHubGraph(data);
+}
+
+// GitHub設定モーダル
+if (githubSettingsBtn) {
+  // ドラッグイベントとの競合を防ぐ
+  githubSettingsBtn.onpointerdown = (e) => {
+    e.stopPropagation();
+  };
+  
+  githubSettingsBtn.onclick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const savedUsername = localStorage.getItem('githubUsername') || '';
+    if (githubUsernameInput) {
+      githubUsernameInput.value = savedUsername;
+    }
+    if (githubSettingsModal) {
+      githubSettingsModal.style.display = 'flex';
+    }
+  };
+}
+
+document.getElementById('close_github_settings_modal')?.addEventListener('click', () => {
+  if (githubSettingsModal) {
+    githubSettingsModal.style.display = 'none';
+  }
+});
+
+document.getElementById('save_github_settings')?.addEventListener('click', async () => {
+  const username = githubUsernameInput?.value?.trim();
+  if (username) {
+    localStorage.setItem('githubUsername', username);
+  } else {
+    localStorage.removeItem('githubUsername');
+  }
+  
+  if (githubSettingsModal) {
+    githubSettingsModal.style.display = 'none';
+  }
+  
+  await updateGitHubWidget();
+});
+
+// 初期化時にGitHubウィジェットを更新
+setTimeout(updateGitHubWidget, 1000);
+
+// 1時間ごとにGitHubウィジェットを更新
+setInterval(updateGitHubWidget, 60 * 60 * 1000);
+
 document.getElementById('save_edit_linuxapp').onclick = () => {
   const name = document.getElementById('edit_linuxapp_name').value.trim();
   const command = document.getElementById('edit_linuxapp_command').value.trim();
@@ -2520,3 +2798,250 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
   
   document.getElementById('edit_linuxapp_modal_overlay').style.display = 'none';
 };
+
+// ========================================
+// ファイル/フォルダショートカット機能
+// ========================================
+
+/**
+ * ファイルまたはフォルダを開く
+ * @param {string} filePath - ファイル/フォルダのパス
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function openFileOrFolder(filePath) {
+  if (window.electronAPI && window.electronAPI.openFileOrFolder) {
+    return await window.electronAPI.openFileOrFolder(filePath);
+  }
+  return { success: false, error: 'Electron API not available' };
+}
+
+/**
+ * ファイルショートカットのアイコンを作成
+ * @param {Object} fileData - ファイルデータ
+ */
+function createFileShortcutIcon(fileData) {
+  const div = document.createElement('div');
+  div.className = 'appicon file-shortcut';
+  const saveKey = fileData.saveKey || ('file-shortcut-' + fileData.name.replace(/\s+/g, '-') + '-' + Date.now());
+  div.dataset.saveKey = saveKey;
+  div._filePath = fileData.path;
+  div._fileData = { ...fileData, saveKey };
+  
+  // saveKeyがなかった場合はlocalStorageを更新
+  if (!fileData.saveKey) {
+    const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+    const index = fileShortcuts.findIndex(f => f.path === fileData.path);
+    if (index !== -1) {
+      fileShortcuts[index].saveKey = saveKey;
+      localStorage.setItem('fileShortcuts', JSON.stringify(fileShortcuts));
+    }
+  }
+  
+  // ファイルタイプに応じたアイコンを設定
+  const iconSrc = fileData.icon || getFileIcon(fileData.path, fileData.isDirectory);
+  
+  div.innerHTML = `
+    <img src="${iconSrc}" height="50" width="50" />
+    <p>${fileData.name}</p>
+  `;
+  
+  div.onclick = async () => {
+    console.log('Opening file/folder:', fileData.path);
+    const result = await openFileOrFolder(fileData.path);
+    if (!result.success) {
+      const lang = getCurrentLanguage();
+      alert(translations[lang].open_failed + ': ' + result.error);
+    }
+  };
+  
+  div.oncontextmenu = (e) => {
+    e.preventDefault();
+    showContextMenu(e, div, 'file');
+  };
+  
+  const addBtn = document.getElementById('appicon-add');
+  if (addBtn && addBtn.parentNode) {
+    addBtn.parentNode.insertBefore(div, addBtn);
+  }
+  
+  // 保存された位置を復元
+  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  if (positions[saveKey]) {
+    div.style.position = positions[saveKey].position;
+    div.style.left = positions[saveKey].left;
+    div.style.top = positions[saveKey].top;
+  }
+  
+  // 通常モードのドラッグを設定
+  setupNormalModeDrag(div);
+}
+
+/**
+ * フォルダショートカットのアイコンを作成
+ * @param {Object} folderData - フォルダデータ
+ */
+function createFolderShortcutIcon(folderData) {
+  const div = document.createElement('div');
+  div.className = 'appicon folder-shortcut';
+  const saveKey = folderData.saveKey || ('folder-shortcut-' + folderData.name.replace(/\s+/g, '-') + '-' + Date.now());
+  div.dataset.saveKey = saveKey;
+  div._filePath = folderData.path;
+  div._fileData = { ...folderData, saveKey };
+  
+  // saveKeyがなかった場合はlocalStorageを更新
+  if (!folderData.saveKey) {
+    const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+    const index = folderShortcuts.findIndex(f => f.path === folderData.path);
+    if (index !== -1) {
+      folderShortcuts[index].saveKey = saveKey;
+      localStorage.setItem('folderShortcuts', JSON.stringify(folderShortcuts));
+    }
+  }
+  
+  // フォルダアイコン
+  const iconSrc = folderData.icon || './assets/folder.svg';
+  
+  div.innerHTML = `
+    <img src="${iconSrc}" height="50" width="50" />
+    <p>${folderData.name}</p>
+  `;
+  
+  div.onclick = async () => {
+    console.log('Opening folder:', folderData.path);
+    const result = await openFileOrFolder(folderData.path);
+    if (!result.success) {
+      const lang = getCurrentLanguage();
+      alert(translations[lang].open_failed + ': ' + result.error);
+    }
+  };
+  
+  div.oncontextmenu = (e) => {
+    e.preventDefault();
+    showContextMenu(e, div, 'folder-shortcut');
+  };
+  
+  const addBtn = document.getElementById('appicon-add');
+  if (addBtn && addBtn.parentNode) {
+    addBtn.parentNode.insertBefore(div, addBtn);
+  }
+  
+  // 保存された位置を復元
+  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  if (positions[saveKey]) {
+    div.style.position = positions[saveKey].position;
+    div.style.left = positions[saveKey].left;
+    div.style.top = positions[saveKey].top;
+  }
+  
+  // 通常モードのドラッグを設定
+  setupNormalModeDrag(div);
+}
+
+/**
+ * ファイルの拡張子からアイコンを取得
+ * @param {string} filePath - ファイルパス
+ * @param {boolean} isDirectory - ディレクトリかどうか
+ * @returns {string} アイコンのパス
+ */
+function getFileIcon(filePath, isDirectory) {
+  if (isDirectory) {
+    return './assets/folder.svg';
+  }
+  
+  // デフォルトはファイルアイコン
+  return './assets/file.svg';
+}
+
+// ファイル追加ボタンのイベント
+document.getElementById('add_file_btn')?.addEventListener('click', async () => {
+  // モーダルを閉じる
+  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  
+  // ファイル選択ダイアログを開く
+  if (window.electronAPI && window.electronAPI.selectFile) {
+    const result = await window.electronAPI.selectFile();
+    if (!result.canceled) {
+      const fileData = {
+        name: result.name,
+        path: result.path,
+        isDirectory: result.isDirectory,
+        saveKey: 'file-shortcut-' + result.name.replace(/\s+/g, '-') + '-' + Date.now()
+      };
+      
+      // localStorageに保存
+      const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+      fileShortcuts.push(fileData);
+      localStorage.setItem('fileShortcuts', JSON.stringify(fileShortcuts));
+      
+      // アイコンを作成
+      createFileShortcutIcon(fileData);
+    }
+  }
+});
+
+// フォルダ追加ボタンのイベント
+document.getElementById('add_folder_btn')?.addEventListener('click', async () => {
+  // モーダルを閉じる
+  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  
+  // フォルダ選択ダイアログを開く
+  if (window.electronAPI && window.electronAPI.selectFolder) {
+    const result = await window.electronAPI.selectFolder();
+    if (!result.canceled) {
+      const folderData = {
+        name: result.name,
+        path: result.path,
+        isDirectory: true,
+        saveKey: 'folder-shortcut-' + result.name.replace(/\s+/g, '-') + '-' + Date.now()
+      };
+      
+      // localStorageに保存
+      const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+      folderShortcuts.push(folderData);
+      localStorage.setItem('folderShortcuts', JSON.stringify(folderShortcuts));
+      
+      // アイコンを作成
+      createFolderShortcutIcon(folderData);
+    }
+  }
+});
+
+// Helper function to check if a file shortcut is in any folder
+function isFileShortcutInFolder(file) {
+  for (const folderId in folders) {
+    const folderData = folders[folderId];
+    const found = folderData.apps.some(folderApp => 
+      folderApp.path && folderApp.path === file.path
+    );
+    if (found) return true;
+  }
+  return false;
+}
+
+// Helper function to check if a folder shortcut is in any folder
+function isFolderShortcutInFolder(folder) {
+  for (const folderId in folders) {
+    const folderData = folders[folderId];
+    const found = folderData.apps.some(folderApp => 
+      folderApp.path && folderApp.path === folder.path
+    );
+    if (found) return true;
+  }
+  return false;
+}
+
+// 保存されたファイルショートカットを読み込み
+const savedFileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+savedFileShortcuts.forEach(file => {
+  if (!isFileShortcutInFolder(file)) {
+    createFileShortcutIcon(file);
+  }
+});
+
+// 保存されたフォルダショートカットを読み込み
+const savedFolderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+savedFolderShortcuts.forEach(folder => {
+  if (!isFolderShortcutInFolder(folder)) {
+    createFolderShortcutIcon(folder);
+  }
+});
