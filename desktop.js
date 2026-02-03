@@ -1093,6 +1093,7 @@ function setupDraggableItem(item) {
   };
   
   item.onpointermove = function(event){
+    if (this._isResizing) return; // リサイズ中は移動処理を無視
     if(event.buttons){
       const dx = event.clientX - this._startX;
       const dy = event.clientY - this._startY;
@@ -1270,6 +1271,7 @@ function setupNormalModeDrag(item) {
   };
   
   item.onpointermove = function(event) {
+    if (this._isResizing) return; // リサイズ中は移動処理を無視
     if (!event.buttons) return;
     
     const dx = event.clientX - this._startX;
@@ -3362,5 +3364,119 @@ const savedFolderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') 
 savedFolderShortcuts.forEach(folder => {
   if (!isFolderShortcutInFolder(folder)) {
     createFolderShortcutIcon(folder);
+  }
+});
+
+// ウィジェットのリサイズ機能を有効化
+function applySavedWidgetSizes() {
+  document.querySelectorAll('.widget').forEach(w => {
+    const id = w.id || w.dataset.widgetKey;
+    if (!id) return;
+    const raw = localStorage.getItem('widgetSize:' + id);
+    if (!raw) return;
+    try {
+      const s = JSON.parse(raw);
+      if (s.w) w.style.width = s.w + 'px';
+      if (s.h) w.style.height = s.h + 'px';
+    } catch (e) {}
+  });
+}
+
+function enableWidgetResizers() {
+  document.querySelectorAll('.widget').forEach(widget => {
+    if (widget.querySelector('.widget-resizer')) return; // 既に追加済み
+
+    // widget に一意キーがなければ自動付与
+    if (!widget.id) {
+      if (!widget.dataset.widgetKey) widget.dataset.widgetKey = 'w-' + Math.random().toString(36).slice(2,9);
+    }
+
+    const res = document.createElement('div');
+    res.className = 'widget-resizer';
+    // リサイズ操作はリサイズハンドラで完結させる（親にイベント伝播させない）
+    res.addEventListener('pointerdown', function(e) {
+      e.stopPropagation(); e.preventDefault();
+      const widgetEl = widget;
+      widgetEl._isResizing = true;
+      widgetEl.classList.add('resizing');
+      widgetEl.setPointerCapture(e.pointerId);
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startW = widgetEl.offsetWidth;
+      const startH = widgetEl.offsetHeight;
+      const minW = 120; const minH = 48;
+
+      function onMove(ev) {
+        ev.preventDefault();
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        let newW = Math.max(minW, Math.round(startW + dx));
+        let newH = Math.max(minH, Math.round(startH + dy));
+        // グリッドモードが有効なら幅・高さをグリッドサイズにスナップ
+        try {
+          if (typeof isGridModeEnabled !== 'undefined' && isGridModeEnabled && typeof GRID_SIZE !== 'undefined') {
+            const gw = GRID_SIZE;
+            newW = Math.max(minW, Math.round(newW / gw) * gw);
+            newH = Math.max(minH, Math.round(newH / gw) * gw);
+          }
+        } catch (e) {}
+        widgetEl.style.width = newW + 'px';
+        widgetEl.style.height = newH + 'px';
+      }
+
+      function onUp(ev) {
+        try { widgetEl.releasePointerCapture(e.pointerId); } catch (err) {}
+        widgetEl._isResizing = false;
+        widgetEl.classList.remove('resizing');
+        // 永続化
+        const id = widgetEl.id || widgetEl.dataset.widgetKey;
+        if (id) {
+          const w = widgetEl.offsetWidth;
+          const h = widgetEl.offsetHeight;
+          localStorage.setItem('widgetSize:' + id, JSON.stringify({w,h}));
+        }
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      }
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+
+    widget.appendChild(res);
+  });
+}
+
+// 起動時に適用
+setTimeout(() => { applySavedWidgetSizes(); enableWidgetResizers(); }, 500);
+
+// ウィジェットサイズをリセット（保存されたサイズを削除し、inline スタイルをクリア）
+function resetWidgetSizes() {
+  // localStorage キーを削除
+  Object.keys(localStorage).forEach(k => {
+    if (k && k.startsWith('widgetSize:')) localStorage.removeItem(k);
+  });
+
+  // 要素のサイズをクリア
+  document.querySelectorAll('.widget').forEach(w => {
+    w.style.width = '';
+    w.style.height = '';
+    // 自動付与した widgetKey は残しておく（不要なら削除可能）
+  });
+
+  // 再適用（リサイズハンドラ等がある場合に備えて）
+  setTimeout(() => { applySavedWidgetSizes(); }, 50);
+}
+
+// 設定画面のリセットボタンにハンドラを追加
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('reset_widget_sizes_btn');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      if (!confirm('全ウィジェットのサイズをリセットしますか？')) return;
+      resetWidgetSizes();
+      alert('ウィジェットサイズをリセットしました。');
+    });
   }
 });
