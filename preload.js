@@ -72,6 +72,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getWindowCount: () => ipcRenderer.invoke('get-window-count'),
   setWindowCount: (count) => ipcRenderer.invoke('set-window-count', count),
   restartApp: () => ipcRenderer.invoke('restart-app'),
+  openGoogleLogin: () => ipcRenderer.invoke('open-google-login'),
   // ブラウザメディア用API
   getBrowserMediaInfo: () => browserMediaInfo,
   browserMediaControl: (action, value) => {

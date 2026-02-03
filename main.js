@@ -179,6 +179,20 @@ ipcMain.handle('media-control', async (event, action, value) => {
   });
 });
 
+// Googleログイン用IPCハンドラ
+ipcMain.handle('open-google-login', async () => {
+  const loginWin = new BrowserWindow({
+    width: 500,
+    height: 600,
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+  loginWin.loadURL('https://accounts.google.com/ServiceLogin?continue=https://calendar.google.com/');
+});
+
 app.whenReady().then(() => {
   const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();

@@ -1093,6 +1093,7 @@ function setupDraggableItem(item) {
   };
   
   item.onpointermove = function(event){
+    if (this._isResizing) return; // リサイズ中は移動処理を無視
     if(event.buttons){
       const dx = event.clientX - this._startX;
       const dy = event.clientY - this._startY;
@@ -1270,6 +1271,7 @@ function setupNormalModeDrag(item) {
   };
   
   item.onpointermove = function(event) {
+    if (this._isResizing) return; // リサイズ中は移動処理を無視
     if (!event.buttons) return;
     
     const dx = event.clientX - this._startX;
@@ -1618,7 +1620,9 @@ const translations = {
     circle: "円形",
     window_count: "ウィンドウ数（仮想デスクトップ用）",
     apply_restart: "適用して再起動",
-    confirm_restart: "ウィンドウ数を変更するにはアプリを再起動する必要があります。再起動しますか？"
+    confirm_restart: "ウィンドウ数を変更するにはアプリを再起動する必要があります。再起動しますか？",
+    google_login: "Googleアカウントにログイン",
+    google_login_help: "カレンダーが表示されない場合はログインしてください"
   },
   en: {
     files: "Files",
@@ -1684,7 +1688,9 @@ const translations = {
     circle: "Circle",
     window_count: "Window Count (for Virtual Desktops)",
     apply_restart: "Apply & Restart",
-    confirm_restart: "The app needs to restart to change window count. Restart now?"
+    confirm_restart: "The app needs to restart to change window count. Restart now?",
+    google_login: "Log in to Google",
+    google_login_help: "Please log in if the calendar is not displayed"
   }
 };
 
@@ -3064,6 +3070,81 @@ setTimeout(updateGitHubWidget, 1000);
 // 1時間ごとにGitHubウィジェットを更新
 setInterval(updateGitHubWidget, 60 * 60 * 1000);
 
+// ========================================
+// Google Calendar Widget
+// ========================================
+
+const googleCalendarWidget = document.getElementById('google_calendar_widget');
+const googleCalendarIframe = document.getElementById('google_calendar_iframe');
+const googleCalendarSetupPrompt = document.getElementById('google_calendar_setup_prompt');
+const googleCalendarSettingsBtn = document.getElementById('google_calendar_settings_btn');
+const googleCalendarSettingsModal = document.getElementById('google_calendar_settings_modal_overlay');
+const googleCalendarUrlInput = document.getElementById('google_calendar_url_input');
+
+/**
+ * Google Calendarウィジェットを更新
+ */
+function updateGoogleCalendarWidget() {
+  const calendarUrl = localStorage.getItem('googleCalendarUrl');
+
+  if (calendarUrl) {
+    if (googleCalendarIframe.src !== calendarUrl) {
+      googleCalendarIframe.src = calendarUrl;
+    }
+    googleCalendarSetupPrompt.style.display = 'none';
+    googleCalendarIframe.style.display = 'block';
+  } else {
+    googleCalendarIframe.src = 'about:blank';
+    googleCalendarSetupPrompt.style.display = 'flex';
+    googleCalendarIframe.style.display = 'none';
+  }
+}
+
+// 設定ボタンのイベント
+if (googleCalendarSettingsBtn) {
+  googleCalendarSettingsBtn.onpointerdown = (e) => {
+    e.stopPropagation();
+  };
+  googleCalendarSettingsBtn.onclick = (e) => {
+    e.stopPropagation();
+    googleCalendarUrlInput.value = localStorage.getItem('googleCalendarUrl') || '';
+    googleCalendarSettingsModal.style.display = 'flex';
+  };
+}
+
+// 設定モーダルのイベント
+document.getElementById('close_google_calendar_settings_modal')?.addEventListener('click', () => {
+  googleCalendarSettingsModal.style.display = 'none';
+});
+
+document.getElementById('save_google_calendar_settings')?.addEventListener('click', () => {
+  let url = googleCalendarUrlInput.value.trim();
+  
+  // ユーザーが<iframe...>全体を貼り付けた場合、srcを抽出する
+  if (url.startsWith('<iframe')) {
+    const match = url.match(/src="([^"]+)"/);
+    url = (match && match[1]) ? match[1].replace(/&amp;/g, '&') : '';
+  }
+
+  if (url) {
+    localStorage.setItem('googleCalendarUrl', url);
+  } else {
+    localStorage.removeItem('googleCalendarUrl');
+  }
+  googleCalendarSettingsModal.style.display = 'none';
+  updateGoogleCalendarWidget();
+});
+
+// Googleログインボタン
+document.getElementById('google_login_btn')?.addEventListener('click', () => {
+  if (window.electronAPI && window.electronAPI.openGoogleLogin) {
+    window.electronAPI.openGoogleLogin();
+  }
+});
+
+// 初期化時にカレンダーウィジェットを更新
+setTimeout(updateGoogleCalendarWidget, 1000);
+
 document.getElementById('save_edit_linuxapp').onclick = () => {
   const name = document.getElementById('edit_linuxapp_name').value.trim();
   const command = document.getElementById('edit_linuxapp_command').value.trim();
@@ -3362,5 +3443,119 @@ const savedFolderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') 
 savedFolderShortcuts.forEach(folder => {
   if (!isFolderShortcutInFolder(folder)) {
     createFolderShortcutIcon(folder);
+  }
+});
+
+// ウィジェットのリサイズ機能を有効化
+function applySavedWidgetSizes() {
+  document.querySelectorAll('.widget').forEach(w => {
+    const id = w.id || w.dataset.widgetKey;
+    if (!id) return;
+    const raw = localStorage.getItem('widgetSize:' + id);
+    if (!raw) return;
+    try {
+      const s = JSON.parse(raw);
+      if (s.w) w.style.width = s.w + 'px';
+      if (s.h) w.style.height = s.h + 'px';
+    } catch (e) {}
+  });
+}
+
+function enableWidgetResizers() {
+  document.querySelectorAll('.widget').forEach(widget => {
+    if (widget.querySelector('.widget-resizer')) return; // 既に追加済み
+
+    // widget に一意キーがなければ自動付与
+    if (!widget.id) {
+      if (!widget.dataset.widgetKey) widget.dataset.widgetKey = 'w-' + Math.random().toString(36).slice(2,9);
+    }
+
+    const res = document.createElement('div');
+    res.className = 'widget-resizer';
+    // リサイズ操作はリサイズハンドラで完結させる（親にイベント伝播させない）
+    res.addEventListener('pointerdown', function(e) {
+      e.stopPropagation(); e.preventDefault();
+      const widgetEl = widget;
+      widgetEl._isResizing = true;
+      widgetEl.classList.add('resizing');
+      widgetEl.setPointerCapture(e.pointerId);
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startW = widgetEl.offsetWidth;
+      const startH = widgetEl.offsetHeight;
+      const minW = 120; const minH = 48;
+
+      function onMove(ev) {
+        ev.preventDefault();
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        let newW = Math.max(minW, Math.round(startW + dx));
+        let newH = Math.max(minH, Math.round(startH + dy));
+        // グリッドモードが有効なら幅・高さをグリッドサイズにスナップ
+        try {
+          if (typeof isGridModeEnabled !== 'undefined' && isGridModeEnabled && typeof GRID_SIZE !== 'undefined') {
+            const gw = GRID_SIZE;
+            newW = Math.max(minW, Math.round(newW / gw) * gw);
+            newH = Math.max(minH, Math.round(newH / gw) * gw);
+          }
+        } catch (e) {}
+        widgetEl.style.width = newW + 'px';
+        widgetEl.style.height = newH + 'px';
+      }
+
+      function onUp(ev) {
+        try { widgetEl.releasePointerCapture(e.pointerId); } catch (err) {}
+        widgetEl._isResizing = false;
+        widgetEl.classList.remove('resizing');
+        // 永続化
+        const id = widgetEl.id || widgetEl.dataset.widgetKey;
+        if (id) {
+          const w = widgetEl.offsetWidth;
+          const h = widgetEl.offsetHeight;
+          localStorage.setItem('widgetSize:' + id, JSON.stringify({w,h}));
+        }
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      }
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+
+    widget.appendChild(res);
+  });
+}
+
+// 起動時に適用
+setTimeout(() => { applySavedWidgetSizes(); enableWidgetResizers(); }, 500);
+
+// ウィジェットサイズをリセット（保存されたサイズを削除し、inline スタイルをクリア）
+function resetWidgetSizes() {
+  // localStorage キーを削除
+  Object.keys(localStorage).forEach(k => {
+    if (k && k.startsWith('widgetSize:')) localStorage.removeItem(k);
+  });
+
+  // 要素のサイズをクリア
+  document.querySelectorAll('.widget').forEach(w => {
+    w.style.width = '';
+    w.style.height = '';
+    // 自動付与した widgetKey は残しておく（不要なら削除可能）
+  });
+
+  // 再適用（リサイズハンドラ等がある場合に備えて）
+  setTimeout(() => { applySavedWidgetSizes(); }, 50);
+}
+
+// 設定画面のリセットボタンにハンドラを追加
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('reset_widget_sizes_btn');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      if (!confirm('全ウィジェットのサイズをリセットしますか？')) return;
+      resetWidgetSizes();
+      alert('ウィジェットサイズをリセットしました。');
+    });
   }
 });
