@@ -800,6 +800,23 @@ body.dark-mode .media-player-controls {
   font-weight: 500;
 }
 
+.github-year-select {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: 12px;
+  padding: 4px 8px;
+  margin-right: 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.github-year-select option {
+  background: #24292e;
+  color: white;
+}
+
 .github-settings-btn {
   width: 32px;
   height: 32px;

@@ -1237,11 +1237,28 @@ function setupNormalModeDrag(item) {
   // 追加ボタンは除外
   if (item.id === 'appicon-add') return;
   
+  // 画像のドラッグを防止
+  const img = item.querySelector('img');
+  if (img) {
+    img.ondragstart = (e) => e.preventDefault();
+  }
+
+  // クリックイベントの制御（重複登録防止）
+  if (!item._clickListenerAttached) {
+    item.addEventListener('click', function(e) {
+      if (this._ignoreClick) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
+    }, true);
+    item._clickListenerAttached = true;
+  }
+
   item.onpointerdown = function(event) {
     // 左クリックのみ
     if (event.button !== 0) return;
     
-    event.preventDefault();
     this.setPointerCapture(event.pointerId);
     this._isDragging = false;
     this._startX = event.clientX;
@@ -1249,6 +1266,7 @@ function setupNormalModeDrag(item) {
     this._startLeft = this.offsetLeft;
     this._startTop = this.offsetTop;
     this._normalModeDragStarted = false;
+    this._ignoreClick = false;
   };
   
   item.onpointermove = function(event) {
@@ -1262,6 +1280,7 @@ function setupNormalModeDrag(item) {
       if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
         this._isDragging = true;
         this._normalModeDragStarted = true;
+        this._ignoreClick = true; // クリックを無視するフラグ
         
         // 位置変更モードに入る
         enterPositionChangeMode();
@@ -1324,6 +1343,7 @@ function setupNormalModeDrag(item) {
     // ドラッグしていなかった場合は通常のクリック処理
     if (!this._normalModeDragStarted) {
       this._isDragging = false;
+      this._ignoreClick = false;
       return;
     }
     
@@ -1341,6 +1361,7 @@ function setupNormalModeDrag(item) {
         draggedItem = null;
         this._isDragging = false;
         this._normalModeDragStarted = false;
+        setTimeout(() => { this._ignoreClick = false; }, 50);
         return;
       }
       
@@ -1350,6 +1371,7 @@ function setupNormalModeDrag(item) {
         draggedItem = null;
         this._isDragging = false;
         this._normalModeDragStarted = false;
+        setTimeout(() => { this._ignoreClick = false; }, 50);
         return;
       }
     }
@@ -1363,6 +1385,7 @@ function setupNormalModeDrag(item) {
     draggedItem = null;
     this._isDragging = false;
     this._normalModeDragStarted = false;
+    setTimeout(() => { this._ignoreClick = false; }, 50);
   };
 }
 
@@ -2575,6 +2598,10 @@ const githubUsernameDisplay = document.getElementById('github_username_display')
 const githubSettingsBtn = document.getElementById('github_settings_btn');
 const githubSettingsModal = document.getElementById('github_settings_modal_overlay');
 const githubUsernameInput = document.getElementById('github_username_input');
+const githubYearSelect = document.getElementById('github_year_select');
+
+let githubData = null;
+let currentGitHubYear = 'last';
 
 /**
  * GitHub コントリビューションデータを取得
@@ -2587,7 +2614,7 @@ async function fetchGitHubContributions(username) {
   try {
     // GitHub GraphQL API または スクレイピング用のプロキシサービスを使用
     // ここでは github-contributions-api を使用
-    const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=last`);
+    const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${username}`);
     if (!response.ok) {
       throw new Error('Failed to fetch GitHub data');
     }
@@ -2665,8 +2692,9 @@ function calculateStreaks(contributions) {
 /**
  * GitHubコントリビューショングラフを描画
  * @param {Object} data - GitHubのコントリビューションデータ
+ * @param {string|number} year - 表示する年 ('last' または西暦)
  */
-function renderGitHubGraph(data) {
+function renderGitHubGraph(data, year = 'last') {
   if (!githubGraph) return;
   
   githubGraph.innerHTML = '';
@@ -2682,14 +2710,49 @@ function renderGitHubGraph(data) {
   }
   
   const contributions = data.contributions;
-  const total = data.total?.lastYear || contributions.reduce((sum, day) => sum + day.count, 0);
+  let total = 0;
+  let startDate, endDate;
   
-  // 過去52週+今週分のデータを表示
-  const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 364);
-  startDate.setDate(startDate.getDate() - startDate.getDay()); // 週の始めに調整
+  if (year === 'last') {
+    // 過去1年分
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    endDate = todayUTC;
+    startDate = new Date(todayUTC);
+    startDate.setUTCDate(startDate.getUTCDate() - 365);
+
+    // totalを計算
+    if (data.total && typeof data.total.lastYear === 'number') {
+      total = data.total.lastYear;
+    } else {
+      const startStr = startDate.toISOString().split('T')[0];
+      const endStr = endDate.toISOString().split('T')[0];
+      total = contributions.reduce((sum, day) => {
+        if (day.date >= startStr && day.date <= endStr) {
+          return sum + day.count;
+        }
+        return sum;
+      }, 0);
+    }
+  } else {
+    // 特定の年
+    const yearNum = parseInt(year);
+    if (data.total && data.total[year]) {
+      total = data.total[year];
+    } else if (data.years) {
+      const yData = data.years.find(y => y.year === year.toString());
+      if (yData) total = yData.total;
+    }
+    
+    startDate = new Date(Date.UTC(yearNum, 0, 1));
+    endDate = new Date(Date.UTC(yearNum, 11, 31));
+  }
   
+  // 表示開始日を週の始め（日曜日）に調整
+  const dayOfWeek = startDate.getUTCDay();
+  const displayStartDate = new Date(startDate);
+  displayStartDate.setUTCDate(displayStartDate.getUTCDate() - dayOfWeek);
+
   // 日付でインデックスを作成
   const contributionMap = {};
   contributions.forEach(day => {
@@ -2698,7 +2761,7 @@ function renderGitHubGraph(data) {
   
   // グラフを描画（週ごと列、日ごと行）
   const fragment = document.createDocumentFragment();
-  let currentDate = new Date(startDate);
+  let currentDate = new Date(displayStartDate);
   
   for (let week = 0; week < 53; week++) {
     for (let day = 0; day < 7; day++) {
@@ -2713,15 +2776,28 @@ function renderGitHubGraph(data) {
       dayEl.dataset.count = count;
       dayEl.title = `${dateStr}: ${count} contributions`;
       
+      // 特定の年の場合、その年以外の日は非表示にする
+      if (year !== 'last') {
+        const d = new Date(dateStr);
+        if (d.getUTCFullYear() !== parseInt(year)) {
+          dayEl.style.visibility = 'hidden';
+        }
+      }
+
       fragment.appendChild(dayEl);
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
     }
   }
   
   githubGraph.appendChild(fragment);
   
   // 統計を更新
-  const streaks = calculateStreaks(contributions);
+  let statsContributions = contributions;
+  if (year !== 'last') {
+    statsContributions = contributions.filter(c => c.date.startsWith(year));
+  }
+  
+  const streaks = calculateStreaks(statsContributions);
   
   if (githubTotalContributions) {
     githubTotalContributions.textContent = total.toLocaleString();
@@ -2732,6 +2808,47 @@ function renderGitHubGraph(data) {
   if (githubLongestStreak) {
     githubLongestStreak.textContent = streaks.longest;
   }
+}
+
+/**
+ * 年選択肢を生成
+ */
+function populateGitHubYearSelect(data) {
+  if (!githubYearSelect) return;
+  
+  githubYearSelect.innerHTML = '';
+  
+  // Last Year
+  const lastOption = document.createElement('option');
+  lastOption.value = 'last';
+  lastOption.textContent = 'Last Year';
+  githubYearSelect.appendChild(lastOption);
+  
+  // Years
+  let years = [];
+  if (data.years) {
+    years = data.years.map(y => y.year);
+  } else if (data.total) {
+    years = Object.keys(data.total).filter(k => k !== 'lastYear');
+  }
+  
+  // 降順ソート
+  years.sort((a, b) => b - a);
+  
+  years.forEach(year => {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    githubYearSelect.appendChild(option);
+  });
+  
+  githubYearSelect.value = currentGitHubYear;
+  githubYearSelect.style.display = 'block';
+  
+  githubYearSelect.onchange = (e) => {
+    currentGitHubYear = e.target.value;
+    renderGitHubGraph(githubData, currentGitHubYear);
+  };
 }
 
 /**
@@ -2770,7 +2887,9 @@ async function updateGitHubWidget() {
   }
   
   const data = await fetchGitHubContributions(username);
-  renderGitHubGraph(data);
+  githubData = data;
+  populateGitHubYearSelect(data);
+  renderGitHubGraph(data, currentGitHubYear);
 }
 
 // GitHub設定モーダル
