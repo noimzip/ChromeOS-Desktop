@@ -2599,6 +2599,13 @@ const githubSettingsBtn = document.getElementById('github_settings_btn');
 const githubSettingsModal = document.getElementById('github_settings_modal_overlay');
 const githubUsernameInput = document.getElementById('github_username_input');
 const githubYearSelect = document.getElementById('github_year_select');
+const githubDetailsModal = document.getElementById('github_details_modal_overlay');
+const githubDetailsDate = document.getElementById('github_details_date');
+const githubDetailsCount = document.getElementById('github_details_count');
+const githubDetailsLevelText = document.getElementById('github_details_level_text');
+const githubDetailsLevelIcon = document.getElementById('github_details_level_icon');
+const openGitHubActivityBtn = document.getElementById('open_github_activity');
+let currentDetailDate = null;
 
 let githubData = null;
 let currentGitHubYear = 'last';
@@ -2690,6 +2697,92 @@ function calculateStreaks(contributions) {
 }
 
 /**
+ * GitHubツールチップを表示
+ */
+function showGitHubTooltip(targetEl, dateStr, count) {
+  const tooltip = document.getElementById('github_tooltip');
+  if (!tooltip) return;
+  
+  const date = new Date(dateStr);
+  // ユーザーのロケールに合わせて日付をフォーマット
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  const formattedDate = date.toLocaleDateString(undefined, options);
+  
+  const countText = count === 0 ? 'No contributions' : `${count} contribution${count !== 1 ? 's' : ''}`;
+  
+  tooltip.innerHTML = `<div style="font-weight: 600; margin-bottom: 2px;">${countText}</div><div style="color: #ccc;">${formattedDate}</div>`;
+  tooltip.style.display = 'block';
+  
+  const rect = targetEl.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+  
+  // 中央揃え
+  let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+  let top = rect.top - tooltipRect.height - 8;
+  
+  // 画面端の調整
+  if (left < 10) left = 10;
+  if (left + tooltipRect.width > window.innerWidth - 10) {
+    left = window.innerWidth - tooltipRect.width - 10;
+  }
+  
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+/**
+ * GitHubツールチップを非表示
+ */
+function hideGitHubTooltip() {
+  const tooltip = document.getElementById('github_tooltip');
+  if (tooltip) {
+    tooltip.style.display = 'none';
+  }
+}
+
+/**
+ * GitHub詳細モーダルを表示
+ */
+function showGitHubDetailsModal(dateStr, count, level) {
+  if (!githubDetailsModal) return;
+  
+  currentDetailDate = dateStr;
+  
+  const date = new Date(dateStr);
+  const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+  if (githubDetailsDate) {
+    githubDetailsDate.textContent = date.toLocaleDateString(undefined, options);
+  }
+  
+  if (githubDetailsCount) {
+    githubDetailsCount.textContent = `${count} contribution${count !== 1 ? 's' : ''}`;
+  }
+  
+  let levelText = 'No activity';
+  let iconName = 'sentiment_neutral';
+  let iconColor = 'var(--on-surface-variant)';
+  
+  if (count > 0) {
+    levelText = 'Good job!';
+    iconName = 'check_circle';
+    iconColor = 'var(--primary-color)';
+  }
+  if (level >= 3) {
+    levelText = 'Excellent!';
+    iconName = 'local_fire_department';
+    iconColor = '#ff6d00'; // Orange
+  }
+  
+  if (githubDetailsLevelText) githubDetailsLevelText.textContent = levelText;
+  if (githubDetailsLevelIcon) {
+    githubDetailsLevelIcon.setAttribute('name', iconName);
+    githubDetailsLevelIcon.style.color = iconColor;
+  }
+  
+  githubDetailsModal.style.display = 'flex';
+}
+
+/**
  * GitHubコントリビューショングラフを描画
  * @param {Object} data - GitHubのコントリビューションデータ
  * @param {string|number} year - 表示する年 ('last' または西暦)
@@ -2698,6 +2791,11 @@ function renderGitHubGraph(data, year = 'last') {
   if (!githubGraph) return;
   
   githubGraph.innerHTML = '';
+
+  // グラフエリアでのポインターイベントがウィジェットのドラッグを開始させないようにする
+  githubGraph.onpointerdown = (e) => {
+    e.stopPropagation();
+  };
   
   if (!data || !data.contributions) {
     githubGraph.innerHTML = `
@@ -2774,7 +2872,13 @@ function renderGitHubGraph(data, year = 'last') {
       dayEl.dataset.level = level;
       dayEl.dataset.date = dateStr;
       dayEl.dataset.count = count;
-      dayEl.title = `${dateStr}: ${count} contributions`;
+      
+      dayEl.onmouseenter = () => showGitHubTooltip(dayEl, dateStr, count);
+      dayEl.onmouseleave = hideGitHubTooltip;
+      dayEl.onclick = (e) => {
+        e.stopPropagation();
+        showGitHubDetailsModal(dateStr, count, level);
+      };
       
       // 特定の年の場合、その年以外の日は非表示にする
       if (year !== 'last') {
@@ -2848,6 +2952,11 @@ function populateGitHubYearSelect(data) {
   githubYearSelect.onchange = (e) => {
     currentGitHubYear = e.target.value;
     renderGitHubGraph(githubData, currentGitHubYear);
+  };
+
+  // セレクトボックスでのポインターイベントがウィジェットのドラッグを開始させないようにする
+  githubYearSelect.onpointerdown = (e) => {
+    e.stopPropagation();
   };
 }
 
@@ -2931,6 +3040,22 @@ document.getElementById('save_github_settings')?.addEventListener('click', async
   }
   
   await updateGitHubWidget();
+});
+
+// GitHub詳細モーダルのイベント
+document.getElementById('close_github_details_modal')?.addEventListener('click', () => {
+  if (githubDetailsModal) githubDetailsModal.style.display = 'none';
+});
+
+openGitHubActivityBtn?.addEventListener('click', () => {
+  if (currentDetailDate) {
+    const username = localStorage.getItem('githubUsername');
+    if (username) {
+      const url = `https://github.com/${username}?tab=overview&from=${currentDetailDate}&to=${currentDetailDate}`;
+      window.open(url, '_blank');
+    }
+  }
+  if (githubDetailsModal) githubDetailsModal.style.display = 'none';
 });
 
 // 初期化時にGitHubウィジェットを更新
