@@ -1620,7 +1620,9 @@ const translations = {
     circle: "円形",
     window_count: "ウィンドウ数（仮想デスクトップ用）",
     apply_restart: "適用して再起動",
-    confirm_restart: "ウィンドウ数を変更するにはアプリを再起動する必要があります。再起動しますか？"
+    confirm_restart: "ウィンドウ数を変更するにはアプリを再起動する必要があります。再起動しますか？",
+    google_login: "Googleアカウントにログイン",
+    google_login_help: "カレンダーが表示されない場合はログインしてください"
   },
   en: {
     files: "Files",
@@ -1686,7 +1688,9 @@ const translations = {
     circle: "Circle",
     window_count: "Window Count (for Virtual Desktops)",
     apply_restart: "Apply & Restart",
-    confirm_restart: "The app needs to restart to change window count. Restart now?"
+    confirm_restart: "The app needs to restart to change window count. Restart now?",
+    google_login: "Log in to Google",
+    google_login_help: "Please log in if the calendar is not displayed"
   }
 };
 
@@ -3065,6 +3069,81 @@ setTimeout(updateGitHubWidget, 1000);
 
 // 1時間ごとにGitHubウィジェットを更新
 setInterval(updateGitHubWidget, 60 * 60 * 1000);
+
+// ========================================
+// Google Calendar Widget
+// ========================================
+
+const googleCalendarWidget = document.getElementById('google_calendar_widget');
+const googleCalendarIframe = document.getElementById('google_calendar_iframe');
+const googleCalendarSetupPrompt = document.getElementById('google_calendar_setup_prompt');
+const googleCalendarSettingsBtn = document.getElementById('google_calendar_settings_btn');
+const googleCalendarSettingsModal = document.getElementById('google_calendar_settings_modal_overlay');
+const googleCalendarUrlInput = document.getElementById('google_calendar_url_input');
+
+/**
+ * Google Calendarウィジェットを更新
+ */
+function updateGoogleCalendarWidget() {
+  const calendarUrl = localStorage.getItem('googleCalendarUrl');
+
+  if (calendarUrl) {
+    if (googleCalendarIframe.src !== calendarUrl) {
+      googleCalendarIframe.src = calendarUrl;
+    }
+    googleCalendarSetupPrompt.style.display = 'none';
+    googleCalendarIframe.style.display = 'block';
+  } else {
+    googleCalendarIframe.src = 'about:blank';
+    googleCalendarSetupPrompt.style.display = 'flex';
+    googleCalendarIframe.style.display = 'none';
+  }
+}
+
+// 設定ボタンのイベント
+if (googleCalendarSettingsBtn) {
+  googleCalendarSettingsBtn.onpointerdown = (e) => {
+    e.stopPropagation();
+  };
+  googleCalendarSettingsBtn.onclick = (e) => {
+    e.stopPropagation();
+    googleCalendarUrlInput.value = localStorage.getItem('googleCalendarUrl') || '';
+    googleCalendarSettingsModal.style.display = 'flex';
+  };
+}
+
+// 設定モーダルのイベント
+document.getElementById('close_google_calendar_settings_modal')?.addEventListener('click', () => {
+  googleCalendarSettingsModal.style.display = 'none';
+});
+
+document.getElementById('save_google_calendar_settings')?.addEventListener('click', () => {
+  let url = googleCalendarUrlInput.value.trim();
+  
+  // ユーザーが<iframe...>全体を貼り付けた場合、srcを抽出する
+  if (url.startsWith('<iframe')) {
+    const match = url.match(/src="([^"]+)"/);
+    url = (match && match[1]) ? match[1].replace(/&amp;/g, '&') : '';
+  }
+
+  if (url) {
+    localStorage.setItem('googleCalendarUrl', url);
+  } else {
+    localStorage.removeItem('googleCalendarUrl');
+  }
+  googleCalendarSettingsModal.style.display = 'none';
+  updateGoogleCalendarWidget();
+});
+
+// Googleログインボタン
+document.getElementById('google_login_btn')?.addEventListener('click', () => {
+  if (window.electronAPI && window.electronAPI.openGoogleLogin) {
+    window.electronAPI.openGoogleLogin();
+  }
+});
+
+// 初期化時にカレンダーウィジェットを更新
+setTimeout(updateGoogleCalendarWidget, 1000);
 
 document.getElementById('save_edit_linuxapp').onclick = () => {
   const name = document.getElementById('edit_linuxapp_name').value.trim();

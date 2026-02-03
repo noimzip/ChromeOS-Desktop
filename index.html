@@ -179,6 +179,46 @@
       </div>
     </div>
 
+    <!-- Google Calendar Widget -->
+    <div id="google_calendar_widget" class="google-calendar widget">
+      <div class="google-calendar-header">
+        <m3e-icon name="calendar_month" class="google-calendar-icon"></m3e-icon>
+        <span class="google-calendar-title">Google Calendar</span>
+        <button id="google_calendar_settings_btn" class="google-calendar-settings-btn" title="設定">
+          <m3e-icon name="settings"></m3e-icon>
+        </button>
+      </div>
+      <div class="google-calendar-content">
+        <iframe id="google_calendar_iframe" src="about:blank"></iframe>
+        <div id="google_calendar_setup_prompt" class="google-calendar-setup-prompt">
+          <m3e-icon name="edit_calendar"></m3e-icon>
+          <span>設定ボタンからカレンダーの埋め込みURLを設定してください</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Google Calendar Settings Modal -->
+    <div id="google_calendar_settings_modal_overlay" class="modal_overlay">
+      <div id="google_calendar_settings_modal" class="modal">
+        <h3>Googleカレンダー設定</h3>
+        <p class="modal-description">Googleカレンダーの設定から「限定公開の共有可能なリンク」または「埋め込みコード」を取得し、URLを貼り付けてください。</p>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="google_calendar_url_input">埋め込みURL</label>
+          <input id="google_calendar_url_input" placeholder="https://calendar.google.com/calendar/embed?..." />
+        </m3e-form-field>
+        <div style="margin: 16px 0; text-align: center;">
+          <p style="font-size: 12px; color: var(--on-surface-variant); margin-bottom: 8px;" data-i18n="google_login_help">
+            カレンダーが表示されない場合はログインしてください
+          </p>
+          <m3e-button variant="outlined" id="google_login_btn" style="width: 100%;" data-i18n="google_login">Googleアカウントにログイン</m3e-button>
+        </div>
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="close_google_calendar_settings_modal">とじる</m3e-button>
+          <m3e-button variant="filled" id="save_google_calendar_settings">保存</m3e-button>
+        </div>
+      </div>
+    </div>
+
     <!-- 右下の設定ボタン -->
     <button id="settings_fab" title="設定">
       <m3e-icon name="settings"></m3e-icon>
