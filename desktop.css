@@ -73,6 +73,13 @@
   --clock-accent: #bbdefb;
   --clock-background: #1a365d;
   --clock-text-color: #ffffff;
+
+  /* GitHub Graph Colors (Light Mode) */
+  --github-level-0: var(--surface-dim);
+  --github-level-1: color-mix(in srgb, var(--primary-color) 30%, var(--surface-variant));
+  --github-level-2: color-mix(in srgb, var(--primary-color) 60%, var(--surface-variant));
+  --github-level-3: var(--primary-color);
+  --github-level-4: var(--primary-dark);
 }
 
 /* ========================================
@@ -242,6 +249,13 @@ body.dark-mode {
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5), 0 5px 10px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+
+  /* GitHub Graph Colors (Dark Mode) */
+  --github-level-0: var(--surface-dim);
+  --github-level-1: color-mix(in srgb, var(--primary-color) 20%, var(--surface-dim));
+  --github-level-2: color-mix(in srgb, var(--primary-color) 50%, var(--surface-dim));
+  --github-level-3: var(--primary-color);
+  --github-level-4: var(--primary-light);
 }
 
 /* Dark mode specific overrides */
@@ -878,6 +892,7 @@ body.dark-mode .media-player-controls {
   border-radius: 2px;
   background: var(--surface-dim);
   transition: transform 0.1s ease;
+  cursor: pointer;
 }
 
 .github-day:hover {
@@ -886,43 +901,23 @@ body.dark-mode .media-player-controls {
 }
 
 .github-day[data-level="0"] {
-  background: var(--surface-dim);
+  background: var(--github-level-0);
 }
 
 .github-day[data-level="1"] {
-  background: #9be9a8;
+  background: var(--github-level-1);
 }
 
 .github-day[data-level="2"] {
-  background: #40c463;
+  background: var(--github-level-2);
 }
 
 .github-day[data-level="3"] {
-  background: #30a14e;
+  background: var(--github-level-3);
 }
 
 .github-day[data-level="4"] {
-  background: #216e39;
-}
-
-body.dark-mode .github-day[data-level="0"] {
-  background: #161b22;
-}
-
-body.dark-mode .github-day[data-level="1"] {
-  background: #0e4429;
-}
-
-body.dark-mode .github-day[data-level="2"] {
-  background: #006d32;
-}
-
-body.dark-mode .github-day[data-level="3"] {
-  background: #26a641;
-}
-
-body.dark-mode .github-day[data-level="4"] {
-  background: #39d353;
+  background: var(--github-level-4);
 }
 
 .github-stats {
@@ -996,6 +991,55 @@ body.dark-mode .github-contribution-footer {
   gap: 8px;
   text-align: center;
   font-size: 12px;
+}
+
+.github-tooltip {
+  position: fixed;
+  background: rgba(30, 30, 30, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 10000;
+  display: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  text-align: center;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* GitHub Details Modal */
+#github_details_modal {
+  width: 300px;
+  padding: 24px;
+  text-align: center;
+}
+
+.github-details-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+  gap: 10px;
+}
+
+.github-details-icon m3e-icon {
+  font-size: 48px;
+  color: var(--primary-color);
+}
+
+.github-details-count {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--on-surface);
+  display: block;
+}
+
+.github-details-level {
+  font-size: 14px;
+  color: var(--on-surface-variant);
 }
 
 /* ========================================

@@ -159,6 +159,26 @@
       </div>
     </div>
 
+    <!-- GitHub詳細モーダル -->
+    <div id="github_details_modal_overlay" class="modal_overlay">
+      <div id="github_details_modal" class="modal">
+        <h3 id="github_details_date">YYYY-MM-DD</h3>
+        <div class="github-details-content">
+          <div class="github-details-icon">
+            <m3e-icon id="github_details_level_icon" name="check_circle"></m3e-icon>
+          </div>
+          <div class="github-details-info">
+            <span id="github_details_count" class="github-details-count">0 contributions</span>
+            <span id="github_details_level_text" class="github-details-level">No activity</span>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="close_github_details_modal">とじる</m3e-button>
+          <m3e-button variant="filled" id="open_github_activity">GitHubで見る</m3e-button>
+        </div>
+      </div>
+    </div>
+
     <!-- 右下の設定ボタン -->
     <button id="settings_fab" title="設定">
       <m3e-icon name="settings"></m3e-icon>
@@ -466,5 +486,6 @@
         </div>
       </div>
     </div>
+    <div id="github_tooltip" class="github-tooltip"></div>
   </body>
 </html>
