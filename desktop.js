@@ -420,6 +420,7 @@ let isPositionChangeMode = false;
 let draggedItem = null;
 let folders = JSON.parse(localStorage.getItem('appFolders') || '{}');
 let currentOpenFolderId = null;
+let currentFolderPage = 0;
 
 // 編集機能用
 let currentEditingApp = null;
@@ -637,22 +638,48 @@ function createFolderIcon(folderId, folderData) {
   return div;
 }
 
+// フォルダーを閉じる（アニメーション付き）
+function closeFolder() {
+  const modal = document.getElementById('folder_modal_overlay');
+  const modalContent = document.getElementById('folder_modal');
+  
+  if (!modal || modal.style.display === 'none') return;
+
+  modal.classList.add('fade-out');
+  if (modalContent) {
+    modalContent.classList.remove('folder-opening');
+    modalContent.classList.add('folder-closing');
+  }
+  
+  const onAnimationEnd = () => {
+    modal.style.display = 'none';
+    modal.classList.remove('fade-out');
+    if (modalContent) {
+      modalContent.classList.remove('folder-closing');
+    }
+    currentOpenFolderId = null;
+  };
+  
+  // アニメーション終了を待つ
+  // アニメーションイベントが発火しない場合の保険としてsetTimeoutも併用
+  const timer = setTimeout(onAnimationEnd, 200);
+  modalContent?.addEventListener('animationend', () => { clearTimeout(timer); onAnimationEnd(); }, { once: true });
+}
+
 // フォルダーを開く
 function openFolder(folderId) {
   const folderData = folders[folderId];
   if (!folderData) return;
   
   currentOpenFolderId = folderId;
+  currentFolderPage = 0;
   
-  const modal = document.getElementById('folder_modal_overlay');
   const title = document.getElementById('folder_title');
   const titleInput = document.getElementById('folder_title_input');
-  const contents = document.getElementById('folder_contents');
   
   title.textContent = folderData.name;
   title.style.display = '';
   titleInput.style.display = 'none';
-  contents.innerHTML = '';
   
   // タイトルクリックで編集モードに
   title.onclick = () => {
@@ -693,7 +720,41 @@ function openFolder(folderId) {
     }
   };
   
-  folderData.apps.forEach((app, index) => {
+  renderFolderPage(folderId);
+}
+
+function renderFolderPage(folderId) {
+  const folderData = folders[folderId];
+  if (!folderData) return;
+
+  const modal = document.getElementById('folder_modal_overlay');
+  const modalContent = document.getElementById('folder_modal');
+  const contents = document.getElementById('folder_contents');
+  
+  contents.innerHTML = '';
+  
+  // ページネーション計算
+  const itemsPerPage = 9;
+  const totalApps = folderData.apps.length;
+  const totalPages = Math.ceil(totalApps / itemsPerPage) || 1;
+  
+  if (currentFolderPage >= totalPages) currentFolderPage = totalPages - 1;
+  if (currentFolderPage < 0) currentFolderPage = 0;
+  
+  const startIdx = currentFolderPage * itemsPerPage;
+  const endIdx = Math.min(startIdx + itemsPerPage, totalApps);
+  const pageApps = folderData.apps.slice(startIdx, endIdx);
+  
+  // グリッドレイアウト決定: 4つまでは2列、それ以上は3列
+  const columns = totalApps > 4 ? 3 : 2;
+  
+  contents.style.display = 'grid';
+  contents.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+  contents.style.gap = '12px';
+  contents.style.justifyContent = 'center';
+  
+  pageApps.forEach((app, i) => {
+    const index = startIdx + i;
     const div = document.createElement('div');
     div.className = 'appicon folder-item';
     div.dataset.folderItemIndex = index;
@@ -702,16 +763,23 @@ function openFolder(folderId) {
       <p>${app.name}</p>
     `;
     
+    // 画像のドラッグを防止
+    const img = div.querySelector('img');
+    if (img) {
+      img.ondragstart = (e) => e.preventDefault();
+    }
+    
     // ドラッグ用の変数
     let isDraggingFromFolder = false;
+    let ignoreClick = false;
     let dragStartX, dragStartY;
     let dragClone = null;
     
     div.onpointerdown = (e) => {
       if (e.button !== 0) return;
-      e.preventDefault();
       div.setPointerCapture(e.pointerId);
       isDraggingFromFolder = false;
+      ignoreClick = false;
       dragStartX = e.clientX;
       dragStartY = e.clientY;
     };
@@ -725,6 +793,7 @@ function openFolder(folderId) {
       // ドラッグ開始判定
       if (!isDraggingFromFolder && (Math.abs(dx) > DRAG_THRESHOLD * 2 || Math.abs(dy) > DRAG_THRESHOLD * 2)) {
         isDraggingFromFolder = true;
+        ignoreClick = true;
         
         // ドラッグ用のクローンを作成
         dragClone = div.cloneNode(true);
@@ -746,12 +815,22 @@ function openFolder(folderId) {
         const isOutsideModal = e.clientX < modalRect.left || e.clientX > modalRect.right ||
                                e.clientY < modalRect.top || e.clientY > modalRect.bottom;
         
+        // ハイライトをリセット
+        document.querySelectorAll('.folder-item.reorder-target').forEach(el => el.classList.remove('reorder-target'));
+        
         if (isOutsideModal) {
           dragClone.style.transform = 'scale(1.1)';
           dragClone.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)';
         } else {
           dragClone.style.transform = 'scale(1)';
           dragClone.style.boxShadow = '';
+          
+          // 並べ替えターゲットの検出
+          const elements = document.elementsFromPoint(e.clientX, e.clientY);
+          const targetItem = elements.find(el => el.classList.contains('folder-item') && el !== div);
+          if (targetItem) {
+            targetItem.classList.add('reorder-target');
+          }
         }
       }
     };
@@ -769,40 +848,154 @@ function openFolder(folderId) {
         dragClone.remove();
         dragClone = null;
         
+        // ハイライトをリセット
+        document.querySelectorAll('.folder-item.reorder-target').forEach(el => el.classList.remove('reorder-target'));
+        
         if (isOutsideModal) {
           // フォルダから取り出す
           removeFromFolder(folderId, index);
-          modal.style.display = 'none';
+          closeFolder();
+        } else {
+          // 並べ替え処理
+          const elements = document.elementsFromPoint(e.clientX, e.clientY);
+          const targetItem = elements.find(el => el.classList.contains('folder-item'));
+          
+          if (targetItem) {
+            const targetIndex = parseInt(targetItem.dataset.folderItemIndex);
+            if (!isNaN(targetIndex) && targetIndex !== index) {
+              // 配列を並べ替え
+              const item = folderData.apps[index];
+              folderData.apps.splice(index, 1);
+              folderData.apps.splice(targetIndex, 0, item);
+              
+              saveFolders();
+              updateFolderIcon(folderId);
+              renderFolderPage(folderId);
+            }
+          }
         }
-      } else if (!isDraggingFromFolder) {
-        // クリックとして処理
-        handleFolderItemClick(app, modal);
       }
       
       isDraggingFromFolder = false;
     };
+
+    div.onclick = (e) => {
+      if (ignoreClick) {
+        e.stopPropagation();
+        return;
+      }
+      handleFolderItemClick(app, modal);
+    };
     
-    // 長押しでフォルダーから取り出す
+    // コンテキストメニュー表示
     div.oncontextmenu = (e) => {
       e.preventDefault();
-      const lang = getCurrentLanguage();
-      const confirmMsg = lang === 'ja' ? `「${app.name}」をフォルダーから取り出しますか？` : `Remove "${app.name}" from folder?`;
       
-      if (confirm(confirmMsg)) {
-        removeFromFolder(folderId, index);
-        modal.style.display = 'none';
+      // アプリタイプを判定
+      let type = 'folder-item';
+      if (app.isLinuxApp || app.command) {
+        type = 'folder-item-linuxapp';
+      } else if (app.url) {
+        type = 'folder-item-webapp';
       }
+      
+      // 編集用データを添付
+      div._appData = app;
+      div._folderId = folderId;
+      div._folderIndex = index;
+      
+      showContextMenu(e, div, type);
     };
     
     contents.appendChild(div);
   });
   
-  modal.style.display = 'flex';
+  // ページネーション表示
+  const existingPagination = modalContent.querySelector('.folder-pagination');
+  if (existingPagination) existingPagination.remove();
+  
+  if (totalPages > 1) {
+    const paginationDiv = document.createElement('div');
+    paginationDiv.className = 'folder-pagination';
+    paginationDiv.style.display = 'flex';
+    paginationDiv.style.justifyContent = 'center';
+    paginationDiv.style.gap = '8px';
+    paginationDiv.style.marginTop = '4px';
+    paginationDiv.style.marginBottom = '4px';
+    paginationDiv.style.order = '3';
+    
+    for (let p = 0; p < totalPages; p++) {
+      const dot = document.createElement('div');
+      dot.style.width = '8px';
+      dot.style.height = '8px';
+      dot.style.borderRadius = '50%';
+      dot.style.backgroundColor = p === currentFolderPage ? 'var(--primary-color)' : 'var(--outline)';
+      dot.style.cursor = 'pointer';
+      dot.onclick = (e) => {
+        e.stopPropagation();
+        currentFolderPage = p;
+        renderFolderPage(folderId);
+      };
+      paginationDiv.appendChild(dot);
+    }
+    modalContent.appendChild(paginationDiv);
+  }
+  
+  updateFolderModalPosition(folderId);
+}
+
+function updateFolderModalPosition(folderId) {
+  const modal = document.getElementById('folder_modal_overlay');
+  const modalContent = document.getElementById('folder_modal');
+  const folderIcon = document.querySelector(`[data-folder-id="${folderId}"]`);
+  
+  if (folderIcon && modalContent) {
+    const rect = folderIcon.getBoundingClientRect();
+    
+    // アニメーションクラスを追加（まだ表示されていない場合）
+    if (modal.style.display === 'none') {
+      modalContent.classList.remove('folder-closing');
+      modalContent.classList.add('folder-opening');
+    }
+    
+    modal.style.display = 'block'; // absolute配置のためにblockにする
+    modalContent.style.position = 'absolute';
+    modalContent.style.margin = '0';
+    
+    // サイズを計測
+    const modalWidth = modalContent.offsetWidth;
+    
+    // 横位置（アイコンの中央に合わせる）
+    let left = rect.left + (rect.width / 2) - (modalWidth / 2);
+    if (left < 10) left = 10;
+    if (left + modalWidth > window.innerWidth - 10) left = window.innerWidth - modalWidth - 10;
+    modalContent.style.left = `${left}px`;
+    
+    // 縦位置（画面の下半分にある場合は上に表示）
+    if (rect.top > window.innerHeight / 2) {
+      modalContent.style.top = 'auto';
+      modalContent.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+      modalContent.style.transformOrigin = 'bottom center';
+    } else {
+      modalContent.style.bottom = 'auto';
+      modalContent.style.top = (rect.bottom + 10) + 'px';
+      modalContent.style.transformOrigin = 'top center';
+    }
+  } else {
+    modal.style.display = 'flex';
+    if (modalContent) {
+      modalContent.style.position = '';
+      modalContent.style.margin = '';
+      modalContent.style.left = '';
+      modalContent.style.top = '';
+      modalContent.style.bottom = '';
+    }
+  }
 }
 
 // フォルダ内アイテムのクリック処理
 async function handleFolderItemClick(app, modal) {
-  modal.style.display = 'none';
+  closeFolder();
   
   // Linuxアプリの場合
   if (app.command || app.isLinuxApp) {
@@ -958,7 +1151,12 @@ function addToFolder(folderId, icon) {
   saveFolders();
   
   // アイコンを非表示ではなく削除（リロード時の重複を防ぐ）
-  icon.remove();
+  // ビルトインアプリは削除すると復元できないため非表示にする
+  if (isBuiltin) {
+    icon.style.display = 'none';
+  } else {
+    icon.remove();
+  }
   
   // フォルダーアイコンを更新
   updateFolderIcon(folderId);
@@ -1008,8 +1206,15 @@ function loadFolders() {
 
 // フォルダーモーダルを閉じる
 document.getElementById('close_folder_modal').onclick = () => {
-  document.getElementById('folder_modal_overlay').style.display = 'none';
+  closeFolder();
 }
+
+// オーバーレイクリックで閉じる
+document.getElementById('folder_modal_overlay').onclick = (e) => {
+  if (e.target.id === 'folder_modal_overlay') {
+    closeFolder();
+  }
+};
 
 // 位置変更モードを有効にする
 function enterPositionChangeMode() {
@@ -2413,9 +2618,9 @@ document.getElementById('context_edit').onclick = (e) => {
   e.stopPropagation();
   hideContextMenu();
   
-  if (currentContextAppType === 'webapp') {
+  if (currentContextAppType === 'webapp' || currentContextAppType === 'folder-item-webapp') {
     openEditWebappModal();
-  } else if (currentContextAppType === 'linuxapp') {
+  } else if (currentContextAppType === 'linuxapp' || currentContextAppType === 'folder-item-linuxapp') {
     openEditLinuxappModal();
   } else if (currentContextAppType === 'file' || currentContextAppType === 'folder-shortcut') {
     // ファイル/フォルダショートカットは編集不可（パスは変更できない）
@@ -2435,6 +2640,19 @@ document.getElementById('context_delete').onclick = (e) => {
   const lang = getCurrentLanguage();
   const appName = currentEditingApp?.name || currentEditingIcon._fileData?.name || 'Unknown';
   const confirmMsg = lang === 'ja' ? `「${appName}」を削除しますか？` : `Delete "${appName}"?`;
+  
+  // フォルダー内アイテムの場合
+  if (currentContextAppType && currentContextAppType.startsWith('folder-item')) {
+    const folderConfirmMsg = lang === 'ja' ? `「${appName}」をフォルダーから取り出しますか？` : `Remove "${appName}" from folder?`;
+    if (confirm(folderConfirmMsg)) {
+      const folderId = currentEditingIcon._folderId;
+      const index = currentEditingIcon._folderIndex;
+      removeFromFolder(folderId, index);
+      if (folders[folderId]) renderFolderPage(folderId);
+      else closeFolder();
+    }
+    return;
+  }
   
   if (confirm(confirmMsg)) {
     const saveKey = currentEditingIcon.dataset.saveKey;
@@ -2513,6 +2731,24 @@ document.getElementById('save_edit_webapp').onclick = () => {
   if (!name || !url) {
     const lang = getCurrentLanguage();
     alert(lang === 'ja' ? '名前とURLを入力してください' : 'Please enter name and URL');
+    return;
+  }
+  
+  // フォルダー内アイテムの場合
+  if (currentContextAppType === 'folder-item-webapp') {
+    const folderId = currentEditingIcon._folderId;
+    const index = currentEditingIcon._folderIndex;
+    const folder = folders[folderId];
+    
+    if (folder && folder.apps[index]) {
+      folder.apps[index].name = name;
+      folder.apps[index].url = url;
+      folder.apps[index].icon = editWebappIconDataUrl;
+      saveFolders();
+      updateFolderIcon(folderId);
+      renderFolderPage(folderId);
+    }
+    document.getElementById('edit_webapp_modal_overlay').style.display = 'none';
     return;
   }
   
@@ -3155,6 +3391,25 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
     alert(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
     return;
   }
+    
+    // フォルダー内アイテムの場合
+    if (currentContextAppType === 'folder-item-linuxapp') {
+      const folderId = currentEditingIcon._folderId;
+      const index = currentEditingIcon._folderIndex;
+      const folder = folders[folderId];
+      
+      if (folder && folder.apps[index]) {
+        folder.apps[index].name = name;
+        folder.apps[index].command = command;
+        folder.apps[index].runInTerminal = runInTerminal;
+        folder.apps[index].icon = editLinuxappIconDataUrl;
+        saveFolders();
+        updateFolderIcon(folderId);
+        renderFolderPage(folderId);
+      }
+      document.getElementById('edit_linuxapp_modal_overlay').style.display = 'none';
+      return;
+    }
   
   // localStorageを更新
   const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
