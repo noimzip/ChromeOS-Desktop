@@ -681,6 +681,25 @@ function openFolder(folderId) {
   title.style.display = '';
   titleInput.style.display = 'none';
   
+  // スタイル設定の初期化
+  const styleEditor = document.getElementById('folder_style_editor');
+  const bgColorInput = document.getElementById('folder_bg_color');
+  const opacityInput = document.getElementById('folder_bg_opacity');
+  
+  if (styleEditor) styleEditor.style.display = 'none';
+  
+  // スタイルデータがない場合はデフォルト値を設定
+  if (!folderData.style) {
+    const isDark = document.body.classList.contains('dark-mode');
+    folderData.style = { color: isDark ? '#1f1f1f' : '#ffffff', opacity: 1.0 };
+  }
+  
+  if (bgColorInput && opacityInput) {
+    bgColorInput.value = folderData.style.color;
+    opacityInput.value = folderData.style.opacity;
+    applyFolderStyle(folderId);
+  }
+  
   // タイトルクリックで編集モードに
   title.onclick = () => {
     title.style.display = 'none';
@@ -721,6 +740,25 @@ function openFolder(folderId) {
   };
   
   renderFolderPage(folderId);
+}
+
+// フォルダーのスタイルを適用
+function applyFolderStyle(folderId) {
+  const folderData = folders[folderId];
+  if (!folderData || !folderData.style) return;
+  
+  const modal = document.getElementById('folder_modal');
+  const { color, opacity } = folderData.style;
+  
+  const rgb = hexToRgb(color);
+  if (rgb) {
+    modal.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+    
+    // 背景色に合わせて文字色を調整
+    const textColor = getContrastColor(rgb.r, rgb.g, rgb.b);
+    modal.style.setProperty('--on-surface', textColor);
+    modal.style.setProperty('--on-surface-variant', textColor);
+  }
 }
 
 function renderFolderPage(folderId) {
@@ -1204,6 +1242,35 @@ document.getElementById('folder_modal_overlay').onclick = (e) => {
     closeFolder();
   }
 };
+
+// フォルダー設定ボタン
+document.getElementById('folder_style_btn').onclick = (e) => {
+  e.stopPropagation();
+  const editor = document.getElementById('folder_style_editor');
+  if (editor) {
+    editor.style.display = editor.style.display === 'none' ? 'flex' : 'none';
+  }
+};
+
+// フォルダー背景色変更
+document.getElementById('folder_bg_color').addEventListener('input', (e) => {
+  if (currentOpenFolderId && folders[currentOpenFolderId]) {
+    folders[currentOpenFolderId].style = folders[currentOpenFolderId].style || {};
+    folders[currentOpenFolderId].style.color = e.target.value;
+    applyFolderStyle(currentOpenFolderId);
+    saveFolders();
+  }
+});
+
+// フォルダー透明度変更
+document.getElementById('folder_bg_opacity').addEventListener('input', (e) => {
+  if (currentOpenFolderId && folders[currentOpenFolderId]) {
+    folders[currentOpenFolderId].style = folders[currentOpenFolderId].style || {};
+    folders[currentOpenFolderId].style.opacity = e.target.value;
+    applyFolderStyle(currentOpenFolderId);
+    saveFolders();
+  }
+});
 
 // 位置変更モードを有効にする
 function enterPositionChangeMode() {
@@ -1818,6 +1885,8 @@ const translations = {
     window_count: "ウィンドウ数（仮想デスクトップ用）",
     apply_restart: "適用して再起動",
     confirm_restart: "ウィンドウ数を変更するにはアプリを再起動する必要があります。再起動しますか？",
+    folder_style: "フォルダーのスタイル",
+    apply_to_all: "すべてに適用",
     google_login: "Googleアカウントにログイン",
     google_login_help: "カレンダーが表示されない場合はログインしてください"
   },
@@ -1886,6 +1955,8 @@ const translations = {
     window_count: "Window Count (for Virtual Desktops)",
     apply_restart: "Apply & Restart",
     confirm_restart: "The app needs to restart to change window count. Restart now?",
+    folder_style: "Folder Style",
+    apply_to_all: "Apply to All",
     google_login: "Log in to Google",
     google_login_help: "Please log in if the calendar is not displayed"
   }
@@ -2239,6 +2310,28 @@ if (applyWindowCountBtn && windowCountSelector) {
         await window.electronAPI.restartApp();
       }
     }
+  };
+}
+
+// フォルダー一括設定
+const applyFolderStyleAllBtn = document.getElementById('apply_folder_style_all');
+if (applyFolderStyleAllBtn) {
+  applyFolderStyleAllBtn.onclick = () => {
+    const color = document.getElementById('global_folder_bg_color').value;
+    const opacity = document.getElementById('global_folder_bg_opacity').value;
+    
+    Object.keys(folders).forEach(folderId => {
+      folders[folderId].style = { color, opacity };
+    });
+    saveFolders();
+    
+    // 開いているフォルダーがあれば更新
+    if (currentOpenFolderId) {
+      applyFolderStyle(currentOpenFolderId);
+    }
+    
+    const lang = getCurrentLanguage();
+    alert(lang === 'ja' ? 'すべてのフォルダーに適用しました' : 'Applied to all folders');
   };
 }
 
