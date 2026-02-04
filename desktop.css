@@ -1194,6 +1194,15 @@ body.dark-mode .github-contribution-footer {
   animation: fadeIn var(--transition-fast);
 }
 
+.modal_overlay.fade-out {
+  animation: fadeOut 0.15s forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 /* ブラー無効時 */
 body.no-blur .modal_overlay {
   backdrop-filter: none;
@@ -1454,22 +1463,29 @@ body.no-blur .modal_overlay {
 }
 
 #folder_modal {
-  width: 380px;
-  max-height: 520px;
-  padding: 28px;
-  gap: 20px;
+  width: auto;
+  min-width: 140px;
+  max-width: 340px;
+  padding: 16px;
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 #folder_title_container {
   text-align: center;
+  order: 2;
 }
 
 #folder_modal h3 {
   cursor: pointer;
-  padding: 8px 16px;
+  padding: 4px 8px;
   border-radius: var(--radius-sm);
   transition: background-color var(--transition-fast);
   display: inline-block;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  margin: 0;
 }
 
 #folder_modal h3:hover {
@@ -1477,13 +1493,12 @@ body.no-blur .modal_overlay {
 }
 
 #folder_title_input {
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: 12px;
   text-align: center;
   border: 2px solid var(--primary-color);
   border-radius: var(--radius-sm);
-  padding: 8px 16px;
-  width: 200px;
+  padding: 2px 8px;
+  width: 120px;
   outline: none;
   font-family: inherit;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -1498,11 +1513,11 @@ body.no-blur .modal_overlay {
   flex-wrap: wrap;
   gap: 12px;
   justify-content: center;
-  padding: 20px;
-  min-height: 120px;
-  background: linear-gradient(135deg, var(--surface-variant) 0%, #eef1f5 100%);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--outline);
+  padding: 4px;
+  min-height: auto;
+  background: transparent;
+  border: none;
+  order: 1;
 }
 
 #folder_contents .appicon {
@@ -1519,8 +1534,38 @@ body.no-blur .modal_overlay {
 }
 
 #folder_modal m3e-button {
-  width: 100%;
-  --m3e-button-height: 44px;
+  display: none;
+}
+
+/* Folder Animations */
+@keyframes folderExpand {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes folderCollapse {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+#folder_modal.folder-opening {
+  animation: folderExpand 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+#folder_modal.folder-closing {
+  animation: folderCollapse 0.15s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
 /* ========================================
@@ -1774,6 +1819,13 @@ body.no-blur .context-menu {
 
 body.no-blur .folder-drag-clone {
   backdrop-filter: none;
+}
+
+.folder-item.reorder-target {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--primary-color);
+  border-radius: var(--radius-md);
+  z-index: 1;
 }
 
 /* ========================================
