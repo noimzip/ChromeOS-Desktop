@@ -517,6 +517,8 @@ function getIconData(icon) {
   const name = icon.querySelector('p')?.textContent || '';
   const isBuiltin = !!icon.id && !icon.dataset.saveKey;
   const isLinuxApp = icon.classList.contains('linux-app');
+  const isFileShortcut = icon.classList.contains('file-shortcut');
+  const isFolderShortcut = icon.classList.contains('folder-shortcut');
   
   // URLを取得
   let url = icon._appUrl || '';
@@ -537,6 +539,12 @@ function getIconData(icon) {
     data.command = icon._appCommand;
     data.runInTerminal = icon._runInTerminal || false;
     data.isLinuxApp = true;
+  }
+
+  // ファイル/フォルダショートカットの場合
+  if ((isFileShortcut || isFolderShortcut) && icon._filePath) {
+    data.path = icon._filePath;
+    data.isDirectory = isFolderShortcut;
   }
   
   return data;
@@ -1043,6 +1051,17 @@ async function handleFolderItemClick(app, modal) {
     return;
   }
   
+  // ファイル/フォルダの場合
+  if (app.path) {
+    console.log('Opening file/folder from folder:', app.path);
+    const result = await openFileOrFolder(app.path);
+    if (!result.success) {
+      const lang = getCurrentLanguage();
+      alert(translations[lang].open_failed + ': ' + result.error);
+    }
+    return;
+  }
+  
   // URLがある場合は開く
   if (app.url) {
     if (app.url.startsWith('chrome://')) {
@@ -1084,6 +1103,23 @@ function removeFromFolder(folderId, appIndex) {
       icon: app.icon,
       runInTerminal: app.runInTerminal || false
     });
+  } else if (app.path) {
+    if (app.isDirectory) {
+      createFolderShortcutIcon({
+        name: app.name,
+        path: app.path,
+        icon: app.icon,
+        saveKey: app.id
+      });
+    } else {
+      createFileShortcutIcon({
+        name: app.name,
+        path: app.path,
+        icon: app.icon,
+        isDirectory: false,
+        saveKey: app.id
+      });
+    }
   } else if (app.isBuiltin && app.id) {
     const el = document.getElementById(app.id);
     if (el) el.style.display = '';
@@ -1152,6 +1188,8 @@ function addToFolder(folderId, icon) {
   const name = icon.querySelector('p')?.textContent || '';
   const isBuiltin = !!icon.id && !icon.dataset.saveKey;
   const isLinuxApp = icon.classList.contains('linux-app');
+  const isFileShortcut = icon.classList.contains('file-shortcut');
+  const isFolderShortcut = icon.classList.contains('folder-shortcut');
   
   // URLを取得（ビルトインアイコンの場合はbuiltinIconUrlsから取得）
   let url = icon._appUrl || '';
@@ -1172,6 +1210,12 @@ function addToFolder(folderId, icon) {
     appData.command = icon._appCommand;
     appData.runInTerminal = icon._runInTerminal || false;
     appData.isLinuxApp = true;
+  }
+
+  // ファイル/フォルダショートカットの場合
+  if ((isFileShortcut || isFolderShortcut) && icon._filePath) {
+    appData.path = icon._filePath;
+    appData.isDirectory = isFolderShortcut;
   }
   
   folderData.apps.push(appData);
@@ -2923,6 +2967,7 @@ const githubCurrentStreak = document.getElementById('github_current_streak');
 const githubLongestStreak = document.getElementById('github_longest_streak');
 const githubUsernameDisplay = document.getElementById('github_username_display');
 const githubSettingsBtn = document.getElementById('github_settings_btn');
+const githubRefreshBtn = document.getElementById('github_refresh_btn');
 const githubSettingsModal = document.getElementById('github_settings_modal_overlay');
 const githubUsernameInput = document.getElementById('github_username_input');
 const githubYearSelect = document.getElementById('github_year_select');
@@ -3326,6 +3371,15 @@ async function updateGitHubWidget() {
   githubData = data;
   populateGitHubYearSelect(data);
   renderGitHubGraph(data, currentGitHubYear);
+}
+
+// GitHub更新ボタン
+if (githubRefreshBtn) {
+  githubRefreshBtn.onpointerdown = (e) => e.stopPropagation();
+  githubRefreshBtn.onclick = (e) => {
+    e.stopPropagation();
+    updateGitHubWidget();
+  };
 }
 
 // GitHub設定モーダル
