@@ -389,26 +389,26 @@ setupBuiltinIconClick('appicon-settings', 'chrome://os-settings');
 
 document.addEventListener('keydown', function(e) {
   if(e.key === 'Escape'){
-    escmenu_modal_overlay.style.display = 'flex';
+    document.getElementById('escmenu_modal_overlay').style.display = 'flex';
   }
 });
 
 // 右下の設定ボタン
 document.getElementById('settings_fab').onclick = () => {
-  escmenu_modal_overlay.style.display = 'flex';
+  document.getElementById('escmenu_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('close_menu_modal').onclick = () => {
-  escmenu_modal_overlay.style.display = 'none';
+  document.getElementById('escmenu_modal_overlay').style.display = 'none';
 }
 
 document.getElementById('open_settingsmenu_modal').onclick = () => {
-  escmenu_modal_overlay.style.display = 'none';
-  settingsmenu_modal_overlay.style.display = 'flex';
+  document.getElementById('escmenu_modal_overlay').style.display = 'none';
+  document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('close_settingsmenu_modal').onclick = () => {
-  settingsmenu_modal_overlay.style.display = 'none';
+  document.getElementById('settingsmenu_modal_overlay').style.display = 'none';
 }
 
 // ========================================
@@ -748,10 +748,7 @@ function renderFolderPage(folderId) {
   // グリッドレイアウト決定: 4つまでは2列、それ以上は3列
   const columns = totalApps > 4 ? 3 : 2;
   
-  contents.style.display = 'grid';
   contents.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-  contents.style.gap = '12px';
-  contents.style.justifyContent = 'center';
   
   pageApps.forEach((app, i) => {
     const index = startIdx + i;
@@ -917,20 +914,12 @@ function renderFolderPage(folderId) {
   if (totalPages > 1) {
     const paginationDiv = document.createElement('div');
     paginationDiv.className = 'folder-pagination';
-    paginationDiv.style.display = 'flex';
-    paginationDiv.style.justifyContent = 'center';
-    paginationDiv.style.gap = '8px';
-    paginationDiv.style.marginTop = '4px';
-    paginationDiv.style.marginBottom = '4px';
-    paginationDiv.style.order = '3';
     
     for (let p = 0; p < totalPages; p++) {
       const dot = document.createElement('div');
-      dot.style.width = '8px';
-      dot.style.height = '8px';
-      dot.style.borderRadius = '50%';
-      dot.style.backgroundColor = p === currentFolderPage ? 'var(--primary-color)' : 'var(--outline)';
-      dot.style.cursor = 'pointer';
+      dot.className = 'folder-pagination-dot';
+      if (p === currentFolderPage) dot.classList.add('active');
+      
       dot.onclick = (e) => {
         e.stopPropagation();
         currentFolderPage = p;
@@ -1221,7 +1210,7 @@ function enterPositionChangeMode() {
   if (isPositionChangeMode) return;
   isPositionChangeMode = true;
   
-  change_widget_position_modal_overlay.style.display = 'flex';
+  document.getElementById('change_widget_position_modal_overlay').style.display = 'flex';
   
   // 位置変更モード中はデスクトップアイコンのz-indexを上げる
   const desktopIcons = document.getElementById('desktop_icons');
@@ -1235,23 +1224,23 @@ function enterPositionChangeMode() {
   
   // グリッド線の表示/非表示
   if (isGridModeEnabled) {
-    change_widget_position_modal_overlay.classList.add('grid-mode');
+    document.getElementById('change_widget_position_modal_overlay').classList.add('grid-mode');
   } else {
-    change_widget_position_modal_overlay.classList.remove('grid-mode');
+    document.getElementById('change_widget_position_modal_overlay').classList.remove('grid-mode');
   }
 }
 
 // 位置変更モードを終了する（保存または閉じる時に呼ばれる）
 function exitPositionChangeMode() {
   isPositionChangeMode = false;
-  change_widget_position_modal_overlay.style.display = 'none';
+  document.getElementById('change_widget_position_modal_overlay').style.display = 'none';
   
   // z-indexを元に戻す
   document.getElementById('desktop_icons').style.zIndex = '';
 }
 
 document.getElementById('open_change_widget_position_modal').onclick = () => {
-  escmenu_modal_overlay.style.display = 'none';
+  document.getElementById('escmenu_modal_overlay').style.display = 'none';
   enterPositionChangeMode();
 };
 
@@ -1616,7 +1605,7 @@ function resetWidgetPositions() {
   });
   
   // モーダルを閉じる
-  change_widget_position_modal_overlay.style.display = 'none';
+  document.getElementById('change_widget_position_modal_overlay').style.display = 'none';
   
   // z-indexを元に戻す
   const desktopIcons = document.getElementById('desktop_icons');
@@ -1732,29 +1721,32 @@ document.getElementById('save_change_widget_position').onclick = () => {
 }
 
 document.getElementById('appicon-add').onclick = () => {
-  add_app_type_modal_overlay.style.display = 'flex';
+  document.getElementById('add_app_type_modal_overlay').style.display = 'flex';
 }
 
 // アプリ追加タイプ選択
 document.getElementById('add_web_app_btn').onclick = () => {
-  add_app_type_modal_overlay.style.display = 'none';
-  add_newapp_modal_overlay.style.display = 'flex';
+  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  document.getElementById('add_newapp_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('add_linux_app_btn').onclick = () => {
-  add_app_type_modal_overlay.style.display = 'none';
-  add_linuxapp_modal_overlay.style.display = 'flex';
+  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  document.getElementById('add_linuxapp_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('close_add_app_type_modal').onclick = () => {
-  add_app_type_modal_overlay.style.display = 'none';
+  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
 }
 
 document.getElementById('close_add_newapp_modal').onclick = () => {
-  add_newapp_modal_overlay.style.display = 'none';
+  document.getElementById('add_newapp_modal_overlay').style.display = 'none';
 }
 
-developer_user_agent.textContent = window.navigator.userAgent.toLowerCase()
+const developerUserAgent = document.getElementById('developer_user_agent');
+if (developerUserAgent) {
+  developerUserAgent.textContent = window.navigator.userAgent.toLowerCase();
+}
 
 document.getElementById('refresh_page').onclick = () => {
   location.reload();
@@ -2488,7 +2480,7 @@ if (linuxAppImageTrigger && linuxAppImageInput) {
 }
 
 document.getElementById('close_add_linuxapp_modal').onclick = () => {
-  add_linuxapp_modal_overlay.style.display = 'none';
+  document.getElementById('add_linuxapp_modal_overlay').style.display = 'none';
 }
 
 const saveLinuxAppBtn = document.getElementById('save_linux_app');

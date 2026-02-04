@@ -1509,8 +1509,7 @@ body.no-blur .modal_overlay {
 }
 
 #folder_contents {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 12px;
   justify-content: center;
   padding: 4px;
@@ -1535,6 +1534,29 @@ body.no-blur .modal_overlay {
 
 #folder_modal m3e-button {
   display: none;
+}
+
+/* Folder Pagination */
+.folder-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  order: 3;
+}
+
+.folder-pagination-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--outline);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.folder-pagination-dot.active {
+  background-color: var(--primary-color);
 }
 
 /* Folder Animations */
