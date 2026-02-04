@@ -1472,6 +1472,40 @@ body.no-blur .modal_overlay {
   flex-direction: column;
 }
 
+.folder-header-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast);
+  z-index: 10;
+}
+
+.folder-header-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.folder-style-editor {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  order: 0;
+  animation: fadeIn var(--transition-fast);
+}
+
 #folder_title_container {
   text-align: center;
   order: 2;
@@ -1848,6 +1882,21 @@ body.no-blur .folder-drag-clone {
   box-shadow: 0 0 0 2px var(--primary-color);
   border-radius: var(--radius-md);
   z-index: 1;
+}
+
+/* Style Editor Controls */
+.style-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--on-surface);
+}
+
+.style-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary-color);
 }
 
 /* ========================================

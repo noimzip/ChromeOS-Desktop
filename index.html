@@ -385,6 +385,19 @@
     <!-- フォルダーモーダル -->
     <div id="folder_modal_overlay" class="modal_overlay">
       <div id="folder_modal" class="modal">
+        <button id="folder_style_btn" class="folder-header-btn" title="スタイル変更">
+          <m3e-icon name="palette"></m3e-icon>
+        </button>
+        <div id="folder_style_editor" class="folder-style-editor" style="display: none;">
+          <div class="style-row">
+            <label>背景色</label>
+            <input type="color" id="folder_bg_color" value="#ffffff">
+          </div>
+          <div class="style-row">
+            <label>透明度</label>
+            <input type="range" id="folder_bg_opacity" min="0" max="1" step="0.05" value="1">
+          </div>
+        </div>
         <div id="folder_title_container">
           <h3 id="folder_title" title="クリックで名前を変更">フォルダー</h3>
           <input type="text" id="folder_title_input" style="display: none;" />
@@ -513,6 +526,16 @@
                 <option value="8">8</option>
               </select>
               <m3e-button variant="outlined" id="apply_window_count" data-i18n="apply_restart">適用して再起動</m3e-button>
+            </div>
+          </div>
+          <div class="settings_row">
+            <span data-i18n="folder_style">フォルダーのスタイル</span>
+            <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+               <div style="display: flex; align-items: center; gap: 8px;">
+                 <input type="color" id="global_folder_bg_color" value="#ffffff">
+                 <input type="range" id="global_folder_bg_opacity" min="0" max="1" step="0.05" value="1" style="width: 80px;">
+               </div>
+               <m3e-button variant="outlined" id="apply_folder_style_all" data-i18n="apply_to_all">すべてに適用</m3e-button>
             </div>
           </div>
           <div class="settings_row settings_row_danger">
