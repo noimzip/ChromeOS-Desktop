@@ -184,6 +184,9 @@
       <div class="google-calendar-header">
         <m3e-icon name="calendar_month" class="google-calendar-icon"></m3e-icon>
         <span class="google-calendar-title">Google Calendar</span>
+        <button id="google_calendar_refresh_btn" class="google-calendar-settings-btn" title="更新" style="margin-right: 4px;">
+          <m3e-icon name="refresh"></m3e-icon>
+        </button>
         <button id="google_calendar_settings_btn" class="google-calendar-settings-btn" title="設定">
           <m3e-icon name="settings"></m3e-icon>
         </button>
@@ -206,6 +209,14 @@
           <label slot="label" for="google_calendar_url_input">埋め込みURL</label>
           <input id="google_calendar_url_input" placeholder="https://calendar.google.com/calendar/embed?..." />
         </m3e-form-field>
+        <div style="margin: 16px 0;">
+          <label for="google_calendar_mode_select" style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--on-surface-variant);">表示モード</label>
+          <select id="google_calendar_mode_select" style="width: 100%;">
+            <option value="MONTH">月 (Month)</option>
+            <option value="WEEK">週 (Week)</option>
+            <option value="AGENDA">スケジュール (Agenda)</option>
+          </select>
+        </div>
         <div style="margin: 16px 0; text-align: center;">
           <p style="font-size: 12px; color: var(--on-surface-variant); margin-bottom: 8px;" data-i18n="google_login_help">
             カレンダーが表示されない場合はログインしてください

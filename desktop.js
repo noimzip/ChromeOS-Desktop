@@ -3401,6 +3401,8 @@ const googleCalendarSetupPrompt = document.getElementById('google_calendar_setup
 const googleCalendarSettingsBtn = document.getElementById('google_calendar_settings_btn');
 const googleCalendarSettingsModal = document.getElementById('google_calendar_settings_modal_overlay');
 const googleCalendarUrlInput = document.getElementById('google_calendar_url_input');
+const googleCalendarRefreshBtn = document.getElementById('google_calendar_refresh_btn');
+const googleCalendarModeSelect = document.getElementById('google_calendar_mode_select');
 
 /**
  * Google Calendarウィジェットを更新
@@ -3421,6 +3423,20 @@ function updateGoogleCalendarWidget() {
   }
 }
 
+// 更新ボタンのイベント
+if (googleCalendarRefreshBtn) {
+  googleCalendarRefreshBtn.onpointerdown = (e) => e.stopPropagation();
+  googleCalendarRefreshBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (googleCalendarIframe.src && googleCalendarIframe.src !== 'about:blank') {
+      // srcを再代入してリロード
+      const currentSrc = googleCalendarIframe.src;
+      googleCalendarIframe.src = 'about:blank';
+      setTimeout(() => { googleCalendarIframe.src = currentSrc; }, 10);
+    }
+  };
+}
+
 // 設定ボタンのイベント
 if (googleCalendarSettingsBtn) {
   googleCalendarSettingsBtn.onpointerdown = (e) => {
@@ -3428,7 +3444,15 @@ if (googleCalendarSettingsBtn) {
   };
   googleCalendarSettingsBtn.onclick = (e) => {
     e.stopPropagation();
-    googleCalendarUrlInput.value = localStorage.getItem('googleCalendarUrl') || '';
+    const url = localStorage.getItem('googleCalendarUrl') || '';
+    googleCalendarUrlInput.value = url;
+    
+    // 現在のモードを検出してセレクトボックスに反映
+    let mode = 'MONTH';
+    if (url.includes('mode=WEEK')) mode = 'WEEK';
+    else if (url.includes('mode=AGENDA')) mode = 'AGENDA';
+    if (googleCalendarModeSelect) googleCalendarModeSelect.value = mode;
+    
     googleCalendarSettingsModal.style.display = 'flex';
   };
 }
@@ -3448,6 +3472,14 @@ document.getElementById('save_google_calendar_settings')?.addEventListener('clic
   }
 
   if (url) {
+    // 表示モードをURLに適用
+    const mode = googleCalendarModeSelect ? googleCalendarModeSelect.value : 'MONTH';
+    // 既存のmodeパラメータを削除
+    url = url.replace(/([?&])mode=[^&]*&?/, '$1').replace(/&$/, '').replace(/\?$/, '');
+    // 新しいmodeパラメータを追加
+    const separator = url.includes('?') ? '&' : '?';
+    url = `${url}${separator}mode=${mode}`;
+
     localStorage.setItem('googleCalendarUrl', url);
   } else {
     localStorage.removeItem('googleCalendarUrl');
