@@ -486,6 +486,50 @@ body.no-blur .appicon:hover {
   border-radius: var(--radius-sm);
 }
 
+/* Support for m3e-shape wrapper element (slotted img) */
+.appicon > m3e-shape {
+  height: 48px;
+  width: 48px;
+  display: inline-block;
+}
+
+.appicon > m3e-shape::slotted(img),
+.appicon > m3e-shape img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  transition: transform var(--transition-fast), border-radius var(--transition-normal);
+  border-radius: var(--radius-sm);
+}
+
+/* Folder preview: ensure m3e-shape wrappers fill each grid cell */
+.appicon.folder .folder-preview m3e-shape {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.appicon.folder .folder-preview m3e-shape::slotted(img),
+.appicon.folder .folder-preview m3e-shape img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Folder modal items: size to 50px */
+.folder-item m3e-shape {
+  width: 50px;
+  height: 50px;
+  display: inline-block;
+}
+.folder-item m3e-shape::slotted(img),
+.folder-item m3e-shape img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .appicon:hover > img {
   transform: scale(1.08);
 }
@@ -548,6 +592,23 @@ body.no-blur .appicon.folder .folder-preview {
   height: 100%;
   object-fit: contain;
   border-radius: 4px;
+}
+
+/* Icon shape selector preview */
+#icon_shape_preview {
+  --preview-size: 48px;
+}
+#icon_shape_preview m3e-shape {
+  width: var(--preview-size);
+  height: var(--preview-size);
+  display: inline-block;
+}
+#icon_shape_preview m3e-shape::slotted(img),
+#icon_shape_preview m3e-shape img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .appicon.folder.drag-over,
@@ -1734,17 +1795,6 @@ body.no-blur #settings_fab {
 
 #settings_fab:hover m3e-icon {
   transform: rotate(45deg);
-}
-
-/* ========================================
-   Test Widget
-   ======================================== */
-
-#test_widget {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  z-index: 0;
 }
 
 /* ========================================
