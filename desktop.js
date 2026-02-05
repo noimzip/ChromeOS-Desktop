@@ -331,10 +331,12 @@ async function updateMediaPlayer() {
     // シークバーの値を更新
     if (mediaSeekbar && duration > 0) {
       const percent = (position / duration) * 100;
-      mediaSeekbar.value = percent;
+      const thumb = mediaSeekbar.querySelector('m3e-slider-thumb');
+      if (thumb) thumb.value = percent;
       mediaSeekbar.disabled = false;
     } else if (mediaSeekbar) {
-      mediaSeekbar.value = 0;
+      const thumb = mediaSeekbar.querySelector('m3e-slider-thumb');
+      if (thumb) thumb.value = 0;
       mediaSeekbar.disabled = true;
     }
     
@@ -403,40 +405,30 @@ setupMediaButton(mediaNextBtn, async () => {
 
 // シークバーのイベント
 if (mediaSeekbar) {
-  // シーク開始（ドラッグ中は更新を止める）
+  // ドラッグ中はUIの自動更新を止める
   mediaSeekbar.addEventListener('pointerdown', (e) => {
     e.stopPropagation(); // ウィジェットのドラッグを防止
     isSeeking = true;
   });
-  
+
   // シーク中の値変更（リアルタイムプレビュー）
   mediaSeekbar.addEventListener('input', (e) => {
     e.stopPropagation();
     if (currentDuration > 0 && mediaTimeCurrent) {
-      const position = (mediaSeekbar.value / 100) * currentDuration;
+      const position = (e.target.value / 100) * currentDuration;
       mediaTimeCurrent.textContent = formatTime(position);
     }
   });
-  
+
   // シーク完了（実際にシーク）
   mediaSeekbar.addEventListener('change', async (e) => {
     e.stopPropagation();
     if (currentDuration > 0) {
-      const seekPosition = (mediaSeekbar.value / 100) * currentDuration;
+      const seekPosition = (e.target.value / 100) * currentDuration;
       await mediaControl('seek', seekPosition);
     }
     isSeeking = false;
     setTimeout(updateMediaPlayer, 300);
-  });
-  
-  // ドラッグキャンセル時
-  mediaSeekbar.addEventListener('pointercancel', () => {
-    isSeeking = false;
-  });
-  
-  // クリックでもシーク可能に
-  mediaSeekbar.addEventListener('click', (e) => {
-    e.stopPropagation();
   });
 }
 
@@ -801,7 +793,8 @@ function openFolder(folderId) {
   
   if (bgColorInput && opacityInput) {
     bgColorInput.value = folderData.style.color;
-    opacityInput.value = folderData.style.opacity;
+    const thumb = opacityInput.querySelector('m3e-slider-thumb');
+    if (thumb) thumb.value = folderData.style.opacity;
     applyFolderStyle(folderId);
   }
   
@@ -2517,7 +2510,8 @@ const applyFolderStyleAllBtn = document.getElementById('apply_folder_style_all')
 if (applyFolderStyleAllBtn) {
   applyFolderStyleAllBtn.onclick = () => {
     const color = document.getElementById('global_folder_bg_color').value;
-    const opacity = document.getElementById('global_folder_bg_opacity').value;
+    const opacitySlider = document.getElementById('global_folder_bg_opacity');
+    const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
     
     Object.keys(folders).forEach(folderId => {
       folders[folderId].style = { color, opacity };

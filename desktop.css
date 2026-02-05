@@ -800,55 +800,20 @@ body.no-blur .appicon.folder .folder-preview {
   font-variant-numeric: tabular-nums;
 }
 
-.media-seekbar-input {
+m3e-slider#media_seekbar {
   flex: 1;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--outline-variant);
-  border-radius: 2px;
-  cursor: pointer;
-  outline: none;
+  --m3e-slider-active-track-color: var(--md-sys-color-primary);
+  --m3e-slider-inactive-track-color: var(--outline-variant);
+  --m3e-slider-handle-color: var(--md-sys-color-primary);
+  --m3e-slider-track-height: 4px;
+  --m3e-slider-handle-width: 12px;
+  --m3e-slider-handle-height: 12px;
 }
 
-.media-seekbar-input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--md-sys-color-primary);
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.media-seekbar-input::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-.media-seekbar-input::-webkit-slider-thumb:active {
-  transform: scale(1.1);
-}
-
-.media-seekbar-input::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border: none;
-  border-radius: 50%;
-  background: var(--md-sys-color-primary);
-  cursor: pointer;
-}
-
-.media-seekbar-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.media-seekbar-input:disabled::-webkit-slider-thumb {
-  background: var(--outline);
-}
-
-.media-player.no-player .media-seekbar {
+m3e-slider#media_seekbar[disabled] {
+  --m3e-slider-active-track-color: var(--outline);
+  --m3e-slider-inactive-track-color: var(--outline-variant);
+  --m3e-slider-handle-color: var(--outline);
   opacity: 0.5;
   pointer-events: none;
 }
@@ -1991,9 +1956,11 @@ body.no-blur .folder-drag-clone {
   color: var(--on-surface);
 }
 
-.style-row input[type="range"] {
+.style-row m3e-slider {
   flex: 1;
-  accent-color: var(--primary-color);
+  --m3e-slider-active-track-color: var(--md-sys-color-primary);
+  --m3e-slider-inactive-track-color: var(--outline-variant);
+  --m3e-slider-handle-color: var(--md-sys-color-primary);
 }
 
 /* Icon Shape Buttons */
