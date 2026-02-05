@@ -486,7 +486,51 @@ body.no-blur .appicon:hover {
   border-radius: var(--radius-sm);
 }
 
-.appicon:hover > img {
+/* Support for m3e-shape wrapper element (slotted img) */
+.appicon > m3e-shape {
+  height: 48px;
+  width: 48px;
+  display: inline-block;
+}
+
+.appicon > m3e-shape::slotted(img),
+.appicon > m3e-shape img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  border-radius: 0; /* Let the shape handle clipping */
+}
+
+/* Folder preview: ensure m3e-shape wrappers fill each grid cell */
+.appicon.folder .folder-preview m3e-shape {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.appicon.folder .folder-preview m3e-shape::slotted(img),
+.appicon.folder .folder-preview m3e-shape img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Folder modal items: size to 50px */
+.folder-item m3e-shape {
+  width: 50px;
+  height: 50px;
+  display: inline-block;
+}
+.folder-item m3e-shape::slotted(img),
+.folder-item m3e-shape img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.appicon:hover > img,
+.appicon:hover > m3e-shape {
   transform: scale(1.08);
 }
 
@@ -548,6 +592,23 @@ body.no-blur .appicon.folder .folder-preview {
   height: 100%;
   object-fit: contain;
   border-radius: 4px;
+}
+
+/* Icon shape selector preview */
+#icon_shape_preview {
+  --preview-size: 48px;
+}
+#icon_shape_preview m3e-shape {
+  width: var(--preview-size);
+  height: var(--preview-size);
+  display: inline-block;
+}
+#icon_shape_preview m3e-shape::slotted(img),
+#icon_shape_preview m3e-shape img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .appicon.folder.drag-over,
@@ -1313,38 +1374,82 @@ body.no-blur .modal_overlay {
   border-radius: 4px;
 }
 
-.settings_row {
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.settings-section:last-of-type {
+  border-bottom: none;
+}
+
+.settings-section-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.settings-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--outline);
+  min-height: 48px;
 }
 
-.settings_row:last-child {
-  border-bottom: none;
+.settings-item-column {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.settings_row_danger {
+.settings-item-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-item-label span {
+  font-size: 0.95rem;
+  color: var(--on-surface);
+  font-weight: 500;
+}
+
+.settings-item-label small {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+}
+
+.settings-item-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.settings-item-danger .settings-item-label span {
+  color: var(--error-color);
+}
+
+.settings-item-danger .settings-item-label small {
+  color: color-mix(in srgb, var(--error-color) 60%, var(--on-surface-variant));
+}
+
+.settings-item-danger {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--error-color);
-}
-
-.settings_row_danger span {
-  color: var(--error-color);
+  border-top: 1px solid color-mix(in srgb, var(--error-color) 30%, transparent);
 }
 
 .danger-button {
   --md-sys-color-primary: var(--error-color) !important;
   --md-sys-color-on-primary: #ffffff !important;
-}
-
-.settings_row label {
-  font-size: 0.95rem;
-  color: var(--on-surface);
-  font-weight: 500;
 }
 
 /* ========================================
@@ -1376,8 +1481,11 @@ body.no-blur .modal_overlay {
   justify-content: center;
   pointer-events: auto;
 }
+#change_widget_position_modal {
+  flex-direction: column;
+}
 
-#change_widget_position_modal .settings_row {
+#change_widget_position_modal .settings-item {
   width: 100%;
 }
 
@@ -1737,17 +1845,6 @@ body.no-blur #settings_fab {
 }
 
 /* ========================================
-   Test Widget
-   ======================================== */
-
-#test_widget {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  z-index: 0;
-}
-
-/* ========================================
    Scrollbar Styling
    ======================================== */
 
@@ -1899,6 +1996,52 @@ body.no-blur .folder-drag-clone {
   accent-color: var(--primary-color);
 }
 
+/* Icon Shape Buttons */
+#icon_shape_buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+  justify-content: flex-start;
+}
+
+#icon_shape_buttons button {
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  border: 1px solid var(--outline);
+  background: var(--surface-variant);
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#icon_shape_buttons button:hover {
+  border-color: var(--primary-color);
+  background: var(--md-sys-color-primary-container);
+}
+
+#icon_shape_buttons button.selected {
+  border-color: var(--primary-color);
+  background: var(--md-sys-color-primary-container);
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+#icon_shape_buttons m3e-shape {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
+}
+
+#icon_shape_buttons m3e-shape img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* ========================================
    Form Field Improvements
    ======================================== */
@@ -1955,6 +2098,13 @@ select:focus {
 
 .checkbox-label span {
   user-select: none;
+}
+
+.user-agent-display {
+  font-size: 10px;
+  color: var(--on-surface-variant);
+  margin-top: 16px;
+  word-break: break-all;
 }
 
 /* ========================================

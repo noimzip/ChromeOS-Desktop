@@ -6,38 +6,122 @@
 
 'use strict';
 
-// ========================================
-// 定数定義
-// ========================================
+// DOM 要素参照は後で初期化するためのプレースホルダ
+let iconShapeSelector = null;
 
-/** グリッドのサイズ（px） */
-const GRID_SIZE = 80;
-/** グリッドの開始位置（paddingに合わせる） */
-const GRID_OFFSET = 20;
-/** ドラッグ開始判定の閾値（px） */
-const DRAG_THRESHOLD = 5;
-/** アイコン重なり判定の閾値（ピクセル面積） */
-const OVERLAP_THRESHOLD = 1600;
-/** デフォルトアイコン */
-const DEFAULT_ICON = './assets/settings.webp';
-
-// ビルトインアイコンのURL定義
+// ビルトインアイコン (index.html にある `appicon-...`) の既定 URL マップ
 const builtinIconUrls = {
   'appicon-chrome': 'chrome://newtab',
   'appicon-files': 'chrome://file-manager',
-  'appicon-settings': 'chrome://os-settings',
-  'appicon-x': 'https://x.com'
+  'appicon-settings': 'chrome://os-settings'
 };
 
 // ========================================
-// Electron API ラッパー
-// ========================================
+// アイコン形状の設定
+function getCurrentIconShape() {
+  return localStorage.getItem('iconShape') || 'square';
+}
 
-/**
- * Linuxアプリを起動する
- * @param {string} command - 実行するコマンド
- * @returns {Promise<{success: boolean, error?: string}>}
- */
+function wrapIconWithShape(appiconEl, shape) {
+  if (!appiconEl) return;
+  const img = appiconEl.querySelector('img');
+  if (!img) return;
+
+  const parentTag = img.parentElement && img.parentElement.tagName && img.parentElement.tagName.toLowerCase();
+
+  // square/circle は CSS の border-radius で処理する — m3e-shape が不要
+  if (shape === 'square' || shape === 'circle') {
+    // もし m3e-shape でラップされていればアンラップする
+    if (parentTag === 'm3e-shape') {
+      const wrapper = img.parentElement;
+      wrapper.replaceWith(img);
+    }
+    return;
+  }
+
+  // カスタム形状: 既に m3e-shape でラップされているかチェック
+  if (parentTag === 'm3e-shape') {
+    const wrapper = img.parentElement;
+    if (wrapper.getAttribute('name') === shape) {
+      return; // 既に正しい形状
+    }
+    // 形状が違う場合は属性を更新
+    wrapper.setAttribute('name', shape);
+    return;
+  }
+
+  // img を m3e-shape でラップする
+  try {
+    const wrapper = document.createElement('m3e-shape');
+    wrapper.setAttribute('name', shape);
+    // move the image into wrapper
+    appiconEl.replaceChild(wrapper, img);
+    wrapper.appendChild(img);
+  } catch (e) {
+    // 何か失敗したらフォールバックで何もしない
+    console.warn('Failed to wrap icon with m3e-shape:', e);
+  }
+}
+
+// 単一の img 要素を形状でラップする（フォルダプレビュー用）
+function wrapImageWithShape(img, shape) {
+  if (!img) return;
+  const parentTag = img.parentElement && img.parentElement.tagName && img.parentElement.tagName.toLowerCase();
+
+  if (shape === 'square' || shape === 'circle') {
+    // アンラップが必要ならアンラップ
+    if (parentTag === 'm3e-shape') {
+      const wrapper = img.parentElement;
+      wrapper.replaceWith(img);
+    }
+    return;
+  }
+
+  if (parentTag === 'm3e-shape') {
+    const wrapper = img.parentElement;
+    if (wrapper.getAttribute('name') === shape) return;
+    wrapper.setAttribute('name', shape);
+    return;
+  }
+
+  try {
+    const wrapper = document.createElement('m3e-shape');
+    wrapper.setAttribute('name', shape);
+    img.replaceWith(wrapper);
+    wrapper.appendChild(img);
+  } catch (e) {
+    console.warn('Failed to wrap preview img with m3e-shape:', e);
+  }
+}
+
+// 全アイコンに形状を適用する
+function applyShapeToAll(shape) {
+  const icons = document.querySelectorAll('.appicon');
+  icons.forEach(icon => wrapIconWithShape(icon, shape));
+}
+
+function updateIconShape(shape) {
+  // 既存の shape クラスを削除
+  document.body.classList.remove('icon-shape-circle', 'icon-shape-square', 'icon-shape-custom');
+
+  if (shape === 'square' || shape === 'circle') {
+    document.body.classList.add(`icon-shape-${shape}`);
+    // アンラップまたは border-radius 適用
+    applyShapeToAll(shape);
+  } else {
+    // カスタム形状: 追加のクラスで状態を識別
+    document.body.classList.add('icon-shape-custom');
+    applyShapeToAll(shape);
+  }
+
+  localStorage.setItem('iconShape', shape);
+
+  // セレクターの値を更新（実際の要素は後で代入される）
+  if (typeof iconShapeSelector !== 'undefined' && iconShapeSelector && iconShapeSelector.value !== undefined) {
+    iconShapeSelector.value = shape;
+  }
+}
+
 async function launchLinuxApp(command) {
   if (window.electronAPI && window.electronAPI.launchLinuxApp) {
     return await window.electronAPI.launchLinuxApp(command);
@@ -422,6 +506,15 @@ let folders = JSON.parse(localStorage.getItem('appFolders') || '{}');
 let currentOpenFolderId = null;
 let currentFolderPage = 0;
 
+// グリッドモードのデフォルト設定
+// CSS のグリッド背景サイズ (desktop.css) に合わせる: 80px マス、20px オフセット
+const GRID_SIZE = 80;
+const GRID_OFFSET = 20;
+// ドラッグ開始判定に使う閾値（ピクセル）
+const DRAG_THRESHOLD = 8;
+// 最小オーバーラップ面積（ピクセル）: これを超えたら重なりと判定
+const OVERLAP_THRESHOLD = 800;
+
 // 編集機能用
 let currentEditingApp = null;
 let currentEditingIcon = null;
@@ -515,7 +608,7 @@ function getOverlappingFolder(draggedEl) {
 function getIconData(icon) {
   const img = icon.querySelector('img');
   const name = icon.querySelector('p')?.textContent || '';
-  const isBuiltin = !!icon.id && !icon.dataset.saveKey;
+  const isBuiltin = !!icon.id && icon.id.startsWith('appicon-');
   const isLinuxApp = icon.classList.contains('linux-app');
   const isFileShortcut = icon.classList.contains('file-shortcut');
   const isFolderShortcut = icon.classList.contains('folder-shortcut');
@@ -613,6 +706,8 @@ function createFolderIcon(folderId, folderData) {
     const img = document.createElement('img');
     img.src = app.icon;
     previewDiv.appendChild(img);
+    // フォルダ内プレビュー画像に形状を適用
+    wrapImageWithShape(img, getCurrentIconShape());
   });
   
   const nameP = document.createElement('p');
@@ -640,6 +735,8 @@ function createFolderIcon(folderId, folderData) {
     }
   };
   
+  // アイコン形状を適用してからドラッグを設定
+  wrapIconWithShape(div, getCurrentIconShape());
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
   
@@ -802,7 +899,7 @@ function renderFolderPage(folderId) {
     div.className = 'appicon folder-item';
     div.dataset.folderItemIndex = index;
     div.innerHTML = `
-      <img src="${app.icon}" height="50" width="50" />
+      <img src="${app.icon}" />
       <p>${app.name}</p>
     `;
     
@@ -895,8 +992,8 @@ function renderFolderPage(folderId) {
         document.querySelectorAll('.folder-item.reorder-target').forEach(el => el.classList.remove('reorder-target'));
         
         if (isOutsideModal) {
-          // フォルダから取り出す
-          removeFromFolder(folderId, index);
+          // フォルダから取り出す（ドロップ座標を渡す）
+          removeFromFolder(folderId, index, e.clientX, e.clientY);
           closeFolder();
         } else {
           // 並べ替え処理
@@ -951,6 +1048,21 @@ function renderFolderPage(folderId) {
     };
     
     contents.appendChild(div);
+
+    // 形状を適用（モーダル内のアイテムは後から生成されるため明示的にラップする）
+    try {
+      wrapIconWithShape(div, getCurrentIconShape());
+      // フォルダ内のアイテムは通常プレビューより大きめに表示
+      const wrapper = div.querySelector('m3e-shape');
+      if (wrapper) {
+        wrapper.style.width = '50px';
+        wrapper.style.height = '50px';
+        // ensure slotted img fills wrapper
+        wrapper.style.display = 'inline-block';
+      }
+    } catch (e) {
+      console.warn('Failed to apply shape to folder item:', e);
+    }
   });
   
   // ページネーション表示
@@ -1041,7 +1153,6 @@ async function handleFolderItemClick(app, modal) {
       command = `xterm -hold -e "${app.command}"`;
     }
     
-    console.log('Launching Linux app from folder:', command);
     const result = await launchLinuxApp(command);
     if (!result.success) {
       const lang = getCurrentLanguage();
@@ -1053,7 +1164,6 @@ async function handleFolderItemClick(app, modal) {
   
   // ファイル/フォルダの場合
   if (app.path) {
-    console.log('Opening file/folder from folder:', app.path);
     const result = await openFileOrFolder(app.path);
     if (!result.success) {
       const lang = getCurrentLanguage();
@@ -1087,7 +1197,7 @@ async function handleFolderItemClick(app, modal) {
 }
 
 // フォルダーからアプリを取り出す
-function removeFromFolder(folderId, appIndex) {
+function removeFromFolder(folderId, appIndex, dropX, dropY) {
   const folderData = folders[folderId];
   if (!folderData) return;
   
@@ -1097,28 +1207,36 @@ function removeFromFolder(folderId, appIndex) {
   // 元のアイコンを表示または再作成
   if (app.command || app.isLinuxApp) {
     // Linuxアプリは再作成
-    createLinuxAppIcon({
+    const created = createLinuxAppIcon({
       name: app.name,
       command: app.command,
       icon: app.icon,
       runInTerminal: app.runInTerminal || false
     });
+    try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
+    if (created && dropX !== undefined && dropY !== undefined) {
+      positionCreatedIcon(created, dropX, dropY);
+    }
   } else if (app.path) {
     if (app.isDirectory) {
-      createFolderShortcutIcon({
+      const created = createFolderShortcutIcon({
         name: app.name,
         path: app.path,
         icon: app.icon,
         saveKey: app.id
       });
+      if (created && dropX !== undefined && dropY !== undefined) positionCreatedIcon(created, dropX, dropY);
+      try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
     } else {
-      createFileShortcutIcon({
+      const created = createFileShortcutIcon({
         name: app.name,
         path: app.path,
         icon: app.icon,
         isDirectory: false,
         saveKey: app.id
       });
+      try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
+      if (created && dropX !== undefined && dropY !== undefined) positionCreatedIcon(created, dropX, dropY);
     }
   } else if (app.isBuiltin && app.id) {
     const el = document.getElementById(app.id);
@@ -1127,13 +1245,17 @@ function removeFromFolder(folderId, appIndex) {
     let el = document.querySelector(`[data-save-key="${app.id}"]`);
     if (el) {
       el.style.display = '';
+        try { wrapIconWithShape(el, getCurrentIconShape()); } catch (e) {}
+        if (dropX !== undefined && dropY !== undefined) positionCreatedIcon(el, dropX, dropY);
     } else if (app.url) {
       // カスタムアプリは再作成
-      createDesktopIcon({
+      const created = createDesktopIcon({
         name: app.name,
         url: app.url,
         icon: app.icon
       });
+      try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
+      if (created && dropX !== undefined && dropY !== undefined) positionCreatedIcon(created, dropX, dropY);
     }
   }
   
@@ -1143,12 +1265,13 @@ function removeFromFolder(folderId, appIndex) {
     if (folderData.apps.length === 1) {
       const remainingApp = folderData.apps[0];
       if (remainingApp.command || remainingApp.isLinuxApp) {
-        createLinuxAppIcon({
-          name: remainingApp.name,
-          command: remainingApp.command,
-          icon: remainingApp.icon,
-          runInTerminal: remainingApp.runInTerminal || false
-        });
+          const created = createLinuxAppIcon({
+            name: remainingApp.name,
+            command: remainingApp.command,
+            icon: remainingApp.icon,
+            runInTerminal: remainingApp.runInTerminal || false
+          });
+          try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
       } else if (remainingApp.isBuiltin && remainingApp.id) {
         const el = document.getElementById(remainingApp.id);
         if (el) el.style.display = '';
@@ -1157,11 +1280,12 @@ function removeFromFolder(folderId, appIndex) {
         if (el) {
           el.style.display = '';
         } else if (remainingApp.url) {
-          createDesktopIcon({
+          const created = createDesktopIcon({
             name: remainingApp.name,
             url: remainingApp.url,
             icon: remainingApp.icon
           });
+          try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
         }
       }
     }
@@ -1179,6 +1303,32 @@ function removeFromFolder(folderId, appIndex) {
   updateFolderIcon(folderId);
 }
 
+// ドロップ座標（クライアント座標）に作成済み要素を配置して位置を保存
+function positionCreatedIcon(el, clientX, clientY) {
+  if (!el) return;
+  const desktop = document.getElementById('desktop_icons');
+  const containerRect = desktop ? desktop.getBoundingClientRect() : { left: 0, top: 0 };
+  const elRect = el.getBoundingClientRect();
+  // 中心を合わせる
+  const left = clientX - containerRect.left - (elRect.width / 2);
+  const top = clientY - containerRect.top - (elRect.height / 2);
+  el.style.position = 'absolute';
+  el.style.left = Math.max(0, Math.round(left)) + 'px';
+  el.style.top = Math.max(0, Math.round(top)) + 'px';
+
+  // 保存（widgetPositions）
+  try {
+    const saveKey = el.dataset.saveKey;
+    if (saveKey) {
+      const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+      positions[saveKey] = { position: 'absolute', left: el.style.left, top: el.style.top };
+      localStorage.setItem('widgetPositions', JSON.stringify(positions));
+    }
+  } catch (e) {
+    console.warn('Failed to save widget position', e);
+  }
+}
+
 // フォルダーにアプリを追加
 function addToFolder(folderId, icon) {
   const folderData = folders[folderId];
@@ -1186,7 +1336,7 @@ function addToFolder(folderId, icon) {
   
   const img = icon.querySelector('img');
   const name = icon.querySelector('p')?.textContent || '';
-  const isBuiltin = !!icon.id && !icon.dataset.saveKey;
+  const isBuiltin = !!icon.id && icon.id.startsWith('appicon-');
   const isLinuxApp = icon.classList.contains('linux-app');
   const isFileShortcut = icon.classList.contains('file-shortcut');
   const isFolderShortcut = icon.classList.contains('folder-shortcut');
@@ -1247,6 +1397,7 @@ function updateFolderIcon(folderId) {
       const img = document.createElement('img');
       img.src = app.icon;
       previewDiv.appendChild(img);
+      wrapImageWithShape(img, getCurrentIconShape());
     });
   }
 }
@@ -1416,7 +1567,7 @@ function setupDraggableItem(item) {
       let newLeft = this._startLeft + dx;
       let newTop = this._startTop + dy;
       
-      // グリッドモードでも移動中はスムーズに動かす
+      // ドラッグ中は滑らかに移動（スナップはドロップ時に行う）
       this.style.left = newLeft + 'px';
       this.style.top = newTop + 'px';
       this.style.position = 'absolute';
@@ -1618,6 +1769,7 @@ function setupNormalModeDrag(item) {
     let newLeft = this._startLeft + dx;
     let newTop = this._startTop + dy;
     
+    // ドラッグ中は滑らかに移動（スナップはドロップ時に行う）
     this.style.left = newLeft + 'px';
     this.style.top = newTop + 'px';
     this.style.position = 'absolute';
@@ -1932,7 +2084,10 @@ const translations = {
     folder_style: "フォルダーのスタイル",
     apply_to_all: "すべてに適用",
     google_login: "Googleアカウントにログイン",
-    google_login_help: "カレンダーが表示されない場合はログインしてください"
+    google_login_help: "カレンダーが表示されない場合はログインしてください",
+    icon_settings: "アイコン設定",
+    system_settings: "システム設定",
+    data_management: "データ管理"
   },
   en: {
     files: "Files",
@@ -2002,7 +2157,10 @@ const translations = {
     folder_style: "Folder Style",
     apply_to_all: "Apply to All",
     google_login: "Log in to Google",
-    google_login_help: "Please log in if the calendar is not displayed"
+    google_login_help: "Please log in if the calendar is not displayed",
+    icon_settings: "Icon Settings",
+    system_settings: "System Settings",
+    data_management: "Data Management"
   }
 };
 
@@ -2213,14 +2371,14 @@ function updateSettingsFabVisibility(isVisible) {
   if (settingsFab) {
     settingsFab.style.display = isVisible ? 'flex' : 'none';
   }
-  localStorage.setItem('showSettingsFab', isVisible);
-  
-  // ボタンのテキストを更新
   if (toggleSettingsFabBtn) {
-    const lang = getCurrentLanguage();
-    const key = isVisible ? 'hide_settings_button' : 'show_settings_button';
-    toggleSettingsFabBtn.textContent = translations[lang][key];
+    if (typeof toggleSettingsFabBtn.selected !== 'undefined') {
+      toggleSettingsFabBtn.selected = isVisible;
+    } else {
+      toggleSettingsFabBtn.checked = isVisible;
+    }
   }
+  localStorage.setItem('showSettingsFab', isVisible);
 }
 
 if (toggleSettingsFabBtn) {
@@ -2228,10 +2386,10 @@ if (toggleSettingsFabBtn) {
   const showFab = localStorage.getItem('showSettingsFab') !== 'false';
   updateSettingsFabVisibility(showFab);
   
-  toggleSettingsFabBtn.onclick = () => {
-    const currentlyVisible = settingsFab && settingsFab.style.display !== 'none';
-    updateSettingsFabVisibility(!currentlyVisible);
-  };
+  toggleSettingsFabBtn.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    updateSettingsFabVisibility(newState);
+  });
 }
 
 // ブラー効果の設定
@@ -2243,14 +2401,14 @@ function updateBlurEffect(isEnabled) {
   } else {
     document.body.classList.add('no-blur');
   }
-  localStorage.setItem('blurEffectEnabled', isEnabled);
-  
-  // ボタンのテキストを更新
   if (toggleBlurEffectBtn) {
-    const lang = getCurrentLanguage();
-    const key = isEnabled ? 'enabled' : 'disabled';
-    toggleBlurEffectBtn.textContent = translations[lang][key];
+    if (typeof toggleBlurEffectBtn.selected !== 'undefined') {
+      toggleBlurEffectBtn.selected = isEnabled;
+    } else {
+      toggleBlurEffectBtn.checked = isEnabled;
+    }
   }
+  localStorage.setItem('blurEffectEnabled', isEnabled);
 }
 
 if (toggleBlurEffectBtn) {
@@ -2258,10 +2416,10 @@ if (toggleBlurEffectBtn) {
   const blurEnabled = localStorage.getItem('blurEffectEnabled') !== 'false';
   updateBlurEffect(blurEnabled);
   
-  toggleBlurEffectBtn.onclick = () => {
-    const currentlyEnabled = !document.body.classList.contains('no-blur');
-    updateBlurEffect(!currentlyEnabled);
-  };
+  toggleBlurEffectBtn.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    updateBlurEffect(newState);
+  });
 }
 
 // ダークモードの設定
@@ -2273,14 +2431,14 @@ function updateDarkMode(isEnabled) {
   } else {
     document.body.classList.remove('dark-mode');
   }
-  localStorage.setItem('darkModeEnabled', isEnabled);
-  
-  // ボタンのテキストを更新
   if (toggleDarkModeBtn) {
-    const lang = getCurrentLanguage();
-    const key = isEnabled ? 'enabled' : 'disabled';
-    toggleDarkModeBtn.textContent = translations[lang][key];
+    if (typeof toggleDarkModeBtn.selected !== 'undefined') {
+      toggleDarkModeBtn.selected = isEnabled;
+    } else {
+      toggleDarkModeBtn.checked = isEnabled;
+    }
   }
+  localStorage.setItem('darkModeEnabled', isEnabled);
 }
 
 if (toggleDarkModeBtn) {
@@ -2288,34 +2446,17 @@ if (toggleDarkModeBtn) {
   const darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
   updateDarkMode(darkModeEnabled);
   
-  toggleDarkModeBtn.onclick = () => {
-    const currentlyEnabled = document.body.classList.contains('dark-mode');
-    updateDarkMode(!currentlyEnabled);
-  };
+  toggleDarkModeBtn.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    updateDarkMode(newState);
+  });
 }
 
-// アイコン形状の設定
-const iconShapeSelector = document.getElementById('icon_shape_selector');
-
-function updateIconShape(shape) {
-  // 既存のshapeクラスを削除
-  document.body.classList.remove('icon-shape-circle', 'icon-shape-square');
-  
-  // 新しいshapeクラスを追加
-  document.body.classList.add(`icon-shape-${shape}`);
-  localStorage.setItem('iconShape', shape);
-  
-  // セレクターの値を更新
-  if (iconShapeSelector) {
-    iconShapeSelector.value = shape;
-  }
-}
-
+// アイコン形状の設定: DOM 準備後に要素を取得して初期化する
+iconShapeSelector = document.getElementById('icon_shape_selector');
 if (iconShapeSelector) {
-  // 保存された設定を復元（デフォルトは正方形）
-  const savedShape = localStorage.getItem('iconShape') || 'square';
+  const savedShape = getCurrentIconShape();
   updateIconShape(savedShape);
-  
   iconShapeSelector.onchange = () => {
     updateIconShape(iconShapeSelector.value);
   };
@@ -2439,7 +2580,7 @@ function createDesktopIcon(appData) {
   }
   
   div.innerHTML = `
-    <img src="${appData.icon}" height="50" width="50" />
+    <img src="${appData.icon}" />
     <p>${appData.name}</p>
   `;
   div.onclick = () => {
@@ -2470,6 +2611,7 @@ function createDesktopIcon(appData) {
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
+  return div;
 }
 
 const saveNewAppBtn = document.getElementById('save_new_app');
@@ -2547,7 +2689,7 @@ function createLinuxAppIcon(appData) {
   }
   
   div.innerHTML = `
-    <img src="${appData.icon || './assets/settings.webp'}" height="50" width="50" />
+    <img src="${appData.icon || './assets/settings.webp'}" />
     <p>${appData.name}</p>
   `;
   
@@ -2560,7 +2702,6 @@ function createLinuxAppIcon(appData) {
       command = `xterm -hold -e "${appData.command}"`;
     }
     
-    console.log('Launching Linux app:', command);
     const result = await launchLinuxApp(command);
     if (!result.success) {
       const lang = getCurrentLanguage();
@@ -2707,6 +2848,13 @@ restoreWidgetPositions();
 
 // 通常モードのドラッグを初期化
 initNormalModeDrag();
+
+// 起動時に保存された形状を全アイコン（およびフォルダ内プレビュー）に適用
+try {
+  applyShapeToAll(getCurrentIconShape());
+} catch (e) {
+  console.warn('Failed to apply shapes on init:', e);
+}
 
 // ========================================
 // コンテキストメニューと編集機能
@@ -3667,12 +3815,11 @@ function createFileShortcutIcon(fileData) {
   const iconSrc = fileData.icon || getFileIcon(fileData.path, fileData.isDirectory);
   
   div.innerHTML = `
-    <img src="${iconSrc}" height="50" width="50" />
+    <img src="${iconSrc}" />
     <p>${fileData.name}</p>
   `;
   
   div.onclick = async () => {
-    console.log('Opening file/folder:', fileData.path);
     const result = await openFileOrFolder(fileData.path);
     if (!result.success) {
       const lang = getCurrentLanguage();
@@ -3700,6 +3847,7 @@ function createFileShortcutIcon(fileData) {
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
+  return div;
 }
 
 /**
@@ -3728,12 +3876,11 @@ function createFolderShortcutIcon(folderData) {
   const iconSrc = folderData.icon || './assets/folder.svg';
   
   div.innerHTML = `
-    <img src="${iconSrc}" height="50" width="50" />
+    <img src="${iconSrc}" />
     <p>${folderData.name}</p>
   `;
   
   div.onclick = async () => {
-    console.log('Opening folder:', folderData.path);
     const result = await openFileOrFolder(folderData.path);
     if (!result.success) {
       const lang = getCurrentLanguage();
@@ -3761,6 +3908,7 @@ function createFolderShortcutIcon(folderData) {
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
+  return div;
 }
 
 /**
@@ -3984,4 +4132,47 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('ウィジェットサイズをリセットしました。');
     });
   }
+
+  // アイコン形状選択UIの生成
+  const shapeButtonContainer = document.getElementById('icon_shape_buttons');
+  if (shapeButtonContainer) {
+    const shapes = [
+      "square", "circle", "rounded", "cut",
+      "4-leaf-clover", "4-sided-cookie", "6-sided-cookie", "7-sided-cookie", "8-leaf-clover", "9-sided-cookie", "12-sided-cookie",
+      "arch", "arrow", "boom", "bun", "burst", "diamond", "fan", "flower", "gem", "ghost-ish", "heart", "hexagon", "oval", "pentagon", "pill", "pixel-circle", "pixel-triangle", "puffy", "puffy-diamond", "semicircle", "slanted", "soft-boom", "soft-burst", "sunny", "triangle", "very-sunny"
+    ];
+    const currentShape = getCurrentIconShape();
+
+    let selectedBtn = null;
+    function markSelected(btn) {
+      if (selectedBtn) selectedBtn.classList.remove('selected');
+      selectedBtn = btn;
+      if (selectedBtn) selectedBtn.classList.add('selected');
+    }
+
+    shapes.forEach(s => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = s;
+      
+      const preview = document.createElement('m3e-shape');
+      preview.setAttribute('name', s);
+      const img = document.createElement('img');
+      img.src = './assets/settings.webp';
+      img.alt = s;
+      preview.appendChild(img);
+      btn.appendChild(preview);
+
+      btn.addEventListener('click', () => {
+        updateIconShape(s);
+        markSelected(btn);
+      });
+
+      if (s === currentShape) {
+        markSelected(btn);
+      }
+      shapeButtonContainer.appendChild(btn);
+    });
+  }
+
 });
