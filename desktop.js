@@ -1349,9 +1349,20 @@ function positionCreatedIcon(el, clientX, clientY) {
   // 中心を合わせる
   const left = clientX - containerRect.left - (elRect.width / 2);
   const top = clientY - containerRect.top - (elRect.height / 2);
+  
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  
+  let finalLeft = Math.max(0, Math.round(left));
+  let finalTop = Math.max(0, Math.round(top));
+  
+  // 画面外にはみ出さないように調整
+  if (finalLeft + elRect.width > screenWidth) finalLeft = screenWidth - elRect.width;
+  if (finalTop + elRect.height > screenHeight) finalTop = screenHeight - elRect.height;
+  
   el.style.position = 'absolute';
-  el.style.left = Math.max(0, Math.round(left)) + 'px';
-  el.style.top = Math.max(0, Math.round(top)) + 'px';
+  el.style.left = Math.max(0, finalLeft) + 'px';
+  el.style.top = Math.max(0, finalTop) + 'px';
 
   // 保存（widgetPositions）
   try {
@@ -1601,13 +1612,28 @@ function isOverlappingAny(element, x, y) {
  * @returns {{x: number, y: number}} 空き位置
  */
 function findNearestEmptyPosition(element, startX, startY) {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const elWidth = element.offsetWidth;
+  const elHeight = element.offsetHeight;
+
   let x = startX;
   let y = startY;
+  
+  // 画面内に収まるようにクランプ
+  x = Math.max(0, Math.min(x, screenWidth - elWidth));
+  y = Math.max(0, Math.min(y, screenHeight - elHeight));
   
   // グリッドモードならスナップ
   if (isGridModeEnabled) {
     x = snapToGrid(x);
     y = snapToGrid(y);
+    
+    // スナップ後に画面外に出た場合は調整
+    if (x + elWidth > screenWidth) x -= GRID_SIZE;
+    if (y + elHeight > screenHeight) y -= GRID_SIZE;
+    x = Math.max(0, x);
+    y = Math.max(0, y);
   }
   
   // 重なりがなければそのまま返す
@@ -1625,29 +1651,39 @@ function findNearestEmptyPosition(element, startX, startY) {
   const maxRadius = 20; // 無限ループ防止
   
   while (radius < maxRadius) {
+    // 候補位置をチェックするヘルパー
+    const check = (cx, cy) => {
+      if (cx >= 0 && cy >= 0 && 
+          cx + elWidth <= screenWidth && cy + elHeight <= screenHeight && 
+          !isOverlappingAny(element, cx, cy)) {
+        return true;
+      }
+      return false;
+    };
+
     // 上辺
     for (let i = -radius; i <= radius; i++) {
       const checkX = x + (i * stepX);
       const checkY = y - (radius * stepY);
-      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
     }
     // 右辺
     for (let i = -radius + 1; i <= radius; i++) {
       const checkX = x + (radius * stepX);
       const checkY = y + (i * stepY);
-      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
     }
     // 下辺
     for (let i = radius - 1; i >= -radius; i--) {
       const checkX = x + (i * stepX);
       const checkY = y + (radius * stepY);
-      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
     }
     // 左辺
     for (let i = radius - 1; i > -radius; i--) {
       const checkX = x - (radius * stepX);
       const checkY = y + (i * stepY);
-      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
     }
     
     radius++;
@@ -4240,11 +4276,25 @@ function enableWidgetResizers() {
       widgetEl.classList.add('resizing');
       widgetEl.setPointerCapture(e.pointerId);
 
+      // アンカーを左上に固定し、絶対配置にする
+      const rect = widgetEl.getBoundingClientRect();
+      const desktopIcons = document.getElementById('desktop_icons');
+      const containerRect = desktopIcons ? desktopIcons.getBoundingClientRect() : {left: 0, top: 0};
+      
+      widgetEl.style.position = 'absolute';
+      widgetEl.style.left = (rect.left - containerRect.left) + 'px';
+      widgetEl.style.top = (rect.top - containerRect.top) + 'px';
+      widgetEl.style.right = 'auto';
+      widgetEl.style.bottom = 'auto';
+
       const startX = e.clientX;
       const startY = e.clientY;
       const startW = widgetEl.offsetWidth;
       const startH = widgetEl.offsetHeight;
       const minW = 120; const minH = 48;
+      
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
 
       function onMove(ev) {
         ev.preventDefault();
@@ -4260,6 +4310,15 @@ function enableWidgetResizers() {
             newH = Math.max(minH, Math.round(newH / gw) * gw);
           }
         } catch (e) {}
+        
+        // 画面外にはみ出さないように制限
+        if (rect.left + newW > screenWidth) {
+          newW = Math.max(minW, screenWidth - rect.left);
+        }
+        if (rect.top + newH > screenHeight) {
+          newH = Math.max(minH, screenHeight - rect.top);
+        }
+        
         widgetEl.style.width = newW + 'px';
         widgetEl.style.height = newH + 'px';
       }
