@@ -899,7 +899,7 @@ function renderFolderPage(folderId) {
     div.className = 'appicon folder-item';
     div.dataset.folderItemIndex = index;
     div.innerHTML = `
-      <img src="${app.icon}" height="50" width="50" />
+      <img src="${app.icon}" />
       <p>${app.name}</p>
     `;
     
@@ -2580,7 +2580,7 @@ function createDesktopIcon(appData) {
   }
   
   div.innerHTML = `
-    <img src="${appData.icon}" height="50" width="50" />
+    <img src="${appData.icon}" />
     <p>${appData.name}</p>
   `;
   div.onclick = () => {
@@ -2689,7 +2689,7 @@ function createLinuxAppIcon(appData) {
   }
   
   div.innerHTML = `
-    <img src="${appData.icon || './assets/settings.webp'}" height="50" width="50" />
+    <img src="${appData.icon || './assets/settings.webp'}" />
     <p>${appData.name}</p>
   `;
   
@@ -3815,7 +3815,7 @@ function createFileShortcutIcon(fileData) {
   const iconSrc = fileData.icon || getFileIcon(fileData.path, fileData.isDirectory);
   
   div.innerHTML = `
-    <img src="${iconSrc}" height="50" width="50" />
+    <img src="${iconSrc}" />
     <p>${fileData.name}</p>
   `;
   
@@ -3876,7 +3876,7 @@ function createFolderShortcutIcon(folderData) {
   const iconSrc = folderData.icon || './assets/folder.svg';
   
   div.innerHTML = `
-    <img src="${iconSrc}" height="50" width="50" />
+    <img src="${iconSrc}" />
     <p>${folderData.name}</p>
   `;
   
@@ -4137,7 +4137,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const shapeButtonContainer = document.getElementById('icon_shape_buttons');
   if (shapeButtonContainer) {
     const shapes = [
-      "square", "rounded", "circle", "cut", "diamond", "hexagon", "pill", "bun", "puffy"
+      "square", "circle", "rounded", "cut",
+      "4-leaf-clover", "4-sided-cookie", "6-sided-cookie", "7-sided-cookie", "8-leaf-clover", "9-sided-cookie", "12-sided-cookie",
+      "arch", "arrow", "boom", "bun", "burst", "diamond", "fan", "flower", "gem", "ghost-ish", "heart", "hexagon", "oval", "pentagon", "pill", "pixel-circle", "pixel-triangle", "puffy", "puffy-diamond", "semicircle", "slanted", "soft-boom", "soft-burst", "sunny", "triangle", "very-sunny"
     ];
     const currentShape = getCurrentIconShape();
 
