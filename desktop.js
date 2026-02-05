@@ -1543,6 +1543,120 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
   enterPositionChangeMode();
 };
 
+/**
+ * 指定された位置で他の要素と重なるかチェック
+ * @param {HTMLElement} element - 対象の要素
+ * @param {number} x - 左位置
+ * @param {number} y - 上位置
+ * @returns {boolean} 重なっている場合はtrue
+ */
+function isOverlappingAny(element, x, y) {
+  const width = element.offsetWidth;
+  const height = element.offsetHeight;
+  
+  // 少し余裕を持たせる（境界線での接触を許容するため）
+  const margin = 2;
+  
+  const rect1 = {
+    left: x + margin,
+    top: y + margin,
+    right: x + width - margin,
+    bottom: y + height - margin
+  };
+  
+  const allItems = document.querySelectorAll('.appicon, .widget');
+  for (const item of allItems) {
+    if (item === element || item.style.display === 'none') continue;
+    
+    // appicon-add は無視
+    if (item.id === 'appicon-add') continue;
+    
+    const itemLeft = item.offsetLeft;
+    const itemTop = item.offsetTop;
+    const itemWidth = item.offsetWidth;
+    const itemHeight = item.offsetHeight;
+    
+    const rect2 = {
+      left: itemLeft + margin,
+      top: itemTop + margin,
+      right: itemLeft + itemWidth - margin,
+      bottom: itemTop + itemHeight - margin
+    };
+    
+    if (rect1.left < rect2.right &&
+        rect1.right > rect2.left &&
+        rect1.top < rect2.bottom &&
+        rect1.bottom > rect2.top) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 最も近い空き位置を探す
+ * @param {HTMLElement} element - 対象の要素
+ * @param {number} startX - 開始X座標
+ * @param {number} startY - 開始Y座標
+ * @returns {{x: number, y: number}} 空き位置
+ */
+function findNearestEmptyPosition(element, startX, startY) {
+  let x = startX;
+  let y = startY;
+  
+  // グリッドモードならスナップ
+  if (isGridModeEnabled) {
+    x = snapToGrid(x);
+    y = snapToGrid(y);
+  }
+  
+  // 重なりがなければそのまま返す
+  if (!isOverlappingAny(element, x, y)) {
+    return { x, y };
+  }
+  
+  // 重なっている場合、周囲を探索
+  // 探索ステップ: グリッドサイズまたはアイコンサイズ
+  const stepX = isGridModeEnabled ? GRID_SIZE : 80;
+  const stepY = isGridModeEnabled ? GRID_SIZE : 85;
+  
+  // 渦巻き状に探索
+  let radius = 1;
+  const maxRadius = 20; // 無限ループ防止
+  
+  while (radius < maxRadius) {
+    // 上辺
+    for (let i = -radius; i <= radius; i++) {
+      const checkX = x + (i * stepX);
+      const checkY = y - (radius * stepY);
+      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    // 右辺
+    for (let i = -radius + 1; i <= radius; i++) {
+      const checkX = x + (radius * stepX);
+      const checkY = y + (i * stepY);
+      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    // 下辺
+    for (let i = radius - 1; i >= -radius; i--) {
+      const checkX = x + (i * stepX);
+      const checkY = y + (radius * stepY);
+      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    // 左辺
+    for (let i = radius - 1; i > -radius; i--) {
+      const checkX = x - (radius * stepX);
+      const checkY = y + (i * stepY);
+      if (checkX >= 0 && checkY >= 0 && !isOverlappingAny(element, checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    
+    radius++;
+  }
+  
+  // 見つからない場合は元の位置（重なったまま）
+  return { x, y };
+}
+
 // アイテムにドラッグイベントを設定する関数（位置変更モード用）
 function setupDraggableItem(item) {
   // 位置変更モード中はクリックイベントを無効化
@@ -1674,10 +1788,11 @@ function setupDraggableItem(item) {
       }
     }
     
-    // グリッドモードが有効な場合、スナップ
-    if (isGridModeEnabled && this.style.position === 'absolute') {
-      this.style.left = snapToGrid(this.offsetLeft) + 'px';
-      this.style.top = snapToGrid(this.offsetTop) + 'px';
+    // 自動位置調整（重なり防止）
+    if (this.style.position === 'absolute') {
+      const newPos = findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
+      this.style.left = newPos.x + 'px';
+      this.style.top = newPos.y + 'px';
     }
     
     draggedItem = null;
@@ -1872,10 +1987,11 @@ function setupNormalModeDrag(item) {
       }
     }
     
-    // グリッドモードでスナップ
-    if (isGridModeEnabled && this.style.position === 'absolute') {
-      this.style.left = snapToGrid(this.offsetLeft) + 'px';
-      this.style.top = snapToGrid(this.offsetTop) + 'px';
+    // 自動位置調整（重なり防止）
+    if (this.style.position === 'absolute') {
+      const newPos = findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
+      this.style.left = newPos.x + 'px';
+      this.style.top = newPos.y + 'px';
     }
     
     draggedItem = null;
