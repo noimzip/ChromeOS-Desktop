@@ -1928,21 +1928,6 @@ function setupNormalModeDrag(item) {
         this._normalModeDragStarted = true;
         this._ignoreClick = true; // クリックを無視するフラグ
         
-        // 位置変更モードに入る
-        enterPositionChangeMode();
-        
-        // このアイテムを位置変更モード用に設定
-        document.querySelectorAll(".appicon,.widget").forEach(el => {
-          if (el !== this) {
-            setupDraggableItem(el);
-          }
-        });
-        
-        // 自分自身の設定も更新
-        this._savedOnclick = this.onclick;
-        this._savedOncontextmenu = this.oncontextmenu;
-        this.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
-        
         const images = this.querySelectorAll('img');
         images.forEach(img => {
           img.draggable = false;
@@ -2029,6 +2014,26 @@ function setupNormalModeDrag(item) {
       this.style.left = newPos.x + 'px';
       this.style.top = newPos.y + 'px';
     }
+    
+    // 位置を保存
+    const key = this.id || this.dataset.saveKey;
+    if (key) {
+      try {
+        const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+        positions[key] = {
+          left: this.style.left,
+          top: this.style.top,
+          position: 'absolute'
+        };
+        localStorage.setItem('widgetPositions', JSON.stringify(positions));
+      } catch (e) {}
+    }
+    
+    const images = this.querySelectorAll('img');
+    images.forEach(img => {
+      img.draggable = true;
+      img.style.pointerEvents = '';
+    });
     
     draggedItem = null;
     this._isDragging = false;
