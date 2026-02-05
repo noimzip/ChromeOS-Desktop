@@ -428,166 +428,133 @@
         </div>
 
         <div id="settings_content">
-          <div style="margin-bottom: 16px;">
-            <label for="language_selector" data-i18n="language">言語</label>
-            <select id="language_selector">
-              <option value="ja">日本語</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <label data-i18n="color_scheme">カラースキーム</label>
-            <div id="color_palette" class="color-palette">
-              <button class="color-swatch" data-color="blue" style="background: #4285f4;" title="Blue"></button>
-              <button class="color-swatch" data-color="red" style="background: #ea4335;" title="Red"></button>
-              <button class="color-swatch" data-color="green" style="background: #34a853;" title="Green"></button>
-              <button class="color-swatch" data-color="purple" style="background: #9334e6;" title="Purple"></button>
-              <button class="color-swatch" data-color="orange" style="background: #fa7b17;" title="Orange"></button>
-              <button class="color-swatch" data-color="teal" style="background: #14b8a6;" title="Teal"></button>
-              <button class="color-swatch" data-color="pink" style="background: #ec4899;" title="Pink"></button>
-              <label class="color-swatch color-picker-swatch" title="Custom">
-                <input type="color" id="custom_color_picker" value="#4285f4">
-                <m3e-icon name="colorize" style="font-size: 20px; color: white;"></m3e-icon>
-              </label>
+          <div class="settings-section">
+            <h4 class="settings-section-title" data-i18n="design_style">デザインとスタイル</h4>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="language">言語</span>
+              </div>
+              <div class="settings-item-control">
+                <select id="language_selector">
+                  <option value="ja">日本語</option>
+                  <option value="en">English</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div class="settings_row">
-            <span data-i18n="dark_mode">ダークモード</span>
-            <m3e-button variant="filled" id="toggle_dark_mode" data-i18n="disabled">無効</m3e-button>
-          </div>
-          <div class="settings_row">
-            <span data-i18n="settings_button_label">設定ボタン</span>
-            <m3e-button variant="filled" id="toggle_settings_fab" data-i18n="show_settings_button">表示</m3e-button>
-          </div>
-          <div class="settings_row">
-            <span data-i18n="blur_effect">ブラー効果</span>
-            <m3e-button variant="filled" id="toggle_blur_effect" data-i18n="enabled">有効</m3e-button>
-          </div>
-          <div class="settings_row">
-            <span data-i18n="icon_shape">アイコンの形</span>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <select id="icon_shape_selector">
-                <!-- options populated dynamically -->
-              </select>
-              <script>
-                document.addEventListener('DOMContentLoaded', ()=>{
-                  const shapes = [
-                    "4-leaf-clover","4-sided-cookie","6-sided-cookie","7-sided-cookie","8-leaf-clover","9-sided-cookie","12-sided-cookie",
-                    "burst","oval","pentagon","pill","soft-burst","sunny","very-sunny","bun","boom","soft-boom","semicircle","slanted",
-                    "arch","arrow","diamond","fan","flower","gem","ghost-ish","heart","hexagon","pixel-circle","pixel-triangle",
-                    "puffy","puffy-diamond","square","circle","triangle"
-                  ];
-                  const sel = document.getElementById('icon_shape_selector');
-                  if(!sel) return;
-                  sel.innerHTML = '';
-                  const current = localStorage.getItem('iconShape') || 'square';
-                  shapes.forEach(s=>{
-                    const opt = document.createElement('option');
-                    opt.value = s;
-                    opt.textContent = s.replace(/-/g,' ');
-                    sel.appendChild(opt);
-                  });
-                  if(shapes.includes(current)) sel.value = current;
-                  // ボタンによるプレビュー選択 UI
-                  const btnContainer = document.createElement('div');
-                  btnContainer.id = 'icon_shape_buttons';
-                  btnContainer.style.display = 'flex';
-                  btnContainer.style.flexWrap = 'wrap';
-                  btnContainer.style.maxWidth = '320px';
-                  btnContainer.style.gap = '6px';
-                  sel.parentElement.appendChild(btnContainer);
-
-                  const previewShape = document.getElementById('icon_shape_preview_shape');
-
-                  let selectedBtn = null;
-                  function markSelected(btn){
-                    if(selectedBtn) selectedBtn.style.boxShadow = '';
-                    selectedBtn = btn;
-                    if(selectedBtn) selectedBtn.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.12) inset';
-                  }
-
-                  shapes.forEach(s=>{
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.title = s;
-                    btn.style.width = '40px';
-                    btn.style.height = '40px';
-                    btn.style.padding = '4px';
-                    btn.style.border = '1px solid rgba(0,0,0,0.08)';
-                    btn.style.background = 'transparent';
-                    btn.style.borderRadius = '6px';
-                    btn.style.display = 'inline-flex';
-                    btn.style.alignItems = 'center';
-                    btn.style.justifyContent = 'center';
-                    btn.style.cursor = 'pointer';
-
-                    // 小さいプレビュー用 m3e-shape
-                    const preview = document.createElement('m3e-shape');
-                    preview.setAttribute('name', s);
-                    preview.style.width = '28px';
-                    preview.style.height = '28px';
-                    preview.style.display = 'inline-block';
-                    const img = document.createElement('img');
-                    img.src = './assets/settings.webp';
-                    img.alt = s;
-                    preview.appendChild(img);
-                    btn.appendChild(preview);
-
-                    btn.addEventListener('click', ()=>{
-                      sel.value = s;
-                      // update preview element and global state
-                      if(previewShape) previewShape.setAttribute('name', s);
-                      if(typeof updateIconShape === 'function') updateIconShape(s);
-                      markSelected(btn);
-                    });
-
-                    if(s === current) markSelected(btn);
-                    btnContainer.appendChild(btn);
-                  });
-                });
-              </script>
-              <div id="icon_shape_preview" title="プレビュー" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;">
-                <m3e-shape id="icon_shape_preview_shape" name="square">
-                  <img src="./assets/settings.webp" alt="preview" />
-                </m3e-shape>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="color_scheme">カラースキーム</span>
+              </div>
+              <div class="settings-item-control">
+                <div id="color_palette" class="color-palette">
+                  <button class="color-swatch" data-color="blue" style="background: #4285f4;" title="Blue"></button>
+                  <button class="color-swatch" data-color="red" style="background: #ea4335;" title="Red"></button>
+                  <button class="color-swatch" data-color="green" style="background: #34a853;" title="Green"></button>
+                  <button class="color-swatch" data-color="purple" style="background: #9334e6;" title="Purple"></button>
+                  <button class="color-swatch" data-color="orange" style="background: #fa7b17;" title="Orange"></button>
+                  <button class="color-swatch" data-color="teal" style="background: #14b8a6;" title="Teal"></button>
+                  <button class="color-swatch" data-color="pink" style="background: #ec4899;" title="Pink"></button>
+                  <label class="color-swatch color-picker-swatch" title="Custom">
+                    <input type="color" id="custom_color_picker" value="#4285f4">
+                    <m3e-icon name="colorize" style="font-size: 20px; color: white;"></m3e-icon>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="dark_mode">ダークモード</span>
+              </div>
+              <div class="settings-item-control">
+                <m3e-switch id="toggle_dark_mode"></m3e-switch>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="blur_effect">ブラー効果</span>
+              </div>
+              <div class="settings-item-control">
+                <m3e-switch id="toggle_blur_effect"></m3e-switch>
               </div>
             </div>
           </div>
-          <div class="settings_row">
-            <span data-i18n="window_count">ウィンドウ数（仮想デスクトップ用）</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <select id="window_count_selector">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-              </select>
-              <m3e-button variant="outlined" id="apply_window_count" data-i18n="apply_restart">適用して再起動</m3e-button>
+
+          <div class="settings-section">
+            <h4 class="settings-section-title" data-i18n="icon_settings">アイコン設定</h4>
+            <div class="settings-item settings-item-column">
+              <div class="settings-item-label">
+                <span data-i18n="icon_shape">アイコンの形</span>
+              </div>
+              <div class="settings-item-control">
+                <div id="icon_shape_buttons"></div>
+              </div>
             </div>
           </div>
-          <div class="settings_row">
-            <span data-i18n="folder_style">フォルダーのスタイル</span>
-            <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
-               <div style="display: flex; align-items: center; gap: 8px;">
+
+          <div class="settings-section">
+            <h4 class="settings-section-title" data-i18n="system_settings">システム設定</h4>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="settings_button_label">設定ボタン</span>
+                <small>右下の設定ボタンの表示/非表示</small>
+              </div>
+              <div class="settings-item-control">
+                <m3e-switch id="toggle_settings_fab"></m3e-switch>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="window_count">ウィンドウ数</span>
+                <small>仮想デスクトップ用のウィンドウ数</small>
+              </div>
+              <div class="settings-item-control">
+                <select id="window_count_selector">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                </select>
+                <m3e-button variant="outlined" id="apply_window_count" data-i18n="apply_restart">適用</m3e-button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4 class="settings-section-title" data-i18n="data_management">データ管理</h4>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="folder_style">フォルダーのスタイル</span>
+                <small>すべてのフォルダーにスタイルを適用</small>
+              </div>
+              <div class="settings-item-control">
                  <input type="color" id="global_folder_bg_color" value="#ffffff">
                  <input type="range" id="global_folder_bg_opacity" min="0" max="1" step="0.05" value="1" style="width: 80px;">
-               </div>
-               <m3e-button variant="outlined" id="apply_folder_style_all" data-i18n="apply_to_all">すべてに適用</m3e-button>
+                 <m3e-button variant="outlined" id="apply_folder_style_all" data-i18n="apply_to_all">適用</m3e-button>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span>ウィジェットサイズをリセット</span>
+              </div>
+              <div class="settings-item-control">
+                <m3e-button variant="outlined" id="reset_widget_sizes_btn">リセット</m3e-button>
+              </div>
+            </div>
+            <div class="settings-item settings-item-danger">
+              <div class="settings-item-label">
+                <span data-i18n="delete_all_data">すべてのデータを削除</span>
+              </div>
+              <div class="settings-item-control">
+                <m3e-button variant="filled" id="delete_all_data_btn" class="danger-button" data-i18n="delete">削除</m3e-button>
+              </div>
             </div>
           </div>
-          <div class="settings_row settings_row_danger">
-            <span data-i18n="delete_all_data">すべてのデータを削除</span>
-            <m3e-button variant="filled" id="delete_all_data_btn" class="danger-button" data-i18n="delete">削除</m3e-button>
-          </div>
-          <div class="settings_row">
-            <span>ウィジェットサイズをリセット</span>
-            <m3e-button variant="outlined" id="reset_widget_sizes_btn">リセット</m3e-button>
-          </div>
-          <p><span data-i18n="user_agent">ユーザーエージェント:</span><span id="developer_user_agent"></span></p>
+
+          <p class="user-agent-display"><span data-i18n="user_agent">ユーザーエージェント:</span><span id="developer_user_agent"></span></p>
           <div style="margin-top: auto; align-self: flex-end;">
             <m3e-button variant="filled" id="close_settingsmenu_modal" data-i18n="close">とじる</m3e-button>
           </div>

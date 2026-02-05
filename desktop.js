@@ -2084,7 +2084,10 @@ const translations = {
     folder_style: "フォルダーのスタイル",
     apply_to_all: "すべてに適用",
     google_login: "Googleアカウントにログイン",
-    google_login_help: "カレンダーが表示されない場合はログインしてください"
+    google_login_help: "カレンダーが表示されない場合はログインしてください",
+    icon_settings: "アイコン設定",
+    system_settings: "システム設定",
+    data_management: "データ管理"
   },
   en: {
     files: "Files",
@@ -2154,7 +2157,10 @@ const translations = {
     folder_style: "Folder Style",
     apply_to_all: "Apply to All",
     google_login: "Log in to Google",
-    google_login_help: "Please log in if the calendar is not displayed"
+    google_login_help: "Please log in if the calendar is not displayed",
+    icon_settings: "Icon Settings",
+    system_settings: "System Settings",
+    data_management: "Data Management"
   }
 };
 
@@ -2365,14 +2371,14 @@ function updateSettingsFabVisibility(isVisible) {
   if (settingsFab) {
     settingsFab.style.display = isVisible ? 'flex' : 'none';
   }
-  localStorage.setItem('showSettingsFab', isVisible);
-  
-  // ボタンのテキストを更新
   if (toggleSettingsFabBtn) {
-    const lang = getCurrentLanguage();
-    const key = isVisible ? 'hide_settings_button' : 'show_settings_button';
-    toggleSettingsFabBtn.textContent = translations[lang][key];
+    if (typeof toggleSettingsFabBtn.selected !== 'undefined') {
+      toggleSettingsFabBtn.selected = isVisible;
+    } else {
+      toggleSettingsFabBtn.checked = isVisible;
+    }
   }
+  localStorage.setItem('showSettingsFab', isVisible);
 }
 
 if (toggleSettingsFabBtn) {
@@ -2380,10 +2386,10 @@ if (toggleSettingsFabBtn) {
   const showFab = localStorage.getItem('showSettingsFab') !== 'false';
   updateSettingsFabVisibility(showFab);
   
-  toggleSettingsFabBtn.onclick = () => {
-    const currentlyVisible = settingsFab && settingsFab.style.display !== 'none';
-    updateSettingsFabVisibility(!currentlyVisible);
-  };
+  toggleSettingsFabBtn.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    updateSettingsFabVisibility(newState);
+  });
 }
 
 // ブラー効果の設定
@@ -2395,14 +2401,14 @@ function updateBlurEffect(isEnabled) {
   } else {
     document.body.classList.add('no-blur');
   }
-  localStorage.setItem('blurEffectEnabled', isEnabled);
-  
-  // ボタンのテキストを更新
   if (toggleBlurEffectBtn) {
-    const lang = getCurrentLanguage();
-    const key = isEnabled ? 'enabled' : 'disabled';
-    toggleBlurEffectBtn.textContent = translations[lang][key];
+    if (typeof toggleBlurEffectBtn.selected !== 'undefined') {
+      toggleBlurEffectBtn.selected = isEnabled;
+    } else {
+      toggleBlurEffectBtn.checked = isEnabled;
+    }
   }
+  localStorage.setItem('blurEffectEnabled', isEnabled);
 }
 
 if (toggleBlurEffectBtn) {
@@ -2410,10 +2416,10 @@ if (toggleBlurEffectBtn) {
   const blurEnabled = localStorage.getItem('blurEffectEnabled') !== 'false';
   updateBlurEffect(blurEnabled);
   
-  toggleBlurEffectBtn.onclick = () => {
-    const currentlyEnabled = !document.body.classList.contains('no-blur');
-    updateBlurEffect(!currentlyEnabled);
-  };
+  toggleBlurEffectBtn.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    updateBlurEffect(newState);
+  });
 }
 
 // ダークモードの設定
@@ -2425,14 +2431,14 @@ function updateDarkMode(isEnabled) {
   } else {
     document.body.classList.remove('dark-mode');
   }
-  localStorage.setItem('darkModeEnabled', isEnabled);
-  
-  // ボタンのテキストを更新
   if (toggleDarkModeBtn) {
-    const lang = getCurrentLanguage();
-    const key = isEnabled ? 'enabled' : 'disabled';
-    toggleDarkModeBtn.textContent = translations[lang][key];
+    if (typeof toggleDarkModeBtn.selected !== 'undefined') {
+      toggleDarkModeBtn.selected = isEnabled;
+    } else {
+      toggleDarkModeBtn.checked = isEnabled;
+    }
   }
+  localStorage.setItem('darkModeEnabled', isEnabled);
 }
 
 if (toggleDarkModeBtn) {
@@ -2440,10 +2446,10 @@ if (toggleDarkModeBtn) {
   const darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
   updateDarkMode(darkModeEnabled);
   
-  toggleDarkModeBtn.onclick = () => {
-    const currentlyEnabled = document.body.classList.contains('dark-mode');
-    updateDarkMode(!currentlyEnabled);
-  };
+  toggleDarkModeBtn.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    updateDarkMode(newState);
+  });
 }
 
 // アイコン形状の設定: DOM 準備後に要素を取得して初期化する
@@ -2454,25 +2460,6 @@ if (iconShapeSelector) {
   iconShapeSelector.onchange = () => {
     updateIconShape(iconShapeSelector.value);
   };
-}
-
-// Live preview for shape selector
-const iconShapePreviewEl = document.getElementById('icon_shape_preview_shape');
-if (iconShapeSelector && iconShapePreviewEl) {
-  // initialize preview
-  iconShapePreviewEl.setAttribute('name', getCurrentIconShape());
-
-  // update preview on change and input
-  const updatePreview = (val) => {
-    try {
-      iconShapePreviewEl.setAttribute('name', val);
-    } catch (e) {
-      console.warn('Failed to update shape preview:', e);
-    }
-  };
-
-  iconShapeSelector.addEventListener('input', (e) => updatePreview(e.target.value));
-  iconShapeSelector.addEventListener('change', (e) => updatePreview(e.target.value));
 }
 
 // ウィンドウ数の設定
@@ -4145,4 +4132,45 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('ウィジェットサイズをリセットしました。');
     });
   }
+
+  // アイコン形状選択UIの生成
+  const shapeButtonContainer = document.getElementById('icon_shape_buttons');
+  if (shapeButtonContainer) {
+    const shapes = [
+      "square", "rounded", "circle", "cut", "diamond", "hexagon", "pill", "bun", "puffy"
+    ];
+    const currentShape = getCurrentIconShape();
+
+    let selectedBtn = null;
+    function markSelected(btn) {
+      if (selectedBtn) selectedBtn.classList.remove('selected');
+      selectedBtn = btn;
+      if (selectedBtn) selectedBtn.classList.add('selected');
+    }
+
+    shapes.forEach(s => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = s;
+      
+      const preview = document.createElement('m3e-shape');
+      preview.setAttribute('name', s);
+      const img = document.createElement('img');
+      img.src = './assets/settings.webp';
+      img.alt = s;
+      preview.appendChild(img);
+      btn.appendChild(preview);
+
+      btn.addEventListener('click', () => {
+        updateIconShape(s);
+        markSelected(btn);
+      });
+
+      if (s === currentShape) {
+        markSelected(btn);
+      }
+      shapeButtonContainer.appendChild(btn);
+    });
+  }
+
 });
