@@ -96,8 +96,13 @@ function wrapImageWithShape(img, shape) {
 
 // 全アイコンに形状を適用する
 function applyShapeToAll(shape) {
-  const icons = document.querySelectorAll('.appicon');
+  // 通常のアイコンとフォルダ内アイテム（モーダル）
+  const icons = document.querySelectorAll('.appicon:not(.folder)');
   icons.forEach(icon => wrapIconWithShape(icon, shape));
+
+  // フォルダアイコンのプレビュー画像
+  const folderImages = document.querySelectorAll('.appicon.folder .folder-preview img');
+  folderImages.forEach(img => wrapImageWithShape(img, shape));
 }
 
 function updateIconShape(shape) {
@@ -516,6 +521,33 @@ let currentContextAppType = null;
 // ユーティリティ関数
 // ========================================
 
+/**
+ * 画像を指定されたサイズにリサイズする
+ * @param {string} dataUrl - 元の画像のData URL
+ * @param {number} targetWidth - ターゲットの幅
+ * @param {number} targetHeight - ターゲットの高さ
+ * @returns {Promise<string>} リサイズされた画像のData URL
+ */
+function resizeImage(dataUrl, targetWidth, targetHeight) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      
+      resolve(canvas.toDataURL());
+    };
+    img.onerror = (err) => {
+      console.error("Image loading failed for resizing", err);
+      reject(err);
+    };
+    img.src = dataUrl;
+  });
+}
 /**
  * 値をグリッドにスナップさせる
  * @param {number} value - 元の値
@@ -2540,10 +2572,18 @@ if (newAppImageTrigger && newAppFileInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (evt) => {
-        newAppIconDataUrl = evt.target.result;
-        newAppImagePreview.src = newAppIconDataUrl;
-        newAppImagePreview.style.display = 'block';
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          newAppIconDataUrl = resizedDataUrl;
+          newAppImagePreview.src = newAppIconDataUrl;
+          newAppImagePreview.style.display = 'block';
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          newAppIconDataUrl = evt.target.result;
+          newAppImagePreview.src = newAppIconDataUrl;
+          newAppImagePreview.style.display = 'block';
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -2755,10 +2795,18 @@ if (linuxAppImageTrigger && linuxAppImageInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        linuxAppIconDataUrl = e.target.result;
-        linuxAppImagePreview.src = linuxAppIconDataUrl;
-        linuxAppImagePreview.style.display = 'block';
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          linuxAppIconDataUrl = resizedDataUrl;
+          linuxAppImagePreview.src = linuxAppIconDataUrl;
+          linuxAppImagePreview.style.display = 'block';
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          linuxAppIconDataUrl = evt.target.result;
+          linuxAppImagePreview.src = linuxAppIconDataUrl;
+          linuxAppImagePreview.style.display = 'block';
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -2985,9 +3033,16 @@ if (editWebappImageTrigger && editWebappImageInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (evt) => {
-        editWebappIconDataUrl = evt.target.result;
-        editWebappImagePreview.src = editWebappIconDataUrl;
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          editWebappIconDataUrl = resizedDataUrl;
+          editWebappImagePreview.src = editWebappIconDataUrl;
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          editWebappIconDataUrl = evt.target.result;
+          editWebappImagePreview.src = editWebappIconDataUrl;
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -3087,9 +3142,16 @@ if (editLinuxappImageTrigger && editLinuxappImageInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (evt) => {
-        editLinuxappIconDataUrl = evt.target.result;
-        editLinuxappImagePreview.src = editLinuxappIconDataUrl;
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          editLinuxappIconDataUrl = resizedDataUrl;
+          editLinuxappImagePreview.src = editLinuxappIconDataUrl;
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          editLinuxappIconDataUrl = evt.target.result;
+          editLinuxappImagePreview.src = editLinuxappIconDataUrl;
+        }
       };
       reader.readAsDataURL(file);
     }
