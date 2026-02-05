@@ -96,8 +96,13 @@ function wrapImageWithShape(img, shape) {
 
 // 全アイコンに形状を適用する
 function applyShapeToAll(shape) {
-  const icons = document.querySelectorAll('.appicon');
+  // 通常のアイコンとフォルダ内アイテム（モーダル）
+  const icons = document.querySelectorAll('.appicon:not(.folder)');
   icons.forEach(icon => wrapIconWithShape(icon, shape));
+
+  // フォルダアイコンのプレビュー画像
+  const folderImages = document.querySelectorAll('.appicon.folder .folder-preview img');
+  folderImages.forEach(img => wrapImageWithShape(img, shape));
 }
 
 function updateIconShape(shape) {
@@ -331,10 +336,12 @@ async function updateMediaPlayer() {
     // シークバーの値を更新
     if (mediaSeekbar && duration > 0) {
       const percent = (position / duration) * 100;
-      mediaSeekbar.value = percent;
+      const thumb = mediaSeekbar.querySelector('m3e-slider-thumb');
+      if (thumb) thumb.value = percent;
       mediaSeekbar.disabled = false;
     } else if (mediaSeekbar) {
-      mediaSeekbar.value = 0;
+      const thumb = mediaSeekbar.querySelector('m3e-slider-thumb');
+      if (thumb) thumb.value = 0;
       mediaSeekbar.disabled = true;
     }
     
@@ -403,40 +410,30 @@ setupMediaButton(mediaNextBtn, async () => {
 
 // シークバーのイベント
 if (mediaSeekbar) {
-  // シーク開始（ドラッグ中は更新を止める）
+  // ドラッグ中はUIの自動更新を止める
   mediaSeekbar.addEventListener('pointerdown', (e) => {
     e.stopPropagation(); // ウィジェットのドラッグを防止
     isSeeking = true;
   });
-  
+
   // シーク中の値変更（リアルタイムプレビュー）
   mediaSeekbar.addEventListener('input', (e) => {
     e.stopPropagation();
     if (currentDuration > 0 && mediaTimeCurrent) {
-      const position = (mediaSeekbar.value / 100) * currentDuration;
+      const position = (e.target.value / 100) * currentDuration;
       mediaTimeCurrent.textContent = formatTime(position);
     }
   });
-  
+
   // シーク完了（実際にシーク）
   mediaSeekbar.addEventListener('change', async (e) => {
     e.stopPropagation();
     if (currentDuration > 0) {
-      const seekPosition = (mediaSeekbar.value / 100) * currentDuration;
+      const seekPosition = (e.target.value / 100) * currentDuration;
       await mediaControl('seek', seekPosition);
     }
     isSeeking = false;
     setTimeout(updateMediaPlayer, 300);
-  });
-  
-  // ドラッグキャンセル時
-  mediaSeekbar.addEventListener('pointercancel', () => {
-    isSeeking = false;
-  });
-  
-  // クリックでもシーク可能に
-  mediaSeekbar.addEventListener('click', (e) => {
-    e.stopPropagation();
   });
 }
 
@@ -524,6 +521,33 @@ let currentContextAppType = null;
 // ユーティリティ関数
 // ========================================
 
+/**
+ * 画像を指定されたサイズにリサイズする
+ * @param {string} dataUrl - 元の画像のData URL
+ * @param {number} targetWidth - ターゲットの幅
+ * @param {number} targetHeight - ターゲットの高さ
+ * @returns {Promise<string>} リサイズされた画像のData URL
+ */
+function resizeImage(dataUrl, targetWidth, targetHeight) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      
+      resolve(canvas.toDataURL());
+    };
+    img.onerror = (err) => {
+      console.error("Image loading failed for resizing", err);
+      reject(err);
+    };
+    img.src = dataUrl;
+  });
+}
 /**
  * 値をグリッドにスナップさせる
  * @param {number} value - 元の値
@@ -801,7 +825,8 @@ function openFolder(folderId) {
   
   if (bgColorInput && opacityInput) {
     bgColorInput.value = folderData.style.color;
-    opacityInput.value = folderData.style.opacity;
+    const thumb = opacityInput.querySelector('m3e-slider-thumb');
+    if (thumb) thumb.value = folderData.style.opacity;
     applyFolderStyle(folderId);
   }
   
@@ -1324,9 +1349,20 @@ function positionCreatedIcon(el, clientX, clientY) {
   // 中心を合わせる
   const left = clientX - containerRect.left - (elRect.width / 2);
   const top = clientY - containerRect.top - (elRect.height / 2);
+  
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  
+  let finalLeft = Math.max(0, Math.round(left));
+  let finalTop = Math.max(0, Math.round(top));
+  
+  // 画面外にはみ出さないように調整
+  if (finalLeft + elRect.width > screenWidth) finalLeft = screenWidth - elRect.width;
+  if (finalTop + elRect.height > screenHeight) finalTop = screenHeight - elRect.height;
+  
   el.style.position = 'absolute';
-  el.style.left = Math.max(0, Math.round(left)) + 'px';
-  el.style.top = Math.max(0, Math.round(top)) + 'px';
+  el.style.left = Math.max(0, finalLeft) + 'px';
+  el.style.top = Math.max(0, finalTop) + 'px';
 
   // 保存（widgetPositions）
   try {
@@ -1518,6 +1554,145 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
   enterPositionChangeMode();
 };
 
+/**
+ * 指定された位置で他の要素と重なるかチェック
+ * @param {HTMLElement} element - 対象の要素
+ * @param {number} x - 左位置
+ * @param {number} y - 上位置
+ * @returns {boolean} 重なっている場合はtrue
+ */
+function isOverlappingAny(element, x, y) {
+  const width = element.offsetWidth;
+  const height = element.offsetHeight;
+  
+  // 少し余裕を持たせる（境界線での接触を許容するため）
+  const margin = 2;
+  
+  const rect1 = {
+    left: x + margin,
+    top: y + margin,
+    right: x + width - margin,
+    bottom: y + height - margin
+  };
+  
+  const allItems = document.querySelectorAll('.appicon, .widget');
+  for (const item of allItems) {
+    if (item === element || item.style.display === 'none') continue;
+    
+    // appicon-add は無視
+    if (item.id === 'appicon-add') continue;
+    
+    const itemLeft = item.offsetLeft;
+    const itemTop = item.offsetTop;
+    const itemWidth = item.offsetWidth;
+    const itemHeight = item.offsetHeight;
+    
+    const rect2 = {
+      left: itemLeft + margin,
+      top: itemTop + margin,
+      right: itemLeft + itemWidth - margin,
+      bottom: itemTop + itemHeight - margin
+    };
+    
+    if (rect1.left < rect2.right &&
+        rect1.right > rect2.left &&
+        rect1.top < rect2.bottom &&
+        rect1.bottom > rect2.top) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 最も近い空き位置を探す
+ * @param {HTMLElement} element - 対象の要素
+ * @param {number} startX - 開始X座標
+ * @param {number} startY - 開始Y座標
+ * @returns {{x: number, y: number}} 空き位置
+ */
+function findNearestEmptyPosition(element, startX, startY) {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const elWidth = element.offsetWidth;
+  const elHeight = element.offsetHeight;
+
+  let x = startX;
+  let y = startY;
+  
+  // 画面内に収まるようにクランプ
+  x = Math.max(0, Math.min(x, screenWidth - elWidth));
+  y = Math.max(0, Math.min(y, screenHeight - elHeight));
+  
+  // グリッドモードならスナップ
+  if (isGridModeEnabled) {
+    x = snapToGrid(x);
+    y = snapToGrid(y);
+    
+    // スナップ後に画面外に出た場合は調整
+    if (x + elWidth > screenWidth) x -= GRID_SIZE;
+    if (y + elHeight > screenHeight) y -= GRID_SIZE;
+    x = Math.max(0, x);
+    y = Math.max(0, y);
+  }
+  
+  // 重なりがなければそのまま返す
+  if (!isOverlappingAny(element, x, y)) {
+    return { x, y };
+  }
+  
+  // 重なっている場合、周囲を探索
+  // 探索ステップ: グリッドサイズまたはアイコンサイズ
+  const stepX = isGridModeEnabled ? GRID_SIZE : 80;
+  const stepY = isGridModeEnabled ? GRID_SIZE : 85;
+  
+  // 渦巻き状に探索
+  let radius = 1;
+  const maxRadius = 20; // 無限ループ防止
+  
+  while (radius < maxRadius) {
+    // 候補位置をチェックするヘルパー
+    const check = (cx, cy) => {
+      if (cx >= 0 && cy >= 0 && 
+          cx + elWidth <= screenWidth && cy + elHeight <= screenHeight && 
+          !isOverlappingAny(element, cx, cy)) {
+        return true;
+      }
+      return false;
+    };
+
+    // 上辺
+    for (let i = -radius; i <= radius; i++) {
+      const checkX = x + (i * stepX);
+      const checkY = y - (radius * stepY);
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    // 右辺
+    for (let i = -radius + 1; i <= radius; i++) {
+      const checkX = x + (radius * stepX);
+      const checkY = y + (i * stepY);
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    // 下辺
+    for (let i = radius - 1; i >= -radius; i--) {
+      const checkX = x + (i * stepX);
+      const checkY = y + (radius * stepY);
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    // 左辺
+    for (let i = radius - 1; i > -radius; i--) {
+      const checkX = x - (radius * stepX);
+      const checkY = y + (i * stepY);
+      if (check(checkX, checkY)) return { x: checkX, y: checkY };
+    }
+    
+    radius++;
+  }
+  
+  // 見つからない場合は元の位置（重なったまま）
+  return { x, y };
+}
+
 // アイテムにドラッグイベントを設定する関数（位置変更モード用）
 function setupDraggableItem(item) {
   // 位置変更モード中はクリックイベントを無効化
@@ -1649,10 +1824,11 @@ function setupDraggableItem(item) {
       }
     }
     
-    // グリッドモードが有効な場合、スナップ
-    if (isGridModeEnabled && this.style.position === 'absolute') {
-      this.style.left = snapToGrid(this.offsetLeft) + 'px';
-      this.style.top = snapToGrid(this.offsetTop) + 'px';
+    // 自動位置調整（重なり防止）
+    if (this.style.position === 'absolute') {
+      const newPos = findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
+      this.style.left = newPos.x + 'px';
+      this.style.top = newPos.y + 'px';
     }
     
     draggedItem = null;
@@ -1752,21 +1928,6 @@ function setupNormalModeDrag(item) {
         this._normalModeDragStarted = true;
         this._ignoreClick = true; // クリックを無視するフラグ
         
-        // 位置変更モードに入る
-        enterPositionChangeMode();
-        
-        // このアイテムを位置変更モード用に設定
-        document.querySelectorAll(".appicon,.widget").forEach(el => {
-          if (el !== this) {
-            setupDraggableItem(el);
-          }
-        });
-        
-        // 自分自身の設定も更新
-        this._savedOnclick = this.onclick;
-        this._savedOncontextmenu = this.oncontextmenu;
-        this.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
-        
         const images = this.querySelectorAll('img');
         images.forEach(img => {
           img.draggable = false;
@@ -1847,11 +2008,32 @@ function setupNormalModeDrag(item) {
       }
     }
     
-    // グリッドモードでスナップ
-    if (isGridModeEnabled && this.style.position === 'absolute') {
-      this.style.left = snapToGrid(this.offsetLeft) + 'px';
-      this.style.top = snapToGrid(this.offsetTop) + 'px';
+    // 自動位置調整（重なり防止）
+    if (this.style.position === 'absolute') {
+      const newPos = findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
+      this.style.left = newPos.x + 'px';
+      this.style.top = newPos.y + 'px';
     }
+    
+    // 位置を保存
+    const key = this.id || this.dataset.saveKey;
+    if (key) {
+      try {
+        const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+        positions[key] = {
+          left: this.style.left,
+          top: this.style.top,
+          position: 'absolute'
+        };
+        localStorage.setItem('widgetPositions', JSON.stringify(positions));
+      } catch (e) {}
+    }
+    
+    const images = this.querySelectorAll('img');
+    images.forEach(img => {
+      img.draggable = true;
+      img.style.pointerEvents = '';
+    });
     
     draggedItem = null;
     this._isDragging = false;
@@ -2517,7 +2699,8 @@ const applyFolderStyleAllBtn = document.getElementById('apply_folder_style_all')
 if (applyFolderStyleAllBtn) {
   applyFolderStyleAllBtn.onclick = () => {
     const color = document.getElementById('global_folder_bg_color').value;
-    const opacity = document.getElementById('global_folder_bg_opacity').value;
+    const opacitySlider = document.getElementById('global_folder_bg_opacity');
+    const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
     
     Object.keys(folders).forEach(folderId => {
       folders[folderId].style = { color, opacity };
@@ -2546,10 +2729,18 @@ if (newAppImageTrigger && newAppFileInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (evt) => {
-        newAppIconDataUrl = evt.target.result;
-        newAppImagePreview.src = newAppIconDataUrl;
-        newAppImagePreview.style.display = 'block';
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          newAppIconDataUrl = resizedDataUrl;
+          newAppImagePreview.src = newAppIconDataUrl;
+          newAppImagePreview.style.display = 'block';
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          newAppIconDataUrl = evt.target.result;
+          newAppImagePreview.src = newAppIconDataUrl;
+          newAppImagePreview.style.display = 'block';
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -2761,10 +2952,18 @@ if (linuxAppImageTrigger && linuxAppImageInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        linuxAppIconDataUrl = e.target.result;
-        linuxAppImagePreview.src = linuxAppIconDataUrl;
-        linuxAppImagePreview.style.display = 'block';
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          linuxAppIconDataUrl = resizedDataUrl;
+          linuxAppImagePreview.src = linuxAppIconDataUrl;
+          linuxAppImagePreview.style.display = 'block';
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          linuxAppIconDataUrl = evt.target.result;
+          linuxAppImagePreview.src = linuxAppIconDataUrl;
+          linuxAppImagePreview.style.display = 'block';
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -2991,9 +3190,16 @@ if (editWebappImageTrigger && editWebappImageInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (evt) => {
-        editWebappIconDataUrl = evt.target.result;
-        editWebappImagePreview.src = editWebappIconDataUrl;
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          editWebappIconDataUrl = resizedDataUrl;
+          editWebappImagePreview.src = editWebappIconDataUrl;
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          editWebappIconDataUrl = evt.target.result;
+          editWebappImagePreview.src = editWebappIconDataUrl;
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -3093,9 +3299,16 @@ if (editLinuxappImageTrigger && editLinuxappImageInput) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (evt) => {
-        editLinuxappIconDataUrl = evt.target.result;
-        editLinuxappImagePreview.src = editLinuxappIconDataUrl;
+      reader.onload = async (evt) => {
+        try {
+          const resizedDataUrl = await resizeImage(evt.target.result, 740, 740);
+          editLinuxappIconDataUrl = resizedDataUrl;
+          editLinuxappImagePreview.src = editLinuxappIconDataUrl;
+        } catch (err) {
+          console.error("Failed to resize image:", err);
+          editLinuxappIconDataUrl = evt.target.result;
+          editLinuxappImagePreview.src = editLinuxappIconDataUrl;
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -4068,11 +4281,25 @@ function enableWidgetResizers() {
       widgetEl.classList.add('resizing');
       widgetEl.setPointerCapture(e.pointerId);
 
+      // アンカーを左上に固定し、絶対配置にする
+      const rect = widgetEl.getBoundingClientRect();
+      const desktopIcons = document.getElementById('desktop_icons');
+      const containerRect = desktopIcons ? desktopIcons.getBoundingClientRect() : {left: 0, top: 0};
+      
+      widgetEl.style.position = 'absolute';
+      widgetEl.style.left = (rect.left - containerRect.left) + 'px';
+      widgetEl.style.top = (rect.top - containerRect.top) + 'px';
+      widgetEl.style.right = 'auto';
+      widgetEl.style.bottom = 'auto';
+
       const startX = e.clientX;
       const startY = e.clientY;
       const startW = widgetEl.offsetWidth;
       const startH = widgetEl.offsetHeight;
       const minW = 120; const minH = 48;
+      
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
 
       function onMove(ev) {
         ev.preventDefault();
@@ -4088,6 +4315,15 @@ function enableWidgetResizers() {
             newH = Math.max(minH, Math.round(newH / gw) * gw);
           }
         } catch (e) {}
+        
+        // 画面外にはみ出さないように制限
+        if (rect.left + newW > screenWidth) {
+          newW = Math.max(minW, screenWidth - rect.left);
+        }
+        if (rect.top + newH > screenHeight) {
+          newH = Math.max(minH, screenHeight - rect.top);
+        }
+        
         widgetEl.style.width = newW + 'px';
         widgetEl.style.height = newH + 'px';
       }
