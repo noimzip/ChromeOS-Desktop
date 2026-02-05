@@ -833,12 +833,24 @@ function openFolder(folderId) {
     title.style.display = '';
   };
   
-  titleInput.onblur = saveTitle;
+  // タイトルクリックで編集モードに
+  title.onclick = () => {
+    title.style.display = 'none';
+    titleInput.style.display = '';
+    titleInput.value = folderData.name;
+    titleInput.onblur = saveTitle; // 編集モードに入るときにだけblurハンドラを設定
+    titleInput.focus();
+    titleInput.select();
+  };
+  
+  // キー入力の処理は一度だけ設定
   titleInput.onkeydown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      saveTitle();
+      titleInput.blur(); // Enterでblurを発火させて保存
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      titleInput.onblur = null; // Escapeでは保存しないようにblurハンドラを解除
       titleInput.style.display = 'none';
       title.style.display = '';
     }
@@ -1905,10 +1917,12 @@ function resetWidgetPositions() {
       img.style.pointerEvents = '';
     });
     
-    // ポインターイベントを削除
+    // 位置変更モードで設定されたポインターイベントを削除
     item.onpointerdown = null;
     item.onpointermove = null;
     item.onpointerup = null;
+    
+    // ドラッグ関連のプロパティもクリア
     delete item._isDragging;
     delete item._startX;
     delete item._startY;
