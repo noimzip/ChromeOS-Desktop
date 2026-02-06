@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="./clock.css">
     <link rel="stylesheet" href="./desktop.css">
     <script src="./clock.js" defer></script>
+    <script src="./i18n.js" defer></script>
     <script src="./desktop.js" defer></script>
 
     <script type="importmap">
@@ -95,7 +96,7 @@
         <img id="media_art" src="" alt="Album Art" style="display: none;">
       </div>
       <div class="media-player-info">
-        <div id="media_title" class="media-title">再生中の音楽なし</div>
+        <div id="media_title" class="media-title" data-i18n="no_music_playing">再生中の音楽なし</div>
         <div id="media_artist" class="media-artist"></div>
       </div>
       <div class="media-seekbar">
@@ -141,40 +142,40 @@
         <div id="github_contribution_graph" class="github-graph">
           <div class="github-loading">
             <m3e-icon name="hourglass_empty"></m3e-icon>
-            <span>読み込み中...</span>
+            <span data-i18n="loading">読み込み中...</span>
           </div>
         </div>
         <div class="github-stats">
           <div class="github-stat">
             <span class="github-stat-value" id="github_total_contributions">-</span>
-            <span class="github-stat-label">contributions</span>
+            <span class="github-stat-label" data-i18n="contributions_label">contributions</span>
           </div>
           <div class="github-stat">
             <span class="github-stat-value" id="github_current_streak">-</span>
-            <span class="github-stat-label">day streak</span>
+            <span class="github-stat-label" data-i18n="day_streak_label">day streak</span>
           </div>
           <div class="github-stat">
             <span class="github-stat-value" id="github_longest_streak">-</span>
-            <span class="github-stat-label">longest</span>
+            <span class="github-stat-label" data-i18n="longest_streak_label">longest</span>
           </div>
         </div>
       </div>
       <div class="github-contribution-footer">
-        <span id="github_username_display">ユーザー名を設定してください</span>
+        <span id="github_username_display" data-i18n="set_username">ユーザー名を設定してください</span>
       </div>
     </div>
 
     <!-- GitHub設定モーダル -->
     <div id="github_settings_modal_overlay" class="modal_overlay">
       <div id="github_settings_modal" class="modal">
-        <h3>GitHub設定</h3>
+        <h3 data-i18n="github_settings">GitHub設定</h3>
         <m3e-form-field variant="outlined">
-          <label slot="label" for="github_username_input">GitHubユーザー名</label>
-          <input id="github_username_input" placeholder="例: octocat" />
+          <label slot="label" for="github_username_input" data-i18n="github_username">GitHubユーザー名</label>
+          <input id="github_username_input" placeholder="例: octocat" data-i18n="username_placeholder" />
         </m3e-form-field>
         <div class="modal-buttons">
-          <m3e-button variant="outlined" id="close_github_settings_modal">とじる</m3e-button>
-          <m3e-button variant="filled" id="save_github_settings">保存</m3e-button>
+          <m3e-button variant="outlined" id="close_github_settings_modal" data-i18n="close">とじる</m3e-button>
+          <m3e-button variant="filled" id="save_github_settings" data-i18n="save">保存</m3e-button>
         </div>
       </div>
     </div>
@@ -189,12 +190,12 @@
           </div>
           <div class="github-details-info">
             <span id="github_details_count" class="github-details-count">0 contributions</span>
-            <span id="github_details_level_text" class="github-details-level">No activity</span>
+            <span id="github_details_level_text" class="github-details-level" data-i18n="no_activity">No activity</span>
           </div>
         </div>
         <div class="modal-buttons">
-          <m3e-button variant="outlined" id="close_github_details_modal">とじる</m3e-button>
-          <m3e-button variant="filled" id="open_github_activity">GitHubで見る</m3e-button>
+          <m3e-button variant="outlined" id="close_github_details_modal" data-i18n="close">とじる</m3e-button>
+          <m3e-button variant="filled" id="open_github_activity" data-i18n="view_on_github">GitHubで見る</m3e-button>
         </div>
       </div>
     </div>
@@ -215,7 +216,7 @@
         <iframe id="google_calendar_iframe" src="about:blank"></iframe>
         <div id="google_calendar_setup_prompt" class="google-calendar-setup-prompt">
           <m3e-icon name="edit_calendar"></m3e-icon>
-          <span>設定ボタンからカレンダーの埋め込みURLを設定してください</span>
+          <span data-i18n="set_calendar_url">設定ボタンからカレンダーの埋め込みURLを設定してください</span>
         </div>
       </div>
     </div>
@@ -223,18 +224,18 @@
     <!-- Google Calendar Settings Modal -->
     <div id="google_calendar_settings_modal_overlay" class="modal_overlay">
       <div id="google_calendar_settings_modal" class="modal">
-        <h3>Googleカレンダー設定</h3>
-        <p class="modal-description">Googleカレンダーの設定から「限定公開の共有可能なリンク」または「埋め込みコード」を取得し、URLを貼り付けてください。</p>
+        <h3 data-i18n="calendar_settings">Googleカレンダー設定</h3>
+        <p class="modal-description" data-i18n="calendar_settings_desc">Googleカレンダーの設定から「限定公開の共有可能なリンク」または「埋め込みコード」を取得し、URLを貼り付けてください。</p>
         <m3e-form-field variant="outlined">
-          <label slot="label" for="google_calendar_url_input">埋め込みURL</label>
+          <label slot="label" for="google_calendar_url_input" data-i18n="embed_url">埋め込みURL</label>
           <input id="google_calendar_url_input" placeholder="https://calendar.google.com/calendar/embed?..." />
         </m3e-form-field>
         <div style="margin: 16px 0;">
-          <label for="google_calendar_mode_select" style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--on-surface-variant);">表示モード</label>
+          <label for="google_calendar_mode_select" style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--on-surface-variant);" data-i18n="display_mode">表示モード</label>
           <select id="google_calendar_mode_select" style="width: 100%;">
-            <option value="MONTH">月 (Month)</option>
-            <option value="WEEK">週 (Week)</option>
-            <option value="AGENDA">スケジュール (Agenda)</option>
+            <option value="MONTH" data-i18n="month">月 (Month)</option>
+            <option value="WEEK" data-i18n="week">週 (Week)</option>
+            <option value="AGENDA" data-i18n="agenda">スケジュール (Agenda)</option>
           </select>
         </div>
         <div style="margin: 16px 0; text-align: center;">
@@ -244,8 +245,8 @@
           <m3e-button variant="outlined" id="google_login_btn" style="width: 100%;" data-i18n="google_login">Googleアカウントにログイン</m3e-button>
         </div>
         <div class="modal-buttons">
-          <m3e-button variant="outlined" id="close_google_calendar_settings_modal">とじる</m3e-button>
-          <m3e-button variant="filled" id="save_google_calendar_settings">保存</m3e-button>
+          <m3e-button variant="outlined" id="close_google_calendar_settings_modal" data-i18n="close">とじる</m3e-button>
+          <m3e-button variant="filled" id="save_google_calendar_settings" data-i18n="save">保存</m3e-button>
         </div>
       </div>
     </div>
@@ -550,7 +551,7 @@
             <div class="settings-item">
               <div class="settings-item-label">
                 <span data-i18n="settings_button_label">設定ボタン</span>
-                <small>右下の設定ボタンの表示/非表示</small>
+                <small data-i18n="settings_button_desc">右下の設定ボタンの表示/非表示</small>
               </div>
               <div class="settings-item-control">
                 <m3e-switch id="toggle_settings_fab"></m3e-switch>
@@ -559,7 +560,7 @@
             <div class="settings-item">
               <div class="settings-item-label">
                 <span data-i18n="window_count">ウィンドウ数</span>
-                <small>仮想デスクトップ用のウィンドウ数</small>
+                <small data-i18n="window_count_desc">仮想デスクトップ用のウィンドウ数</small>
               </div>
               <div class="settings-item-control">
                 <select id="window_count_selector">
@@ -582,7 +583,7 @@
             <div class="settings-item">
               <div class="settings-item-label">
                 <span data-i18n="folder_style">フォルダーのスタイル</span>
-                <small>すべてのフォルダーにスタイルを適用</small>
+                <small data-i18n="apply_folder_style_all_desc">すべてのフォルダーにスタイルを適用</small>
               </div>
               <div class="settings-item-control">
                  <input type="color" id="global_folder_bg_color" value="#ffffff">
@@ -594,10 +595,10 @@
             </div>
             <div class="settings-item">
               <div class="settings-item-label">
-                <span>ウィジェットサイズをリセット</span>
+                <span data-i18n="reset_widget_sizes_label">ウィジェットサイズをリセット</span>
               </div>
               <div class="settings-item-control">
-                <m3e-button variant="outlined" id="reset_widget_sizes_btn">リセット</m3e-button>
+                 <m3e-button variant="outlined" id="reset_widget_sizes_btn" data-i18n="reset">リセット</m3e-button>
               </div>
             </div>
             <div class="settings-item settings-item-danger">

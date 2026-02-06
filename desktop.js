@@ -304,7 +304,8 @@ async function updateMediaPlayer() {
   }
   
   if (!hasPlayer) {
-    if (mediaTitle) mediaTitle.textContent = '再生中の音楽なし';
+    const lang = getCurrentLanguage();
+    if (mediaTitle) mediaTitle.textContent = translations[lang].no_music_playing;
     if (mediaArtist) mediaArtist.textContent = '';
     if (mediaArt) mediaArt.style.display = 'none';
     if (mediaPlayIcon) mediaPlayIcon.setAttribute('name', 'play_arrow');
@@ -2426,7 +2427,31 @@ const translations = {
     folder_settings: "フォルダー設定",
     folder_name: "フォルダー名",
     background_color: "背景色",
-    opacity: "透明度"
+    opacity: "透明度",
+    no_music_playing: "再生中の音楽なし",
+    loading: "読み込み中...",
+    set_username: "設定ボタンからユーザー名を設定してください",
+    github_settings: "GitHub設定",
+    github_username: "GitHubユーザー名",
+    username_placeholder: "例: octocat",
+    view_on_github: "GitHubで見る",
+    set_calendar_url: "設定ボタンからカレンダーの埋め込みURLを設定してください",
+    calendar_settings: "Googleカレンダー設定",
+    calendar_settings_desc: "Googleカレンダーの設定から「限定公開の共有可能なリンク」または「埋め込みコード」を取得し、URLを貼り付けてください。",
+    embed_url: "埋め込みURL",
+    display_mode: "表示モード",
+    month: "月 (Month)",
+    week: "週 (Week)",
+    agenda: "スケジュール (Agenda)",
+    reset_widget_sizes_confirm: "全ウィジェットのサイズをリセットしますか？",
+    widget_sizes_reset: "ウィジェットサイズをリセットしました。",
+    fetch_failed: "データの取得に失敗しました",
+    no_activity: "No activity",
+    good_job: "Good job!",
+    excellent: "Excellent!",
+    contributions_label: "contributions",
+    day_streak_label: "day streak",
+    longest_streak_label: "longest"
   },
   en: {
     files: "Files",
@@ -2505,7 +2530,31 @@ const translations = {
     folder_settings: "Folder Settings",
     folder_name: "Folder Name",
     background_color: "Background Color",
-    opacity: "Opacity"
+    opacity: "Opacity",
+    no_music_playing: "No music playing",
+    loading: "Loading...",
+    set_username: "Please set username from settings",
+    github_settings: "GitHub Settings",
+    github_username: "GitHub Username",
+    username_placeholder: "Ex: octocat",
+    view_on_github: "View on GitHub",
+    set_calendar_url: "Please set calendar embed URL from settings",
+    calendar_settings: "Google Calendar Settings",
+    calendar_settings_desc: "Get the 'Secret address in iCal format' or 'Embed code' from Google Calendar settings and paste the URL here.",
+    embed_url: "Embed URL",
+    display_mode: "Display Mode",
+    month: "Month",
+    week: "Week",
+    agenda: "Agenda",
+    reset_widget_sizes_confirm: "Reset all widget sizes?",
+    widget_sizes_reset: "Widget sizes reset.",
+    fetch_failed: "Failed to fetch data",
+    no_activity: "No activity",
+    good_job: "Good job!",
+    excellent: "Excellent!",
+    contributions_label: "contributions",
+    day_streak_label: "day streak",
+    longest_streak_label: "longest"
   }
 };
 
@@ -2976,7 +3025,8 @@ if (saveNewAppBtn) {
     const url = document.getElementById('new_app_url').value;
     
     if (!name || !url) {
-      alert('名前とURLを入力してください');
+      const lang = getCurrentLanguage();
+      alert(translations[lang].enter_name_and_url);
       return;
     }
     
@@ -3874,6 +3924,7 @@ function hideGitHubTooltip() {
 function showGitHubDetailsModal(dateStr, count, level) {
   closeAllModals();
   if (!githubDetailsModal) return;
+  const lang = getCurrentLanguage();
   
   currentDetailDate = dateStr;
   
@@ -3887,17 +3938,17 @@ function showGitHubDetailsModal(dateStr, count, level) {
     githubDetailsCount.textContent = `${count} contribution${count !== 1 ? 's' : ''}`;
   }
   
-  let levelText = 'No activity';
+  let levelText = translations[lang].no_activity;
   let iconName = 'sentiment_neutral';
   let iconColor = 'var(--on-surface-variant)';
   
   if (count > 0) {
-    levelText = 'Good job!';
+    levelText = translations[lang].good_job;
     iconName = 'check_circle';
     iconColor = 'var(--primary-color)';
   }
   if (level >= 3) {
-    levelText = 'Excellent!';
+    levelText = translations[lang].excellent;
     iconName = 'local_fire_department';
     iconColor = '#ff6d00'; // Orange
   }
@@ -3918,6 +3969,7 @@ function showGitHubDetailsModal(dateStr, count, level) {
  */
 function renderGitHubGraph(data, year = 'last') {
   if (!githubGraph) return;
+  const lang = getCurrentLanguage();
   
   githubGraph.innerHTML = '';
 
@@ -3930,7 +3982,7 @@ function renderGitHubGraph(data, year = 'last') {
     githubGraph.innerHTML = `
       <div class="github-error">
         <m3e-icon name="error"></m3e-icon>
-        <span>データの取得に失敗しました</span>
+        <span>${translations[lang].fetch_failed}</span>
       </div>
     `;
     return;
@@ -4094,18 +4146,19 @@ function populateGitHubYearSelect(data) {
  */
 async function updateGitHubWidget() {
   const username = localStorage.getItem(LS_KEYS.GITHUB_USERNAME);
+  const lang = getCurrentLanguage();
   
   if (!username) {
     if (githubGraph) {
       githubGraph.innerHTML = `
         <div class="github-no-user">
           <m3e-icon name="person_add"></m3e-icon>
-          <span>設定ボタンからユーザー名を設定してください</span>
+          <span>${translations[lang].set_username}</span>
         </div>
       `;
     }
     if (githubUsernameDisplay) {
-      githubUsernameDisplay.textContent = 'ユーザー名を設定してください';
+      githubUsernameDisplay.textContent = translations[lang].set_username;
     }
     return;
   }
@@ -4119,7 +4172,7 @@ async function updateGitHubWidget() {
     githubGraph.innerHTML = `
       <div class="github-loading">
         <m3e-icon name="hourglass_empty"></m3e-icon>
-        <span>読み込み中...</span>
+        <span>${translations[lang].loading}</span>
       </div>
     `;
   }
@@ -4756,9 +4809,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('reset_widget_sizes_btn');
   if (btn) {
     btn.addEventListener('click', async () => {
-      if (!confirm('全ウィジェットのサイズをリセットしますか？')) return;
+      const lang = getCurrentLanguage();
+      if (!confirm(translations[lang].reset_widget_sizes_confirm)) return;
       resetWidgetSizes();
-      alert('ウィジェットサイズをリセットしました。');
+      alert(translations[lang].widget_sizes_reset);
     });
   }
 
