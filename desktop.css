@@ -73,13 +73,6 @@
   --clock-accent: #bbdefb;
   --clock-background: #1a365d;
   --clock-text-color: #ffffff;
-
-  /* GitHub Graph Colors (Light Mode) */
-  --github-level-0: var(--surface-dim);
-  --github-level-1: color-mix(in srgb, var(--primary-color) 30%, var(--surface-variant));
-  --github-level-2: color-mix(in srgb, var(--primary-color) 60%, var(--surface-variant));
-  --github-level-3: var(--primary-color);
-  --github-level-4: var(--primary-dark);
 }
 
 /* ========================================
@@ -396,6 +389,13 @@ body {
   background-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* GitHub Graph Colors (Light Mode) */
+  --github-level-0: var(--surface-dim);
+  --github-level-1: color-mix(in srgb, var(--primary-color) 30%, var(--surface-variant));
+  --github-level-2: color-mix(in srgb, var(--primary-color) 60%, var(--surface-variant));
+  --github-level-3: var(--primary-color);
+  --github-level-4: var(--primary-dark);
 }
 
 /* ========================================
@@ -1624,17 +1624,6 @@ body.no-blur .modal_overlay {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.folder-style-editor {
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 12px;
-  border-radius: var(--radius-md);
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  order: 0;
-  animation: fadeIn var(--transition-fast);
-}
 
 #folder_title_container {
   text-align: center;

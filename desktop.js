@@ -304,7 +304,8 @@ async function updateMediaPlayer() {
   }
   
   if (!hasPlayer) {
-    if (mediaTitle) mediaTitle.textContent = '再生中の音楽なし';
+    const lang = getCurrentLanguage();
+    if (mediaTitle) mediaTitle.textContent = translations[lang].no_music_playing;
     if (mediaArtist) mediaArtist.textContent = '';
     if (mediaArt) mediaArt.style.display = 'none';
     if (mediaPlayIcon) mediaPlayIcon.setAttribute('name', 'play_arrow');
@@ -753,6 +754,67 @@ function calculateOverlapArea(rect1, rect2) {
 }
 
 /**
+ * 画像からドミナントカラー（主要な色）を抽出する
+ * @param {string} imageSrc - 画像のソース (URL or Data URL)
+ * @returns {Promise<string>} 抽出された色のHEXコード
+ */
+function getDominantColor(imageSrc) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      // 処理高速化のために小さくリサイズ
+      canvas.width = 64;
+      canvas.height = 64;
+      ctx.drawImage(img, 0, 0, 64, 64);
+      const { data } = ctx.getImageData(0, 0, 64, 64);
+      
+      const colorCounts = {};
+      let maxCount = 0;
+      let dominantColor = null;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+        const a = data[i+3];
+        
+        if (a < 128) continue; // 透明度が高いピクセルは無視
+        
+        // 色空間を量子化（似た色をまとめる）
+        const q = 20;
+        const rQ = Math.round(r / q) * q;
+        const gQ = Math.round(g / q) * q;
+        const bQ = Math.round(b / q) * q;
+        
+        const key = `${rQ},${gQ},${bQ}`;
+        colorCounts[key] = (colorCounts[key] || 0) + 1;
+        
+        if (colorCounts[key] > maxCount) {
+          maxCount = colorCounts[key];
+          dominantColor = { r: rQ, g: gQ, b: bQ };
+        }
+      }
+      
+      if (dominantColor) {
+        // HEXに変換
+        const toHex = c => {
+            const hex = Math.min(255, Math.max(0, c)).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        };
+        resolve(`#${toHex(dominantColor.r)}${toHex(dominantColor.g)}${toHex(dominantColor.b)}`);
+      } else {
+        resolve('#4285f4'); // フォールバック
+      }
+    };
+    img.onerror = reject;
+    img.src = imageSrc;
+  });
+}
+
+/**
  * ドラッグ中のアイコンと重なっているアイコンを検出
  * @param {HTMLElement} draggedEl - ドラッグ中の要素
  * @returns {HTMLElement|null} 重なっているアイコン
@@ -875,7 +937,7 @@ function createFolder(icon1, icon2) {
   }
   
   // 位置変更モード中であれば、新しいフォルダーアイコンにもドラッグイベントを設定
-  if (typeof setupDraggableItem === 'function') {
+  if (isPositionChangeMode && typeof setupDraggableItem === 'function') {
     setupDraggableItem(folderEl);
   }
   
@@ -893,13 +955,24 @@ function createFolderIcon(folderId, folderData) {
   const previewDiv = document.createElement('div');
   previewDiv.className = 'folder-preview';
   
+  // スタイルを適用
+  if (folderData.style) {
+    const { color, opacity } = folderData.style;
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+    }
+  }
+  
   // 最大4つのアイコンをプレビュー表示
   folderData.apps.slice(0, 4).forEach(app => {
     const img = document.createElement('img');
     img.src = app.icon;
     previewDiv.appendChild(img);
-    // フォルダ内プレビュー画像に形状を適用
-    wrapImageWithShape(img, getCurrentIconShape());
+    if (!app.path) {
+      // フォルダ内プレビュー画像に形状を適用
+      wrapImageWithShape(img, getCurrentIconShape());
+    }
   });
   
   const nameP = document.createElement('p');
@@ -911,20 +984,11 @@ function createFolderIcon(folderId, folderData) {
   // クリックでフォルダーを開く
   div.onclick = () => openFolder(folderId);
   
-  // 右クリックでフォルダー名を変更
+  // 右クリックでコンテキストメニューを表示
   div.oncontextmenu = (e) => {
     e.preventDefault();
-    const lang = getCurrentLanguage();
-    const currentName = folders[folderId]?.name || '';
-    const newName = prompt(
-      lang === 'ja' ? 'フォルダー名を入力:' : 'Enter folder name:',
-      currentName
-    );
-    if (newName?.trim()) {
-      folders[folderId].name = newName.trim();
-      saveFolders();
-      nameP.textContent = newName.trim();
-    }
+    div._folderId = folderId;
+    showContextMenu(e, div, 'folder');
   };
   
   // アイコン形状を適用してからドラッグを設定
@@ -979,25 +1043,13 @@ function openFolder(folderId) {
   title.style.display = '';
   titleInput.style.display = 'none';
   
-  // スタイル設定の初期化
-  const styleEditor = document.getElementById('folder_style_editor');
-  const bgColorInput = document.getElementById('folder_bg_color');
-  const opacityInput = document.getElementById('folder_bg_opacity');
-  
-  if (styleEditor) styleEditor.style.display = 'none';
-  
   // スタイルデータがない場合はデフォルト値を設定
   if (!folderData.style) {
     const isDark = document.body.classList.contains('dark-mode');
     folderData.style = { color: isDark ? '#1f1f1f' : '#ffffff', opacity: 1.0 };
   }
   
-  if (bgColorInput && opacityInput) {
-    bgColorInput.value = folderData.style.color;
-    const thumb = opacityInput.querySelector('m3e-slider-thumb');
-    if (thumb) thumb.value = folderData.style.opacity;
-    applyFolderStyle(folderId);
-  }
+  applyFolderStyle(folderId);
   
   // タイトルクリックで編集モードに
   title.onclick = () => {
@@ -1256,18 +1308,20 @@ function renderFolderPage(folderId) {
     contents.appendChild(div);
 
     // 形状を適用（モーダル内のアイテムは後から生成されるため明示的にラップする）
-    try {
-      wrapIconWithShape(div, getCurrentIconShape());
-      // フォルダ内のアイテムは通常プレビューより大きめに表示
-      const wrapper = div.querySelector('m3e-shape');
-      if (wrapper) {
-        wrapper.style.width = '50px';
-        wrapper.style.height = '50px';
-        // ensure slotted img fills wrapper
-        wrapper.style.display = 'inline-block';
+    if (!app.path) {
+      try {
+        wrapIconWithShape(div, getCurrentIconShape());
+        // フォルダ内のアイテムは通常プレビューより大きめに表示
+        const wrapper = div.querySelector('m3e-shape');
+        if (wrapper) {
+          wrapper.style.width = '50px';
+          wrapper.style.height = '50px';
+          // ensure slotted img fills wrapper
+          wrapper.style.display = 'inline-block';
+        }
+      } catch (e) {
+        console.warn('Failed to apply shape to folder item:', e);
       }
-    } catch (e) {
-      console.warn('Failed to apply shape to folder item:', e);
     }
   });
   
@@ -1447,6 +1501,7 @@ function removeFromFolder(folderId, appIndex, dropX, dropY) {
   } else if (app.isBuiltin && app.id) {
     const el = document.getElementById(app.id);
     if (el) el.style.display = '';
+    if (el && dropX !== undefined && dropY !== undefined) positionCreatedIcon(el, dropX, dropY);
   } else if (app.id) {
     let el = document.querySelector(`[data-save-key="${app.id}"]`);
     if (el) {
@@ -1516,22 +1571,15 @@ function positionCreatedIcon(el, clientX, clientY) {
   const containerRect = desktop ? desktop.getBoundingClientRect() : { left: 0, top: 0 };
   const elRect = el.getBoundingClientRect();
   // 中心を合わせる
-  const left = clientX - containerRect.left - (elRect.width / 2);
-  const top = clientY - containerRect.top - (elRect.height / 2);
+  const startX = clientX - containerRect.left - (elRect.width / 2);
+  const startY = clientY - containerRect.top - (elRect.height / 2);
   
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-  
-  let finalLeft = Math.max(0, Math.round(left));
-  let finalTop = Math.max(0, Math.round(top));
-  
-  // 画面外にはみ出さないように調整
-  if (finalLeft + elRect.width > screenWidth) finalLeft = screenWidth - elRect.width;
-  if (finalTop + elRect.height > screenHeight) finalTop = screenHeight - elRect.height;
+  // グリッドスナップと重なり回避を適用
+  const pos = findNearestEmptyPosition(el, startX, startY);
   
   el.style.position = 'absolute';
-  el.style.left = Math.max(0, finalLeft) + 'px';
-  el.style.top = Math.max(0, finalTop) + 'px';
+  el.style.left = pos.x + 'px';
+  el.style.top = pos.y + 'px';
 
   // 保存（widgetPositions）
   try {
@@ -1609,12 +1657,25 @@ function updateFolderIcon(folderId) {
   
   const previewDiv = folderEl.querySelector('.folder-preview');
   if (previewDiv) {
+    // スタイルを適用
+    if (folderData.style) {
+      const { color, opacity } = folderData.style;
+      const rgb = hexToRgb(color);
+      if (rgb) {
+        previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+      }
+    } else {
+      previewDiv.style.background = '';
+    }
+
     previewDiv.innerHTML = '';
     folderData.apps.slice(0, 4).forEach(app => {
       const img = document.createElement('img');
       img.src = app.icon;
       previewDiv.appendChild(img);
-      wrapImageWithShape(img, getCurrentIconShape());
+      if (!app.path) {
+        wrapImageWithShape(img, getCurrentIconShape());
+      }
     });
   }
 }
@@ -1654,35 +1715,6 @@ document.getElementById('folder_modal_overlay').onclick = (e) => {
     closeFolder();
   }
 };
-
-// フォルダー設定ボタン
-document.getElementById('folder_style_btn').onclick = (e) => {
-  e.stopPropagation();
-  const editor = document.getElementById('folder_style_editor');
-  if (editor) {
-    editor.style.display = editor.style.display === 'none' ? 'flex' : 'none';
-  }
-};
-
-// フォルダー背景色変更
-document.getElementById('folder_bg_color').addEventListener('input', (e) => {
-  if (currentOpenFolderId && folders[currentOpenFolderId]) {
-    folders[currentOpenFolderId].style = folders[currentOpenFolderId].style || {};
-    folders[currentOpenFolderId].style.color = e.target.value;
-    applyFolderStyle(currentOpenFolderId);
-    saveFolders();
-  }
-});
-
-// フォルダー透明度変更
-document.getElementById('folder_bg_opacity').addEventListener('input', (e) => {
-  if (currentOpenFolderId && folders[currentOpenFolderId]) {
-    folders[currentOpenFolderId].style = folders[currentOpenFolderId].style || {};
-    folders[currentOpenFolderId].style.opacity = e.target.value;
-    applyFolderStyle(currentOpenFolderId);
-    saveFolders();
-  }
-});
 
 // 位置変更モードを有効にする
 function enterPositionChangeMode() {
@@ -2458,7 +2490,37 @@ const translations = {
     google_login_help: "カレンダーが表示されない場合はログインしてください",
     icon_settings: "アイコン設定",
     system_settings: "システム設定",
-    data_management: "データ管理"
+    data_management: "データ管理",
+    folder_settings: "フォルダー設定",
+    folder_name: "フォルダー名",
+    background_color: "背景色",
+    opacity: "透明度",
+    extract_color_from_image: "画像から色を抽出",
+    upload_image_generic: "画像をアップロード",
+    no_music_playing: "再生中の音楽なし",
+    loading: "読み込み中...",
+    set_username: "設定ボタンからユーザー名を設定してください",
+    github_settings: "GitHub設定",
+    github_username: "GitHubユーザー名",
+    username_placeholder: "例: octocat",
+    view_on_github: "GitHubで見る",
+    set_calendar_url: "設定ボタンからカレンダーの埋め込みURLを設定してください",
+    calendar_settings: "Googleカレンダー設定",
+    calendar_settings_desc: "Googleカレンダーの設定から「限定公開の共有可能なリンク」または「埋め込みコード」を取得し、URLを貼り付けてください。",
+    embed_url: "埋め込みURL",
+    display_mode: "表示モード",
+    month: "月 (Month)",
+    week: "週 (Week)",
+    agenda: "スケジュール (Agenda)",
+    reset_widget_sizes_confirm: "全ウィジェットのサイズをリセットしますか？",
+    widget_sizes_reset: "ウィジェットサイズをリセットしました。",
+    fetch_failed: "データの取得に失敗しました",
+    no_activity: "No activity",
+    good_job: "Good job!",
+    excellent: "Excellent!",
+    contributions_label: "contributions",
+    day_streak_label: "day streak",
+    longest_streak_label: "longest"
   },
   en: {
     files: "Files",
@@ -2533,7 +2595,37 @@ const translations = {
     google_login_help: "Please log in if the calendar is not displayed",
     icon_settings: "Icon Settings",
     system_settings: "System Settings",
-    data_management: "Data Management"
+    data_management: "Data Management",
+    folder_settings: "Folder Settings",
+    folder_name: "Folder Name",
+    background_color: "Background Color",
+    opacity: "Opacity",
+    extract_color_from_image: "Extract color from image",
+    upload_image_generic: "Upload Image",
+    no_music_playing: "No music playing",
+    loading: "Loading...",
+    set_username: "Please set username from settings",
+    github_settings: "GitHub Settings",
+    github_username: "GitHub Username",
+    username_placeholder: "Ex: octocat",
+    view_on_github: "View on GitHub",
+    set_calendar_url: "Please set calendar embed URL from settings",
+    calendar_settings: "Google Calendar Settings",
+    calendar_settings_desc: "Get the 'Secret address in iCal format' or 'Embed code' from Google Calendar settings and paste the URL here.",
+    embed_url: "Embed URL",
+    display_mode: "Display Mode",
+    month: "Month",
+    week: "Week",
+    agenda: "Agenda",
+    reset_widget_sizes_confirm: "Reset all widget sizes?",
+    widget_sizes_reset: "Widget sizes reset.",
+    fetch_failed: "Failed to fetch data",
+    no_activity: "No activity",
+    good_job: "Good job!",
+    excellent: "Excellent!",
+    contributions_label: "contributions",
+    day_streak_label: "day streak",
+    longest_streak_label: "longest"
   }
 };
 
@@ -2725,6 +2817,34 @@ if (customColorPicker) {
   });
 }
 
+// 画像から色抽出
+const extractColorBtn = document.getElementById('extract_color_btn');
+const colorSchemeImageInput = document.getElementById('color_scheme_image_input');
+
+if (extractColorBtn && colorSchemeImageInput) {
+  extractColorBtn.onclick = () => colorSchemeImageInput.click();
+  
+  colorSchemeImageInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const color = await getDominantColor(evt.target.result);
+          // カスタムカラーとして適用
+          if (customColorPicker) {
+            customColorPicker.value = color;
+          }
+          updateColorScheme('custom', color);
+        } catch (err) {
+          console.error("Failed to extract color:", err);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+}
+
 // カスタムカラー変数をリセット
 function resetCustomColorVars() {
   const vars = [
@@ -2882,6 +3002,7 @@ if (applyFolderStyleAllBtn) {
     Object.keys(folders).forEach(folderId => {
       folders[folderId].style = { color, opacity };
     });
+    Object.keys(folders).forEach(folderId => updateFolderIcon(folderId));
     saveFolders();
     
     // 開いているフォルダーがあれば更新
@@ -3003,7 +3124,8 @@ if (saveNewAppBtn) {
     const url = document.getElementById('new_app_url').value;
     
     if (!name || !url) {
-      alert('名前とURLを入力してください');
+      const lang = getCurrentLanguage();
+      alert(translations[lang].enter_name_and_url);
       return;
     }
     
@@ -3109,6 +3231,9 @@ function createLinuxAppIcon(appData) {
     div.style.left = positions[saveKey].left;
     div.style.top = positions[saveKey].top;
   }
+  
+  // アイコン形状を適用
+  wrapIconWithShape(div, getCurrentIconShape());
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
@@ -3393,6 +3518,8 @@ document.getElementById('context_edit').onclick = (e) => {
   
   if (currentContextAppType === 'webapp' || currentContextAppType === 'folder-item-webapp') {
     openEditWebappModal();
+  } else if (currentContextAppType === 'folder') {
+    openFolderSettingsModal(currentEditingIcon._folderId);
   } else if (currentContextAppType === 'linuxapp' || currentContextAppType === 'folder-item-linuxapp') {
     openEditLinuxappModal();
   } else if (currentContextAppType === 'file' || currentContextAppType === 'folder-shortcut') {
@@ -3423,6 +3550,17 @@ document.getElementById('context_delete').onclick = (e) => {
       removeFromFolder(folderId, index);
       if (folders[folderId]) renderFolderPage(folderId);
       else closeFolder();
+    }
+    return;
+  }
+  
+  // フォルダーの場合
+  if (currentContextAppType === 'folder') {
+    if (confirm(confirmMsg)) {
+      const folderId = currentEditingIcon._folderId;
+      delete folders[folderId];
+      saveFolders();
+      currentEditingIcon.remove();
     }
     return;
   }
@@ -3567,6 +3705,116 @@ document.getElementById('save_edit_webapp').onclick = () => {
   
   document.getElementById('edit_webapp_modal_overlay').style.display = 'none';
 };
+
+// ========================================
+// フォルダー設定モーダル
+// ========================================
+
+let currentSettingsFolderId = null;
+
+function openFolderSettingsModal(folderId) {
+  const folderData = folders[folderId];
+  if (!folderData) return;
+  
+  currentSettingsFolderId = folderId;
+  
+  // デフォルトスタイル
+  if (!folderData.style) {
+    const isDark = document.body.classList.contains('dark-mode');
+    folderData.style = { color: isDark ? '#1f1f1f' : '#ffffff', opacity: 1.0 };
+  }
+  
+  document.getElementById('folder_settings_name').value = folderData.name;
+  document.getElementById('folder_settings_color').value = folderData.style.color;
+  const opacitySlider = document.getElementById('folder_settings_opacity');
+  const thumb = opacitySlider.querySelector('m3e-slider-thumb');
+  if (thumb) thumb.value = folderData.style.opacity;
+  
+  document.getElementById('folder_settings_modal_overlay').style.display = 'flex';
+}
+
+// フォルダー内の設定ボタン
+document.getElementById('folder_style_btn').onclick = (e) => {
+  e.stopPropagation();
+  if (currentOpenFolderId) {
+    openFolderSettingsModal(currentOpenFolderId);
+  }
+};
+
+document.getElementById('close_folder_settings_modal').onclick = () => {
+  document.getElementById('folder_settings_modal_overlay').style.display = 'none';
+  // プレビューで変更されたスタイルを元に戻すために再適用（保存されていない場合）
+  if (currentSettingsFolderId) {
+    applyFolderStyle(currentSettingsFolderId);
+  }
+  if (currentSettingsFolderId) updateFolderIcon(currentSettingsFolderId);
+  currentSettingsFolderId = null;
+};
+
+document.getElementById('save_folder_settings').onclick = () => {
+  if (!currentSettingsFolderId || !folders[currentSettingsFolderId]) return;
+  
+  const name = document.getElementById('folder_settings_name').value.trim();
+  const color = document.getElementById('folder_settings_color').value;
+  const opacitySlider = document.getElementById('folder_settings_opacity');
+  const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
+  
+  const folderData = folders[currentSettingsFolderId];
+  folderData.name = name || folderData.name;
+  folderData.style = { color, opacity };
+  
+  saveFolders();
+  applyFolderStyle(currentSettingsFolderId);
+  
+  // フォルダーアイコンの名前更新
+  const folderIcon = document.querySelector(`[data-folder-id="${currentSettingsFolderId}"]`);
+  if (folderIcon) {
+    const nameEl = folderIcon.querySelector('p');
+    if (nameEl) nameEl.textContent = folderData.name;
+  }
+  
+  // 開いているフォルダーのタイトル更新
+  if (currentOpenFolderId === currentSettingsFolderId) {
+    const title = document.getElementById('folder_title');
+    if (title) title.textContent = folderData.name;
+  }
+  
+  updateFolderIcon(currentSettingsFolderId);
+  
+  document.getElementById('folder_settings_modal_overlay').style.display = 'none';
+  currentSettingsFolderId = null;
+};
+
+// 設定モーダルでのライブプレビュー（フォルダーが開いている場合）
+function updateFolderPreview() {
+  const color = document.getElementById('folder_settings_color').value;
+  const opacitySlider = document.getElementById('folder_settings_opacity');
+  const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
+  const rgb = hexToRgb(color);
+
+  if (currentSettingsFolderId && currentOpenFolderId === currentSettingsFolderId) {
+    // 一時的にスタイル適用（保存はしない）
+    const modal = document.getElementById('folder_modal');
+    if (rgb && modal) {
+      modal.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+      const textColor = getContrastColor(rgb.r, rgb.g, rgb.b);
+      modal.style.setProperty('--on-surface', textColor);
+      modal.style.setProperty('--on-surface-variant', textColor);
+    }
+  }
+  
+  // アイコンのプレビューも更新
+  if (currentSettingsFolderId && rgb) {
+    const folderEl = document.querySelector(`[data-folder-id="${currentSettingsFolderId}"]`);
+    const previewDiv = folderEl?.querySelector('.folder-preview');
+    if (previewDiv) {
+      previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+    }
+  }
+}
+
+document.getElementById('folder_settings_color').addEventListener('input', updateFolderPreview);
+document.getElementById('folder_settings_opacity').addEventListener('input', updateFolderPreview);
 
 // ========================================
 // Linuxアプリ編集モーダル
@@ -3778,6 +4026,7 @@ function hideGitHubTooltip() {
 function showGitHubDetailsModal(dateStr, count, level) {
   closeAllModals();
   if (!githubDetailsModal) return;
+  const lang = getCurrentLanguage();
   
   currentDetailDate = dateStr;
   
@@ -3791,17 +4040,17 @@ function showGitHubDetailsModal(dateStr, count, level) {
     githubDetailsCount.textContent = `${count} contribution${count !== 1 ? 's' : ''}`;
   }
   
-  let levelText = 'No activity';
+  let levelText = translations[lang].no_activity;
   let iconName = 'sentiment_neutral';
   let iconColor = 'var(--on-surface-variant)';
   
   if (count > 0) {
-    levelText = 'Good job!';
+    levelText = translations[lang].good_job;
     iconName = 'check_circle';
     iconColor = 'var(--primary-color)';
   }
   if (level >= 3) {
-    levelText = 'Excellent!';
+    levelText = translations[lang].excellent;
     iconName = 'local_fire_department';
     iconColor = '#ff6d00'; // Orange
   }
@@ -3822,6 +4071,7 @@ function showGitHubDetailsModal(dateStr, count, level) {
  */
 function renderGitHubGraph(data, year = 'last') {
   if (!githubGraph) return;
+  const lang = getCurrentLanguage();
   
   githubGraph.innerHTML = '';
 
@@ -3834,7 +4084,7 @@ function renderGitHubGraph(data, year = 'last') {
     githubGraph.innerHTML = `
       <div class="github-error">
         <m3e-icon name="error"></m3e-icon>
-        <span>データの取得に失敗しました</span>
+        <span>${translations[lang].fetch_failed}</span>
       </div>
     `;
     return;
@@ -3998,18 +4248,19 @@ function populateGitHubYearSelect(data) {
  */
 async function updateGitHubWidget() {
   const username = localStorage.getItem(LS_KEYS.GITHUB_USERNAME);
+  const lang = getCurrentLanguage();
   
   if (!username) {
     if (githubGraph) {
       githubGraph.innerHTML = `
         <div class="github-no-user">
           <m3e-icon name="person_add"></m3e-icon>
-          <span>設定ボタンからユーザー名を設定してください</span>
+          <span>${translations[lang].set_username}</span>
         </div>
       `;
     }
     if (githubUsernameDisplay) {
-      githubUsernameDisplay.textContent = 'ユーザー名を設定してください';
+      githubUsernameDisplay.textContent = translations[lang].set_username;
     }
     return;
   }
@@ -4023,7 +4274,7 @@ async function updateGitHubWidget() {
     githubGraph.innerHTML = `
       <div class="github-loading">
         <m3e-icon name="hourglass_empty"></m3e-icon>
-        <span>読み込み中...</span>
+        <span>${translations[lang].loading}</span>
       </div>
     `;
   }
@@ -4594,13 +4845,10 @@ function enableWidgetResizers() {
         let newW = Math.max(minW, Math.round(startW + dx));
         let newH = Math.max(minH, Math.round(startH + dy));
         // グリッドモードが有効なら幅・高さをグリッドサイズにスナップ
-        try {
-          if (typeof isGridModeEnabled !== 'undefined' && isGridModeEnabled && typeof GRID_SIZE !== 'undefined') {
-            const gw = GRID_SIZE;
-            newW = Math.max(minW, Math.round(newW / gw) * gw);
-            newH = Math.max(minH, Math.round(newH / gw) * gw);
-          }
-        } catch (e) {}
+        if (isGridModeEnabled) {
+          newW = Math.max(minW, Math.round(newW / GRID_SIZE_X) * GRID_SIZE_X);
+          newH = Math.max(minH, Math.round(newH / GRID_SIZE_Y) * GRID_SIZE_Y);
+        }
         
         // 画面外にはみ出さないように制限
         if (rect.left + newW > screenWidth) {
@@ -4663,9 +4911,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('reset_widget_sizes_btn');
   if (btn) {
     btn.addEventListener('click', async () => {
-      if (!confirm('全ウィジェットのサイズをリセットしますか？')) return;
+      const lang = getCurrentLanguage();
+      if (!confirm(translations[lang].reset_widget_sizes_confirm)) return;
       resetWidgetSizes();
-      alert('ウィジェットサイズをリセットしました。');
+      alert(translations[lang].widget_sizes_reset);
     });
   }
 
