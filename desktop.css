@@ -1499,7 +1499,7 @@ body.no-blur .modal_overlay {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 80px 80px;
+  background-size: 80px 90px;
   background-position: 20px 20px;
 }
 

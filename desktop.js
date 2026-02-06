@@ -670,8 +670,9 @@ let currentOpenFolderId = null;
 let currentFolderPage = 0;
 
 // グリッドモードのデフォルト設定
-// CSS のグリッド背景サイズ (desktop.css) に合わせる: 80px マス、20px オフセット
-const GRID_SIZE = 80;
+// アイコンサイズ (80x90) とギャップ (20px) に合わせる
+const GRID_SIZE_X = 80;
+const GRID_SIZE_Y = 90;
 const GRID_OFFSET = 20;
 // ドラッグ開始判定に使う閾値（ピクセル）
 const DRAG_THRESHOLD = 8;
@@ -719,8 +720,9 @@ function resizeImage(dataUrl, targetWidth, targetHeight) {
  * @param {number} value - 元の値
  * @returns {number} スナップされた値
  */
-function snapToGrid(value) {
-  return Math.round((value - GRID_OFFSET) / GRID_SIZE) * GRID_SIZE + GRID_OFFSET;
+function snapToGrid(value, axis = 'x') {
+  const size = axis === 'y' ? GRID_SIZE_Y : GRID_SIZE_X;
+  return Math.round((value - GRID_OFFSET) / size) * size + GRID_OFFSET;
 }
 
 /**
@@ -1798,12 +1800,12 @@ function findNearestEmptyPosition(element, startX, startY) {
   
   // グリッドモードならスナップ
   if (isGridModeEnabled) {
-    x = snapToGrid(x);
-    y = snapToGrid(y);
+    x = snapToGrid(x, 'x');
+    y = snapToGrid(y, 'y');
     
     // スナップ後に画面外に出た場合は調整
-    if (x + elWidth > screenWidth) x -= GRID_SIZE;
-    if (y + elHeight > screenHeight) y -= GRID_SIZE;
+    if (x + elWidth > screenWidth) x -= GRID_SIZE_X;
+    if (y + elHeight > screenHeight) y -= GRID_SIZE_Y;
     x = Math.max(0, x);
     y = Math.max(0, y);
   }
@@ -1815,8 +1817,8 @@ function findNearestEmptyPosition(element, startX, startY) {
   
   // 重なっている場合、周囲を探索
   // 探索ステップ: グリッドサイズまたはアイコンサイズ
-  const stepX = isGridModeEnabled ? GRID_SIZE : 80;
-  const stepY = isGridModeEnabled ? GRID_SIZE : 85;
+  const stepX = isGridModeEnabled ? GRID_SIZE_X : 80;
+  const stepY = isGridModeEnabled ? GRID_SIZE_Y : 95;
   
   // 渦巻き状に探索
   let radius = 1;
@@ -2047,8 +2049,8 @@ if (gridModeSwitch) {
         
         // グリッドにスナップ
         item.style.position = 'absolute';
-        item.style.left = snapToGrid(currentLeft) + 'px';
-        item.style.top = snapToGrid(currentTop) + 'px';
+        item.style.left = snapToGrid(currentLeft, 'x') + 'px';
+        item.style.top = snapToGrid(currentTop, 'y') + 'px';
       });
     }
   });
