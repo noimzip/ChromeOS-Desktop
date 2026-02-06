@@ -754,6 +754,67 @@ function calculateOverlapArea(rect1, rect2) {
 }
 
 /**
+ * 画像からドミナントカラー（主要な色）を抽出する
+ * @param {string} imageSrc - 画像のソース (URL or Data URL)
+ * @returns {Promise<string>} 抽出された色のHEXコード
+ */
+function getDominantColor(imageSrc) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      // 処理高速化のために小さくリサイズ
+      canvas.width = 64;
+      canvas.height = 64;
+      ctx.drawImage(img, 0, 0, 64, 64);
+      const { data } = ctx.getImageData(0, 0, 64, 64);
+      
+      const colorCounts = {};
+      let maxCount = 0;
+      let dominantColor = null;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+        const a = data[i+3];
+        
+        if (a < 128) continue; // 透明度が高いピクセルは無視
+        
+        // 色空間を量子化（似た色をまとめる）
+        const q = 20;
+        const rQ = Math.round(r / q) * q;
+        const gQ = Math.round(g / q) * q;
+        const bQ = Math.round(b / q) * q;
+        
+        const key = `${rQ},${gQ},${bQ}`;
+        colorCounts[key] = (colorCounts[key] || 0) + 1;
+        
+        if (colorCounts[key] > maxCount) {
+          maxCount = colorCounts[key];
+          dominantColor = { r: rQ, g: gQ, b: bQ };
+        }
+      }
+      
+      if (dominantColor) {
+        // HEXに変換
+        const toHex = c => {
+            const hex = Math.min(255, Math.max(0, c)).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        };
+        resolve(`#${toHex(dominantColor.r)}${toHex(dominantColor.g)}${toHex(dominantColor.b)}`);
+      } else {
+        resolve('#4285f4'); // フォールバック
+      }
+    };
+    img.onerror = reject;
+    img.src = imageSrc;
+  });
+}
+
+/**
  * ドラッグ中のアイコンと重なっているアイコンを検出
  * @param {HTMLElement} draggedEl - ドラッグ中の要素
  * @returns {HTMLElement|null} 重なっているアイコン
@@ -2428,6 +2489,8 @@ const translations = {
     folder_name: "フォルダー名",
     background_color: "背景色",
     opacity: "透明度",
+    extract_color_from_image: "画像から色を抽出",
+    upload_image_generic: "画像をアップロード",
     no_music_playing: "再生中の音楽なし",
     loading: "読み込み中...",
     set_username: "設定ボタンからユーザー名を設定してください",
@@ -2531,6 +2594,8 @@ const translations = {
     folder_name: "Folder Name",
     background_color: "Background Color",
     opacity: "Opacity",
+    extract_color_from_image: "Extract color from image",
+    upload_image_generic: "Upload Image",
     no_music_playing: "No music playing",
     loading: "Loading...",
     set_username: "Please set username from settings",
@@ -2744,6 +2809,34 @@ if (customColorPicker) {
   customColorPicker.addEventListener('input', (e) => {
     updateColorScheme('custom', e.target.value);
   });
+}
+
+// 画像から色抽出
+const extractColorBtn = document.getElementById('extract_color_btn');
+const colorSchemeImageInput = document.getElementById('color_scheme_image_input');
+
+if (extractColorBtn && colorSchemeImageInput) {
+  extractColorBtn.onclick = () => colorSchemeImageInput.click();
+  
+  colorSchemeImageInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const color = await getDominantColor(evt.target.result);
+          // カスタムカラーとして適用
+          if (customColorPicker) {
+            customColorPicker.value = color;
+          }
+          updateColorScheme('custom', color);
+        } catch (err) {
+          console.error("Failed to extract color:", err);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 }
 
 // カスタムカラー変数をリセット

@@ -89,7 +89,9 @@
   "window_count_desc": "Number of windows used for virtual desktops",
   "apply_folder_style_all_desc": "Apply this style to all folders",
   "reset_widget_sizes_label": "Reset widget sizes",
-  "reset": "Reset"
+  "reset": "Reset",
+  "extract_color_from_image": "Extract color from image",
+  "upload_image_generic": "Upload image"
 }
 
 

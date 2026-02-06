@@ -89,5 +89,7 @@
   "window_count_desc": "仮想デスクトップ用のウィンドウ数",
   "apply_folder_style_all_desc": "すべてのフォルダーにスタイルを適用",
   "reset_widget_sizes_label": "ウィジェットサイズをリセット",
-  "reset": "リセット"
+  "reset": "リセット",
+  "extract_color_from_image": "画像から抽出",
+  "upload_image_generic": "画像をアップロード"
 }
