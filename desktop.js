@@ -530,6 +530,32 @@ setTimeout(() => {
   }
 }, 1000);
 
+// すべてのモーダルを閉じる関数
+function closeAllModals() {
+  // すべてのオーバーレイを非表示
+  const overlays = document.querySelectorAll('.modal_overlay');
+  overlays.forEach(el => {
+    el.style.display = 'none';
+    el.classList.remove('fade-out');
+  });
+
+  // フォルダーの状態をリセット
+  currentOpenFolderId = null;
+  const folderModal = document.getElementById('folder_modal');
+  if (folderModal) {
+    folderModal.classList.remove('folder-opening', 'folder-closing');
+  }
+
+  // 位置変更モードを終了
+  if (isPositionChangeMode) {
+    isPositionChangeMode = false;
+    const desktopIcons = document.getElementById('desktop_icons');
+    if (desktopIcons) desktopIcons.style.zIndex = '';
+  }
+
+  hideContextMenu();
+}
+
 // ========================================
 // ビルトインアイコンのクリックイベント
 // ========================================
@@ -546,26 +572,28 @@ setupBuiltinIconClick('appicon-settings', 'chrome://os-settings');
 
 document.addEventListener('keydown', function(e) {
   if(e.key === 'Escape'){
+    closeAllModals();
     document.getElementById('escmenu_modal_overlay').style.display = 'flex';
   }
 });
 
 // 右下の設定ボタン
 document.getElementById('settings_fab').onclick = () => {
+  closeAllModals();
   document.getElementById('escmenu_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('close_menu_modal').onclick = () => {
-  document.getElementById('escmenu_modal_overlay').style.display = 'none';
+  closeAllModals();
 }
 
 document.getElementById('open_settingsmenu_modal').onclick = () => {
-  document.getElementById('escmenu_modal_overlay').style.display = 'none';
+  closeAllModals();
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('close_settingsmenu_modal').onclick = () => {
-  document.getElementById('settingsmenu_modal_overlay').style.display = 'none';
+  closeAllModals();
 }
 
 // ========================================
@@ -873,6 +901,7 @@ function closeFolder() {
 
 // フォルダーを開く
 function openFolder(folderId) {
+  closeAllModals();
   const folderData = folders[folderId];
   if (!folderData) return;
   
@@ -1593,6 +1622,7 @@ document.getElementById('folder_bg_opacity').addEventListener('input', (e) => {
 
 // 位置変更モードを有効にする
 function enterPositionChangeMode() {
+  closeAllModals();
   if (isPositionChangeMode) return;
   isPositionChangeMode = true;
   
@@ -1626,7 +1656,6 @@ function exitPositionChangeMode() {
 }
 
 document.getElementById('open_change_widget_position_modal').onclick = () => {
-  document.getElementById('escmenu_modal_overlay').style.display = 'none';
   enterPositionChangeMode();
 };
 
@@ -2256,12 +2285,12 @@ document.getElementById('save_change_widget_position').onclick = () => {
 
 // アプリ追加タイプ選択
 document.getElementById('add_web_app_btn').onclick = () => {
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   document.getElementById('add_newapp_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('add_linux_app_btn').onclick = () => {
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   document.getElementById('add_linuxapp_modal_overlay').style.display = 'flex';
 }
 
@@ -3207,17 +3236,17 @@ if (desktopIconsContainer && desktopContextMenu) {
 
   document.getElementById('desktop_context_add_app').onclick = (e) => {
     e.stopPropagation();
-    hideContextMenu();
+    closeAllModals();
     document.getElementById('add_app_type_modal_overlay').style.display = 'flex';
   };
   document.getElementById('desktop_context_settings').onclick = (e) => {
     e.stopPropagation();
-    hideContextMenu();
+    closeAllModals();
     document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
   };
   document.getElementById('desktop_context_change_position').onclick = (e) => {
     e.stopPropagation();
-    hideContextMenu();
+    // closeAllModals is called inside enterPositionChangeMode
     enterPositionChangeMode();
   };
 }
@@ -3326,6 +3355,7 @@ if (editWebappImageTrigger && editWebappImageInput) {
 }
 
 function openEditWebappModal() {
+  closeAllModals();
   if (!currentEditingApp) return;
   
   document.getElementById('edit_webapp_name').value = currentEditingApp.name;
@@ -3435,6 +3465,7 @@ if (editLinuxappImageTrigger && editLinuxappImageInput) {
 }
 
 function openEditLinuxappModal() {
+  closeAllModals();
   if (!currentEditingApp) return;
   
   document.getElementById('edit_linuxapp_name').value = currentEditingApp.name;
@@ -3610,6 +3641,7 @@ function hideGitHubTooltip() {
  * GitHub詳細モーダルを表示
  */
 function showGitHubDetailsModal(dateStr, count, level) {
+  closeAllModals();
   if (!githubDetailsModal) return;
   
   currentDetailDate = dateStr;
@@ -3886,6 +3918,7 @@ if (githubSettingsBtn) {
   githubSettingsBtn.onclick = (e) => {
     e.stopPropagation();
     e.preventDefault();
+    closeAllModals();
     const savedUsername = localStorage.getItem('githubUsername') || '';
     if (githubUsernameInput) {
       githubUsernameInput.value = savedUsername;
@@ -3992,6 +4025,7 @@ if (googleCalendarSettingsBtn) {
   };
   googleCalendarSettingsBtn.onclick = (e) => {
     e.stopPropagation();
+    closeAllModals();
     const url = localStorage.getItem('googleCalendarUrl') || '';
     googleCalendarUrlInput.value = url;
     
@@ -4274,8 +4308,7 @@ function getFileIcon(filePath, isDirectory) {
 
 // ファイル追加ボタンのイベント
 document.getElementById('add_file_btn')?.addEventListener('click', async () => {
-  // モーダルを閉じる
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   
   // ファイル選択ダイアログを開く
   if (window.electronAPI && window.electronAPI.selectFile) {
@@ -4301,8 +4334,7 @@ document.getElementById('add_file_btn')?.addEventListener('click', async () => {
 
 // フォルダ追加ボタンのイベント
 document.getElementById('add_folder_btn')?.addEventListener('click', async () => {
-  // モーダルを閉じる
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   
   // フォルダ選択ダイアログを開く
   if (window.electronAPI && window.electronAPI.selectFolder) {
