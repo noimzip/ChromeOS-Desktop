@@ -1701,9 +1701,9 @@ function enterPositionChangeMode() {
     setupDraggableItem(item);
   });
   
-  // グリッドモードのボタンの状態を復元
+  // グリッドモードのスイッチの状態を復元
   isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
-  updateGridModeButton();
+  updateGridModeSwitch();
   
   // グリッド線の表示/非表示
   if (isGridModeEnabled) {
@@ -2008,23 +2008,27 @@ function setupDraggableItem(item) {
   };
 }
 
-// グリッドモードボタンのテキスト更新関数
-function updateGridModeButton() {
-  const gridModeBtn = document.getElementById('toggle_grid_mode');
-  if (gridModeBtn) {
-    const lang = getCurrentLanguage();
-    const key = isGridModeEnabled ? 'grid_mode_on' : 'grid_mode_off';
-    gridModeBtn.textContent = translations[lang][key];
+// グリッドモードスイッチの状態更新関数 (m3e-switchのプロパティを考慮)
+function updateGridModeSwitch() {
+  const gridModeSwitch = document.getElementById('toggle_grid_mode');
+  if (gridModeSwitch) {
+    // m3e-switch は 'selected' プロパティを使用するが、念のため 'checked' も考慮
+    if (typeof gridModeSwitch.selected !== 'undefined') {
+      gridModeSwitch.selected = isGridModeEnabled;
+    } else {
+      gridModeSwitch.checked = isGridModeEnabled;
+    }
   }
 }
 
-// グリッドモードボタンのイベント
-const gridModeBtn = document.getElementById('toggle_grid_mode');
-if (gridModeBtn) {
-  gridModeBtn.onclick = () => {
-    isGridModeEnabled = !isGridModeEnabled;
+// グリッドモードスイッチのイベント
+const gridModeSwitch = document.getElementById('toggle_grid_mode');
+if (gridModeSwitch) {
+  gridModeSwitch.addEventListener('change', (e) => {
+    // m3e-switch は 'selected' プロパティで状態を公開するが、念のため 'checked' も考慮
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    isGridModeEnabled = newState;
     localStorage.setItem(LS_KEYS.GRID_MODE_ENABLED, isGridModeEnabled);
-    updateGridModeButton();
     
     // グリッド線の表示/非表示
     const overlay = document.getElementById('change_widget_position_modal_overlay');
@@ -2047,7 +2051,7 @@ if (gridModeBtn) {
         item.style.top = snapToGrid(currentTop) + 'px';
       });
     }
-  };
+  });
 }
 
 // 通常モードでのドラッグを設定する関数
