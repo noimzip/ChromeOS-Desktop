@@ -1633,6 +1633,11 @@ function enterPositionChangeMode() {
   if (desktopIcons) {
     desktopIcons.style.zIndex = '5';
   }
+
+  // すべてのアイコンにドラッグイベントを設定
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
+    setupDraggableItem(item);
+  });
   
   // グリッドモードのボタンの状態を復元
   isGridModeEnabled = localStorage.getItem('gridModeEnabled') === 'true';
