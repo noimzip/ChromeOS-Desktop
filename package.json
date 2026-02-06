@@ -9,8 +9,8 @@
   "author": "SupeChicken666 & Noimzip",
   "license": "GPL3",
   "dependencies": {
-    "@m3e/all": "^1.1.6",
-    "electron": "^39.2.7",
+    "@m3e/all": "^1.1.11",
+    "electron": "^40.1.0",
     "ws": "^8.19.0"
   }
 }
