@@ -414,9 +414,9 @@ body {
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 20px;
-  box-sizing: border-box;
   pointer-events: auto;
   z-index: 0;
+  box-sizing: border-box;
 }
 
 /* ========================================
@@ -426,12 +426,12 @@ body {
 .appicon {
   text-align: center;
   cursor: pointer;
-  height: 85px;
+  height: 90px;
   width: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 8px 4px;
   border-radius: var(--radius-md);
   transition: all var(--transition-normal);
@@ -713,6 +713,7 @@ body.no-blur .appicon.folder .folder-preview {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .media-player-placeholder {
@@ -721,7 +722,7 @@ body.no-blur .appicon.folder .folder-preview {
 }
 
 .media-player-info {
-  padding: 12px 16px;
+  padding: 16px 16px 12px;
   background: var(--surface-color);
 }
 
@@ -748,7 +749,7 @@ body.no-blur .appicon.folder .folder-preview {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 16px 16px;
+  padding: 12px 16px 16px;
   background: var(--surface-color);
 }
 
@@ -835,7 +836,7 @@ body.no-blur .appicon.folder .folder-preview {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 16px 8px;
+  padding: 0 16px;
   background: var(--surface-color);
 }
 
@@ -1327,6 +1328,10 @@ body.no-blur .modal_overlay {
   flex-direction: column;
   overflow: hidden;
   animation: slideUp var(--transition-normal) ease-out;
+  padding: var(--space-xl);
+  gap: var(--space-lg);
+  align-items: center;
+  width: 380px;
 }
 
 .modal h3 {
@@ -1341,10 +1346,6 @@ body.no-blur .modal_overlay {
    ======================================== */
 
 #escmenu_modal {
-  width: 340px;
-  padding: 32px;
-  gap: 16px;
-  align-items: center;
   justify-content: center;
 }
 
@@ -1362,6 +1363,9 @@ body.no-blur .modal_overlay {
 #settingsmenu_modal {
   width: 850px;
   height: 620px;
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
   flex-direction: row;
 }
 
@@ -1530,13 +1534,6 @@ body.no-blur .modal_overlay {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-#add_app_type_modal {
-  width: 340px;
-  padding: 32px;
-  gap: 16px;
-  align-items: center;
-}
-
 #add_app_type_modal h3 {
   margin-bottom: 8px;
   text-align: center;
@@ -1554,7 +1551,6 @@ body.no-blur .modal_overlay {
 
 #add_newapp_modal,
 #add_linuxapp_modal {
-  width: 360px;
   padding: 28px;
   gap: 20px;
 }
@@ -1602,10 +1598,8 @@ body.no-blur .modal_overlay {
   width: auto;
   min-width: 140px;
   max-width: 340px;
-  padding: 16px;
-  gap: 8px;
-  display: flex;
-  flex-direction: column;
+  padding: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .folder-header-btn {
@@ -1771,7 +1765,6 @@ body.no-blur .modal_overlay {
 
 #edit_webapp_modal,
 #edit_linuxapp_modal {
-  width: 360px;
   padding: 28px;
   gap: 20px;
 }
@@ -1902,15 +1895,16 @@ body.no-blur #settings_fab {
 
 .context-menu {
   position: fixed;
-  background: rgba(40, 40, 45, 0.95);
-  backdrop-filter: blur(20px);
+  background: rgba(45, 45, 45, 0.8);
+  backdrop-filter: blur(24px);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-lg);
   min-width: 160px;
   z-index: 1000;
   overflow: hidden;
   animation: contextMenuIn var(--transition-fast) ease-out;
   transform-origin: top left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes contextMenuIn {
