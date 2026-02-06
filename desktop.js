@@ -103,6 +103,12 @@ function applyShapeToAll(shape) {
   // フォルダアイコンのプレビュー画像
   const folderImages = document.querySelectorAll('.appicon.folder .folder-preview img');
   folderImages.forEach(img => wrapImageWithShape(img, shape));
+
+  // 時計の背景形状
+  const clockBg = document.querySelector('.clock-background');
+  if (clockBg && clockBg.tagName === 'M3E-SHAPE') {
+    clockBg.setAttribute('name', shape);
+  }
 }
 
 function updateIconShape(shape) {
@@ -238,12 +244,16 @@ const mediaPlayIcon = document.getElementById('media_play_icon');
 const mediaPrevBtn = document.getElementById('media_prev');
 const mediaPlayPauseBtn = document.getElementById('media_play_pause');
 const mediaNextBtn = document.getElementById('media_next');
+const mediaShuffleBtn = document.getElementById('media_shuffle');
+const mediaRepeatBtn = document.getElementById('media_repeat');
 const mediaSeekbar = document.getElementById('media_seekbar');
 const mediaTimeCurrent = document.getElementById('media_time_current');
 const mediaTimeTotal = document.getElementById('media_time_total');
 
 let currentMediaStatus = 'Stopped';
 let currentDuration = 0; // 曲の長さ（秒）
+let currentShuffle = 'Off';
+let currentLoop = 'None';
 let isSeeking = false; // シーク中フラグ
 
 /**
@@ -352,6 +362,53 @@ async function updateMediaPlayer() {
     if (mediaTimeTotal) {
       mediaTimeTotal.textContent = formatTime(duration);
     }
+    
+    // シャッフル・リピート状態の更新
+    if (info.shuffle) {
+      currentShuffle = info.shuffle;
+      if (mediaShuffleBtn) {
+        mediaShuffleBtn.classList.toggle('active', currentShuffle === 'On');
+        mediaShuffleBtn.title = currentShuffle === 'On' ? 'Shuffle: On' : 'Shuffle: Off';
+        mediaShuffleBtn.disabled = false;
+      }
+    } else if (mediaShuffleBtn) {
+      mediaShuffleBtn.disabled = true;
+      mediaShuffleBtn.classList.remove('active');
+      mediaShuffleBtn.title = 'Shuffle';
+    }
+
+    if (info.loop) {
+      currentLoop = info.loop;
+      if (mediaRepeatBtn) {
+        const loopStatus = currentLoop.toLowerCase();
+        const isTrack = loopStatus === 'track' || loopStatus === 'one';
+        const isPlaylist = loopStatus === 'playlist' || loopStatus === 'all';
+        const isActive = isTrack || isPlaylist;
+        
+        mediaRepeatBtn.classList.toggle('active', isActive);
+        mediaRepeatBtn.classList.toggle('repeat-one', isTrack);
+        
+        const icon = mediaRepeatBtn.querySelector('m3e-icon');
+        if (icon) {
+          const iconName = isTrack ? 'repeat_one' : 'repeat';
+          icon.setAttribute('name', iconName);
+          icon.name = iconName; // プロパティも更新
+        }
+        
+        // ツールチップ更新
+        let title = 'Repeat: Off';
+        if (isPlaylist) title = 'Repeat: All';
+        if (isTrack) title = 'Repeat: One';
+        mediaRepeatBtn.title = title;
+        
+        mediaRepeatBtn.disabled = false;
+      }
+    } else if (mediaRepeatBtn) {
+      mediaRepeatBtn.disabled = true;
+      mediaRepeatBtn.classList.remove('active');
+      mediaRepeatBtn.classList.remove('repeat-one');
+      mediaRepeatBtn.title = 'Repeat';
+    }
   }
 }
 
@@ -408,12 +465,31 @@ setupMediaButton(mediaNextBtn, async () => {
   await mediaControl('next');
 });
 
+setupMediaButton(mediaShuffleBtn, async () => {
+  const newValue = currentShuffle === 'On' ? 'Off' : 'On';
+  await mediaControl('shuffle', newValue);
+});
+
+setupMediaButton(mediaRepeatBtn, async () => {
+  let newValue = 'None';
+  if (currentLoop === 'None') newValue = 'Playlist';
+  else if (currentLoop === 'Playlist') newValue = 'Track';
+  else newValue = 'None';
+  
+  await mediaControl('loop', newValue);
+});
+
 // シークバーのイベント
 if (mediaSeekbar) {
   // ドラッグ中はUIの自動更新を止める
   mediaSeekbar.addEventListener('pointerdown', (e) => {
     e.stopPropagation(); // ウィジェットのドラッグを防止
     isSeeking = true;
+  });
+
+  // スライド操作中もイベントの伝播を止める
+  mediaSeekbar.addEventListener('pointermove', (e) => {
+    e.stopPropagation();
   });
 
   // シーク中の値変更（リアルタイムプレビュー）
@@ -1737,6 +1813,7 @@ function setupDraggableItem(item) {
   
   item.onpointermove = function(event){
     if (this._isResizing) return; // リサイズ中は移動処理を無視
+    if (!this.hasPointerCapture(event.pointerId)) return;
     if(event.buttons){
       const dx = event.clientX - this._startX;
       const dy = event.clientY - this._startY;
@@ -1917,6 +1994,7 @@ function setupNormalModeDrag(item) {
   item.onpointermove = function(event) {
     if (this._isResizing) return; // リサイズ中は移動処理を無視
     if (!event.buttons) return;
+    if (!this.hasPointerCapture(event.pointerId)) return;
     
     const dx = event.clientX - this._startX;
     const dy = event.clientY - this._startY;

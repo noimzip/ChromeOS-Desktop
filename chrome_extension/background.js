@@ -98,6 +98,6 @@ self.onmessage = e => {
     // メディア情報を返す
     broadcastMediaInfo();
   } else if (data.request === 'mediaControl') {
-    handleMediaControl(data.action);
+    handleMediaControl(data.action, data.value);
   }
 };

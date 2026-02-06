@@ -10,6 +10,15 @@ const hostname = window.location.hostname;
 
 console.log('[Soul Widgets] Content script loaded on:', hostname);
 
+// 時間文字列を秒数に変換
+function parseTime(timeStr) {
+  if (!timeStr) return null;
+  const parts = timeStr.split(':').map(Number);
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return null;
+}
+
 // サイト固有のセレクター定義
 const SITE_SELECTORS = {
   'www.youtube.com': {
@@ -33,6 +42,16 @@ const SITE_SELECTORS = {
       const video = document.querySelector('video');
       return video ? !video.paused : false;
     },
+    shuffle: () => {
+      const btn = document.querySelector('.ytp-shuffle-button');
+      if (!btn) return '';
+      return btn.getAttribute('aria-pressed') === 'true' ? 'On' : 'Off';
+    },
+    loop: () => {
+      const btn = document.querySelector('.ytp-repeat-button');
+      if (!btn) return '';
+      return btn.getAttribute('aria-pressed') === 'true' ? 'Playlist' : 'None';
+    },
     controls: {
       playPause: () => {
         const video = document.querySelector('video');
@@ -41,7 +60,21 @@ const SITE_SELECTORS = {
         }
       },
       next: () => document.querySelector('.ytp-next-button')?.click(),
-      previous: () => document.querySelector('.ytp-prev-button')?.click()
+      previous: () => document.querySelector('.ytp-prev-button')?.click(),
+      shuffle: (value) => {
+        const btn = document.querySelector('.ytp-shuffle-button');
+        if (!btn) return;
+        if (value) {
+          const currentState = btn.getAttribute('aria-pressed') === 'true' ? 'On' : 'Off';
+          if (value !== currentState) btn.click();
+        } else {
+          btn.click();
+        }
+      },
+      loop: (value) => {
+        // YouTubeのループ制御は複雑なため、とりあえずクリックのみ（valueがあっても無視）
+        document.querySelector('.ytp-repeat-button')?.click();
+      }
     }
   },
   'music.youtube.com': {
@@ -55,10 +88,47 @@ const SITE_SELECTORS = {
       const video = document.querySelector('video');
       return video ? !video.paused : false;
     },
+    shuffle: () => {
+      const btn = document.querySelector('ytmusic-player-bar .shuffle');
+      if (!btn) return '';
+      return btn.getAttribute('aria-pressed') === 'true' ? 'On' : 'Off';
+    },
+    loop: () => {
+      const btn = document.querySelector('ytmusic-player-bar .repeat');
+      if (!btn) return '';
+      const label = (btn.getAttribute('aria-label') || btn.getAttribute('title') || '').toLowerCase();
+      if (label.includes('one') || label.includes('1') || label.includes('単曲')) return 'Track';
+      if (label.includes('all') || label.includes('playlist') || label.includes('全曲')) return 'Playlist';
+      return 'None';
+    },
     controls: {
       playPause: () => document.querySelector('#play-pause-button')?.click(),
       next: () => document.querySelector('.next-button')?.click(),
-      previous: () => document.querySelector('.previous-button')?.click()
+      previous: () => document.querySelector('.previous-button')?.click(),
+      shuffle: (value) => {
+        const btn = document.querySelector('ytmusic-player-bar .shuffle');
+        if (!btn) return;
+        if (value) {
+          const currentState = btn.getAttribute('aria-pressed') === 'true' ? 'On' : 'Off';
+          if (value !== currentState) btn.click();
+        } else {
+          btn.click();
+        }
+      },
+      loop: (value) => {
+        const btn = document.querySelector('ytmusic-player-bar .repeat');
+        if (!btn) return;
+        if (value) {
+          let currentState = 'None';
+          const label = (btn.getAttribute('aria-label') || btn.getAttribute('title') || '').toLowerCase();
+          if (label.includes('one') || label.includes('1') || label.includes('単曲')) currentState = 'Track';
+          else if (label.includes('all') || label.includes('playlist') || label.includes('全曲')) currentState = 'Playlist';
+          
+          if (value !== currentState) btn.click();
+        } else {
+          btn.click();
+        }
+      }
     }
   },
   'open.spotify.com': {
@@ -73,14 +143,57 @@ const SITE_SELECTORS = {
       return document.querySelector('[data-testid="CoverSlotCollapsed__container"] img')?.src ||
              document.querySelector('.cover-art img')?.src || '';
     },
+    currentTime: () => {
+      const el = document.querySelector('[data-testid="playback-position"]');
+      return el ? parseTime(el.textContent) : null;
+    },
+    duration: () => {
+      const el = document.querySelector('[data-testid="playback-duration"]');
+      return el ? parseTime(el.textContent) : null;
+    },
     isPlaying: () => {
       const btn = document.querySelector('[data-testid="control-button-playpause"]');
       return btn?.getAttribute('aria-label')?.includes('Pause') || false;
     },
+    shuffle: () => {
+      const btn = document.querySelector('[data-testid="control-button-shuffle"]');
+      return btn ? (btn.getAttribute('aria-checked') === 'true' ? 'On' : 'Off') : '';
+    },
+    loop: () => {
+      const btn = document.querySelector('[data-testid="control-button-repeat"]');
+      const val = btn?.getAttribute('aria-checked');
+      if (val === 'mixed') return 'Track';
+      if (val === 'true') return 'Playlist';
+      return btn ? 'None' : '';
+    },
     controls: {
       playPause: () => document.querySelector('[data-testid="control-button-playpause"]')?.click(),
       next: () => document.querySelector('[data-testid="control-button-skip-forward"]')?.click(),
-      previous: () => document.querySelector('[data-testid="control-button-skip-back"]')?.click()
+      previous: () => document.querySelector('[data-testid="control-button-skip-back"]')?.click(),
+      shuffle: (value) => {
+        const btn = document.querySelector('[data-testid="control-button-shuffle"]');
+        if (!btn) return;
+        if (value) {
+          const currentState = btn.getAttribute('aria-checked') === 'true' ? 'On' : 'Off';
+          if (value !== currentState) btn.click();
+        } else {
+          btn.click();
+        }
+      },
+      loop: (value) => {
+        const btn = document.querySelector('[data-testid="control-button-repeat"]');
+        if (!btn) return;
+        if (value) {
+          const val = btn.getAttribute('aria-checked');
+          let currentState = 'None';
+          if (val === 'mixed') currentState = 'Track';
+          else if (val === 'true') currentState = 'Playlist';
+          
+          if (value !== currentState) btn.click();
+        } else {
+          btn.click();
+        }
+      }
     }
   },
   'soundcloud.com': {
@@ -91,10 +204,44 @@ const SITE_SELECTORS = {
       return style ? style.replace(/url\(["']?|["']?\)/g, '').replace('50x50', '500x500') : '';
     },
     isPlaying: () => document.querySelector('.playControl')?.classList.contains('playing') || false,
+    shuffle: () => {
+      const btn = document.querySelector('.shuffleControl');
+      return btn ? (btn.classList.contains('m-shuffling') ? 'On' : 'Off') : '';
+    },
+    loop: () => {
+      const btn = document.querySelector('.repeatControl');
+      if (!btn) return '';
+      if (btn?.classList.contains('m-one')) return 'Track';
+      if (btn?.classList.contains('m-all')) return 'Playlist';
+      return 'None';
+    },
     controls: {
       playPause: () => document.querySelector('.playControl')?.click(),
       next: () => document.querySelector('.skipControl__next')?.click(),
-      previous: () => document.querySelector('.skipControl__previous')?.click()
+      previous: () => document.querySelector('.skipControl__previous')?.click(),
+      shuffle: (value) => {
+        const btn = document.querySelector('.shuffleControl');
+        if (!btn) return;
+        if (value) {
+          const currentState = btn.classList.contains('m-shuffling') ? 'On' : 'Off';
+          if (value !== currentState) btn.click();
+        } else {
+          btn.click();
+        }
+      },
+      loop: (value) => {
+        const btn = document.querySelector('.repeatControl');
+        if (!btn) return;
+        if (value) {
+          let currentState = 'None';
+          if (btn.classList.contains('m-one')) currentState = 'Track';
+          else if (btn.classList.contains('m-all')) currentState = 'Playlist';
+          
+          if (value !== currentState) btn.click();
+        } else {
+          btn.click();
+        }
+      }
     }
   }
 };
@@ -134,13 +281,30 @@ function getMediaInfo() {
   const artist = typeof selectors.artist === 'function' ? selectors.artist() : '';
   const artUrl = typeof selectors.artUrl === 'function' ? selectors.artUrl() : '';
   const isPlaying = typeof selectors.isPlaying === 'function' ? selectors.isPlaying() : false;
+  const shuffle = typeof selectors.shuffle === 'function' ? selectors.shuffle() : '';
+  const loop = typeof selectors.loop === 'function' ? selectors.loop() : '';
   
   // 再生位置と長さを取得
-  const video = document.querySelector('video') || document.querySelector('audio');
   let currentTime = 0;
   let duration = 0;
-  if (video) {
+  
+  let customCurrentTime = null;
+  let customDuration = null;
+  
+  if (typeof selectors.currentTime === 'function') customCurrentTime = selectors.currentTime();
+  if (typeof selectors.duration === 'function') customDuration = selectors.duration();
+
+  const video = document.querySelector('video') || document.querySelector('audio');
+  
+  if (customCurrentTime !== null) {
+    currentTime = customCurrentTime;
+  } else if (video) {
     currentTime = video.currentTime || 0;
+  }
+  
+  if (customDuration !== null) {
+    duration = customDuration;
+  } else if (video) {
     duration = video.duration || 0;
     if (isNaN(duration)) duration = 0;
   }
@@ -167,7 +331,9 @@ function getMediaInfo() {
     artUrl: artUrl,
     currentTime: currentTime,
     duration: duration,
-    source: hostname
+    source: hostname,
+    shuffle: shuffle,
+    loop: loop
   };
   
   console.log('[Soul Widgets] Media info:', info);
@@ -202,14 +368,16 @@ function executeControl(action, value) {
   const actionMap = {
     'play-pause': 'playPause',
     'play_pause': 'playPause',
-    'PlayPause': 'playPause'
+    'PlayPause': 'playPause',
+    'shuffle': 'shuffle',
+    'loop': 'loop'
   };
   const mappedAction = actionMap[action] || action;
   
   console.log('[Soul Widgets] Executing control:', action, '-> mapped to:', mappedAction);
   const controlFn = selectors.controls[mappedAction];
   if (typeof controlFn === 'function') {
-    controlFn();
+    controlFn(value);
     console.log('[Soul Widgets] Control executed successfully');
   } else {
     console.log('[Soul Widgets] Control function not found for:', mappedAction);
