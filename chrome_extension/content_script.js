@@ -10,6 +10,15 @@ const hostname = window.location.hostname;
 
 console.log('[Soul Widgets] Content script loaded on:', hostname);
 
+// 時間文字列を秒数に変換
+function parseTime(timeStr) {
+  if (!timeStr) return null;
+  const parts = timeStr.split(':').map(Number);
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return null;
+}
+
 // サイト固有のセレクター定義
 const SITE_SELECTORS = {
   'www.youtube.com': {
@@ -133,6 +142,14 @@ const SITE_SELECTORS = {
     artUrl: () => {
       return document.querySelector('[data-testid="CoverSlotCollapsed__container"] img')?.src ||
              document.querySelector('.cover-art img')?.src || '';
+    },
+    currentTime: () => {
+      const el = document.querySelector('[data-testid="playback-position"]');
+      return el ? parseTime(el.textContent) : null;
+    },
+    duration: () => {
+      const el = document.querySelector('[data-testid="playback-duration"]');
+      return el ? parseTime(el.textContent) : null;
     },
     isPlaying: () => {
       const btn = document.querySelector('[data-testid="control-button-playpause"]');
@@ -268,11 +285,26 @@ function getMediaInfo() {
   const loop = typeof selectors.loop === 'function' ? selectors.loop() : '';
   
   // 再生位置と長さを取得
-  const video = document.querySelector('video') || document.querySelector('audio');
   let currentTime = 0;
   let duration = 0;
-  if (video) {
+  
+  let customCurrentTime = null;
+  let customDuration = null;
+  
+  if (typeof selectors.currentTime === 'function') customCurrentTime = selectors.currentTime();
+  if (typeof selectors.duration === 'function') customDuration = selectors.duration();
+
+  const video = document.querySelector('video') || document.querySelector('audio');
+  
+  if (customCurrentTime !== null) {
+    currentTime = customCurrentTime;
+  } else if (video) {
     currentTime = video.currentTime || 0;
+  }
+  
+  if (customDuration !== null) {
+    duration = customDuration;
+  } else if (video) {
     duration = video.duration || 0;
     if (isNaN(duration)) duration = 0;
   }
