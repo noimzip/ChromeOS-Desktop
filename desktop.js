@@ -3106,6 +3106,9 @@ function createDesktopIcon(appData) {
     div.style.top = positions[saveKey].top;
   }
   
+  // アイコン形状を適用
+  wrapIconWithShape(div, getCurrentIconShape());
+  
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
   return div;
@@ -3225,6 +3228,9 @@ function createLinuxAppIcon(appData) {
     div.style.left = positions[saveKey].left;
     div.style.top = positions[saveKey].top;
   }
+  
+  // アイコン形状を適用
+  wrapIconWithShape(div, getCurrentIconShape());
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
@@ -4602,6 +4608,9 @@ function createFileShortcutIcon(fileData) {
     div.style.top = positions[saveKey].top;
   }
   
+  // アイコン形状を適用
+  wrapIconWithShape(div, getCurrentIconShape());
+  
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
   return div;
@@ -4662,6 +4671,9 @@ function createFolderShortcutIcon(folderData) {
     div.style.left = positions[saveKey].left;
     div.style.top = positions[saveKey].top;
   }
+  
+  // アイコン形状を適用
+  wrapIconWithShape(div, getCurrentIconShape());
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
