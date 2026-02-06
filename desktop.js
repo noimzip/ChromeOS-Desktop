@@ -911,20 +911,11 @@ function createFolderIcon(folderId, folderData) {
   // クリックでフォルダーを開く
   div.onclick = () => openFolder(folderId);
   
-  // 右クリックでフォルダー名を変更
+  // 右クリックでコンテキストメニューを表示
   div.oncontextmenu = (e) => {
     e.preventDefault();
-    const lang = getCurrentLanguage();
-    const currentName = folders[folderId]?.name || '';
-    const newName = prompt(
-      lang === 'ja' ? 'フォルダー名を入力:' : 'Enter folder name:',
-      currentName
-    );
-    if (newName?.trim()) {
-      folders[folderId].name = newName.trim();
-      saveFolders();
-      nameP.textContent = newName.trim();
-    }
+    div._folderId = folderId;
+    showContextMenu(e, div, 'folder');
   };
   
   // アイコン形状を適用してからドラッグを設定
@@ -979,25 +970,13 @@ function openFolder(folderId) {
   title.style.display = '';
   titleInput.style.display = 'none';
   
-  // スタイル設定の初期化
-  const styleEditor = document.getElementById('folder_style_editor');
-  const bgColorInput = document.getElementById('folder_bg_color');
-  const opacityInput = document.getElementById('folder_bg_opacity');
-  
-  if (styleEditor) styleEditor.style.display = 'none';
-  
   // スタイルデータがない場合はデフォルト値を設定
   if (!folderData.style) {
     const isDark = document.body.classList.contains('dark-mode');
     folderData.style = { color: isDark ? '#1f1f1f' : '#ffffff', opacity: 1.0 };
   }
   
-  if (bgColorInput && opacityInput) {
-    bgColorInput.value = folderData.style.color;
-    const thumb = opacityInput.querySelector('m3e-slider-thumb');
-    if (thumb) thumb.value = folderData.style.opacity;
-    applyFolderStyle(folderId);
-  }
+  applyFolderStyle(folderId);
   
   // タイトルクリックで編集モードに
   title.onclick = () => {
@@ -1648,35 +1627,6 @@ document.getElementById('folder_modal_overlay').onclick = (e) => {
     closeFolder();
   }
 };
-
-// フォルダー設定ボタン
-document.getElementById('folder_style_btn').onclick = (e) => {
-  e.stopPropagation();
-  const editor = document.getElementById('folder_style_editor');
-  if (editor) {
-    editor.style.display = editor.style.display === 'none' ? 'flex' : 'none';
-  }
-};
-
-// フォルダー背景色変更
-document.getElementById('folder_bg_color').addEventListener('input', (e) => {
-  if (currentOpenFolderId && folders[currentOpenFolderId]) {
-    folders[currentOpenFolderId].style = folders[currentOpenFolderId].style || {};
-    folders[currentOpenFolderId].style.color = e.target.value;
-    applyFolderStyle(currentOpenFolderId);
-    saveFolders();
-  }
-});
-
-// フォルダー透明度変更
-document.getElementById('folder_bg_opacity').addEventListener('input', (e) => {
-  if (currentOpenFolderId && folders[currentOpenFolderId]) {
-    folders[currentOpenFolderId].style = folders[currentOpenFolderId].style || {};
-    folders[currentOpenFolderId].style.opacity = e.target.value;
-    applyFolderStyle(currentOpenFolderId);
-    saveFolders();
-  }
-});
 
 // 位置変更モードを有効にする
 function enterPositionChangeMode() {
@@ -2452,7 +2402,11 @@ const translations = {
     google_login_help: "カレンダーが表示されない場合はログインしてください",
     icon_settings: "アイコン設定",
     system_settings: "システム設定",
-    data_management: "データ管理"
+    data_management: "データ管理",
+    folder_settings: "フォルダー設定",
+    folder_name: "フォルダー名",
+    background_color: "背景色",
+    opacity: "透明度"
   },
   en: {
     files: "Files",
@@ -2527,7 +2481,11 @@ const translations = {
     google_login_help: "Please log in if the calendar is not displayed",
     icon_settings: "Icon Settings",
     system_settings: "System Settings",
-    data_management: "Data Management"
+    data_management: "Data Management",
+    folder_settings: "Folder Settings",
+    folder_name: "Folder Name",
+    background_color: "Background Color",
+    opacity: "Opacity"
   }
 };
 
@@ -3387,6 +3345,8 @@ document.getElementById('context_edit').onclick = (e) => {
   
   if (currentContextAppType === 'webapp' || currentContextAppType === 'folder-item-webapp') {
     openEditWebappModal();
+  } else if (currentContextAppType === 'folder') {
+    openFolderSettingsModal(currentEditingIcon._folderId);
   } else if (currentContextAppType === 'linuxapp' || currentContextAppType === 'folder-item-linuxapp') {
     openEditLinuxappModal();
   } else if (currentContextAppType === 'file' || currentContextAppType === 'folder-shortcut') {
@@ -3417,6 +3377,17 @@ document.getElementById('context_delete').onclick = (e) => {
       removeFromFolder(folderId, index);
       if (folders[folderId]) renderFolderPage(folderId);
       else closeFolder();
+    }
+    return;
+  }
+  
+  // フォルダーの場合
+  if (currentContextAppType === 'folder') {
+    if (confirm(confirmMsg)) {
+      const folderId = currentEditingIcon._folderId;
+      delete folders[folderId];
+      saveFolders();
+      currentEditingIcon.remove();
     }
     return;
   }
@@ -3561,6 +3532,104 @@ document.getElementById('save_edit_webapp').onclick = () => {
   
   document.getElementById('edit_webapp_modal_overlay').style.display = 'none';
 };
+
+// ========================================
+// フォルダー設定モーダル
+// ========================================
+
+let currentSettingsFolderId = null;
+
+function openFolderSettingsModal(folderId) {
+  const folderData = folders[folderId];
+  if (!folderData) return;
+  
+  currentSettingsFolderId = folderId;
+  
+  // デフォルトスタイル
+  if (!folderData.style) {
+    const isDark = document.body.classList.contains('dark-mode');
+    folderData.style = { color: isDark ? '#1f1f1f' : '#ffffff', opacity: 1.0 };
+  }
+  
+  document.getElementById('folder_settings_name').value = folderData.name;
+  document.getElementById('folder_settings_color').value = folderData.style.color;
+  const opacitySlider = document.getElementById('folder_settings_opacity');
+  const thumb = opacitySlider.querySelector('m3e-slider-thumb');
+  if (thumb) thumb.value = folderData.style.opacity;
+  
+  document.getElementById('folder_settings_modal_overlay').style.display = 'flex';
+}
+
+// フォルダー内の設定ボタン
+document.getElementById('folder_style_btn').onclick = (e) => {
+  e.stopPropagation();
+  if (currentOpenFolderId) {
+    openFolderSettingsModal(currentOpenFolderId);
+  }
+};
+
+document.getElementById('close_folder_settings_modal').onclick = () => {
+  document.getElementById('folder_settings_modal_overlay').style.display = 'none';
+  // プレビューで変更されたスタイルを元に戻すために再適用（保存されていない場合）
+  if (currentSettingsFolderId) {
+    applyFolderStyle(currentSettingsFolderId);
+  }
+  currentSettingsFolderId = null;
+};
+
+document.getElementById('save_folder_settings').onclick = () => {
+  if (!currentSettingsFolderId || !folders[currentSettingsFolderId]) return;
+  
+  const name = document.getElementById('folder_settings_name').value.trim();
+  const color = document.getElementById('folder_settings_color').value;
+  const opacitySlider = document.getElementById('folder_settings_opacity');
+  const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
+  
+  const folderData = folders[currentSettingsFolderId];
+  folderData.name = name || folderData.name;
+  folderData.style = { color, opacity };
+  
+  saveFolders();
+  applyFolderStyle(currentSettingsFolderId);
+  
+  // フォルダーアイコンの名前更新
+  const folderIcon = document.querySelector(`[data-folder-id="${currentSettingsFolderId}"]`);
+  if (folderIcon) {
+    const nameEl = folderIcon.querySelector('p');
+    if (nameEl) nameEl.textContent = folderData.name;
+  }
+  
+  // 開いているフォルダーのタイトル更新
+  if (currentOpenFolderId === currentSettingsFolderId) {
+    const title = document.getElementById('folder_title');
+    if (title) title.textContent = folderData.name;
+  }
+  
+  document.getElementById('folder_settings_modal_overlay').style.display = 'none';
+  currentSettingsFolderId = null;
+};
+
+// 設定モーダルでのライブプレビュー（フォルダーが開いている場合）
+function updateFolderPreview() {
+  if (currentSettingsFolderId && currentOpenFolderId === currentSettingsFolderId) {
+    const color = document.getElementById('folder_settings_color').value;
+    const opacitySlider = document.getElementById('folder_settings_opacity');
+    const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
+    
+    // 一時的にスタイル適用（保存はしない）
+    const modal = document.getElementById('folder_modal');
+    const rgb = hexToRgb(color);
+    if (rgb && modal) {
+      modal.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+      const textColor = getContrastColor(rgb.r, rgb.g, rgb.b);
+      modal.style.setProperty('--on-surface', textColor);
+      modal.style.setProperty('--on-surface-variant', textColor);
+    }
+  }
+}
+
+document.getElementById('folder_settings_color').addEventListener('input', updateFolderPreview);
+document.getElementById('folder_settings_opacity').addEventListener('input', updateFolderPreview);
 
 // ========================================
 // Linuxアプリ編集モーダル

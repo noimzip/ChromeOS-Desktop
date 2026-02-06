@@ -1624,17 +1624,6 @@ body.no-blur .modal_overlay {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.folder-style-editor {
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 12px;
-  border-radius: var(--radius-md);
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  order: 0;
-  animation: fadeIn var(--transition-fast);
-}
 
 #folder_title_container {
   text-align: center;
