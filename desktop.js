@@ -422,6 +422,11 @@ if (mediaSeekbar) {
     isSeeking = true;
   });
 
+  // スライド操作中もイベントの伝播を止める
+  mediaSeekbar.addEventListener('pointermove', (e) => {
+    e.stopPropagation();
+  });
+
   // シーク中の値変更（リアルタイムプレビュー）
   mediaSeekbar.addEventListener('input', (e) => {
     e.stopPropagation();
@@ -1743,6 +1748,7 @@ function setupDraggableItem(item) {
   
   item.onpointermove = function(event){
     if (this._isResizing) return; // リサイズ中は移動処理を無視
+    if (!this.hasPointerCapture(event.pointerId)) return;
     if(event.buttons){
       const dx = event.clientX - this._startX;
       const dy = event.clientY - this._startY;
@@ -1923,6 +1929,7 @@ function setupNormalModeDrag(item) {
   item.onpointermove = function(event) {
     if (this._isResizing) return; // リサイズ中は移動処理を無視
     if (!event.buttons) return;
+    if (!this.hasPointerCapture(event.pointerId)) return;
     
     const dx = event.clientX - this._startX;
     const dy = event.clientY - this._startY;
