@@ -530,6 +530,46 @@ setTimeout(() => {
   }
 }, 1000);
 
+// ========================================
+// ウィジェット管理
+// ========================================
+
+const availableWidgets = {
+  'widget-clock': { name: '時計', element: document.getElementById('widget-clock') },
+  'media_player_widget': { name: 'メディアプレイヤー', element: document.getElementById('media_player_widget') },
+  'github_contribution_widget': { name: 'GitHub Contributions', element: document.getElementById('github_contribution_widget') },
+  'google_calendar_widget': { name: 'Google Calendar', element: document.getElementById('google_calendar_widget') }
+};
+
+let widgetVisibility = {};
+
+function loadWidgetVisibility() {
+  const saved = JSON.parse(localStorage.getItem('widgetVisibility') || '{}');
+  const defaults = {};
+  Object.keys(availableWidgets).forEach(id => {
+    defaults[id] = true; // デフォルトはすべて表示
+  });
+  widgetVisibility = { ...defaults, ...saved };
+}
+
+function applyWidgetVisibility() {
+  for (const widgetId in availableWidgets) {
+    const widget = availableWidgets[widgetId].element;
+    if (widget) {
+      widget.style.display = widgetVisibility[widgetId] ? '' : 'none';
+    }
+  }
+}
+
+function setWidgetVisibility(widgetId, isVisible) {
+  const widget = availableWidgets[widgetId]?.element;
+  if (widget) {
+    widget.style.display = isVisible ? '' : 'none';
+    widgetVisibility[widgetId] = isVisible;
+    localStorage.setItem('widgetVisibility', JSON.stringify(widgetVisibility));
+  }
+}
+
 // すべてのモーダルを閉じる関数
 function closeAllModals() {
   // すべてのオーバーレイを非表示
@@ -2321,6 +2361,7 @@ const translations = {
     files: "ファイル",
     settings: "設定",
     add_app: "アプリを追加",
+    add_widget: "ウィジェットを追加",
     upload_image: "アプリ画像をアップロード",
     app_name: "アプリ名",
     url: "URL",
@@ -2358,6 +2399,7 @@ const translations = {
     dark_mode: "ダークモード",
     edit: "編集",
     delete: "削除",
+    hide_widget: "ウィジェットを非表示",
     edit_app: "アプリを編集",
     edit_linux_app: "Linuxアプリを編集",
     change_image: "画像を変更",
@@ -2394,6 +2436,7 @@ const translations = {
     files: "Files",
     settings: "Settings",
     add_app: "Add an app",
+    add_widget: "Add a widget",
     upload_image: "Upload app image",
     app_name: "App Name",
     url: "URL",
@@ -2431,6 +2474,7 @@ const translations = {
     dark_mode: "Dark Mode",
     edit: "Edit",
     delete: "Delete",
+    hide_widget: "Hide widget",
     edit_app: "Edit App",
     edit_linux_app: "Edit Linux App",
     change_image: "Change Image",
@@ -3202,11 +3246,9 @@ function showContextMenu(e, iconEl, appType) {
 
 // コンテキストメニューを非表示
 function hideContextMenu() {
-  contextMenu.style.display = 'none';
-  const desktopContextMenu = document.getElementById('desktop_context_menu');
-  if (desktopContextMenu) {
-    desktopContextMenu.style.display = 'none';
-  }
+  document.querySelectorAll('.context-menu').forEach(menu => {
+    menu.style.display = 'none';
+  });
 }
 
 // 画面クリックでコンテキストメニューを閉じる
@@ -3244,6 +3286,11 @@ if (desktopIconsContainer && desktopContextMenu) {
     closeAllModals();
     document.getElementById('add_app_type_modal_overlay').style.display = 'flex';
   };
+  document.getElementById('desktop_context_add_widget').onclick = (e) => {
+    e.stopPropagation();
+    closeAllModals();
+    openAddWidgetModal();
+  };
   document.getElementById('desktop_context_settings').onclick = (e) => {
     e.stopPropagation();
     closeAllModals();
@@ -3254,6 +3301,60 @@ if (desktopIconsContainer && desktopContextMenu) {
     // closeAllModals is called inside enterPositionChangeMode
     enterPositionChangeMode();
   };
+}
+
+// ========================================
+// ウィジェット追加モーダル
+// ========================================
+const addWidgetModalOverlay = document.getElementById('add_widget_modal_overlay');
+const closeAddWidgetModalBtn = document.getElementById('close_add_widget_modal');
+const widgetListContainer = document.getElementById('widget_list');
+
+function openAddWidgetModal() {
+  if (!widgetListContainer || !addWidgetModalOverlay) return;
+
+  widgetListContainer.innerHTML = ''; // リストをクリア
+
+  for (const widgetId in availableWidgets) {
+    const widgetInfo = availableWidgets[widgetId];
+    const btn = document.createElement('m3e-button');
+    btn.variant = 'outlined';
+    btn.textContent = widgetInfo.name;
+    btn.dataset.widgetId = widgetId;
+    btn.disabled = widgetVisibility[widgetId]; // 既に表示されている場合は無効化
+    btn.style.width = '100%';
+
+    btn.onclick = () => {
+      setWidgetVisibility(widgetId, true);
+      addWidgetModalOverlay.style.display = 'none';
+    };
+    widgetListContainer.appendChild(btn);
+  }
+
+  addWidgetModalOverlay.style.display = 'flex';
+}
+
+if (closeAddWidgetModalBtn) {
+  closeAddWidgetModalBtn.onclick = () => {
+    if (addWidgetModalOverlay) addWidgetModalOverlay.style.display = 'none';
+  };
+}
+
+// ========================================
+// ウィジェットのコンテキストメニュー
+// ========================================
+const widgetContextMenu = document.getElementById('widget_context_menu');
+let currentEditingWidget = null;
+
+function showWidgetContextMenu(e, widgetEl) {
+  e.preventDefault();
+  e.stopPropagation();
+  hideContextMenu(); // 他のメニューを隠す
+  currentEditingWidget = widgetEl;
+
+  widgetContextMenu.style.display = 'block';
+  widgetContextMenu.style.left = e.clientX + 'px';
+  widgetContextMenu.style.top = e.clientY + 'px';
 }
 
 // 編集ボタン
@@ -4581,4 +4682,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ウィジェットのコンテキストメニューを設定
+  Object.values(availableWidgets).forEach(widgetInfo => {
+    if (widgetInfo.element) {
+      widgetInfo.element.addEventListener('contextmenu', (e) => showWidgetContextMenu(e, widgetInfo.element));
+    }
+  });
+
+  // ウィジェット非表示ボタンの処理
+  document.getElementById('widget_context_hide').onclick = (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    if (currentEditingWidget) {
+      const widgetId = currentEditingWidget.id;
+      if (widgetId) {
+        setWidgetVisibility(widgetId, false);
+      }
+    }
+  };
+
+  loadWidgetVisibility();
+  applyWidgetVisibility();
 });
