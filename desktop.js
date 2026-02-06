@@ -4690,13 +4690,10 @@ function enableWidgetResizers() {
         let newW = Math.max(minW, Math.round(startW + dx));
         let newH = Math.max(minH, Math.round(startH + dy));
         // グリッドモードが有効なら幅・高さをグリッドサイズにスナップ
-        try {
-          if (typeof isGridModeEnabled !== 'undefined' && isGridModeEnabled && typeof GRID_SIZE !== 'undefined') {
-            const gw = GRID_SIZE;
-            newW = Math.max(minW, Math.round(newW / gw) * gw);
-            newH = Math.max(minH, Math.round(newH / gw) * gw);
-          }
-        } catch (e) {}
+        if (isGridModeEnabled) {
+          newW = Math.max(minW, Math.round(newW / GRID_SIZE_X) * GRID_SIZE_X);
+          newH = Math.max(minH, Math.round(newH / GRID_SIZE_Y) * GRID_SIZE_Y);
+        }
         
         // 画面外にはみ出さないように制限
         if (rect.left + newW > screenWidth) {
