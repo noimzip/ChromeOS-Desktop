@@ -53,10 +53,6 @@
         <img src="./assets/settings.webp" />
         <p data-i18n="settings">Settings</p>
       </div>
-      <div class="appicon" id="appicon-add">
-        <img src="./assets/add.webp" />
-        <p data-i18n="add_app">Add an app</p>
-      </div>
     </div>
 
     <!-- アプリ追加タイプ選択メニュー -->
@@ -299,6 +295,14 @@
     <div id="app_context_menu" class="context-menu" style="display: none;">
       <div class="context-menu-item" id="context_edit" data-i18n="edit">編集</div>
       <div class="context-menu-item" id="context_delete" data-i18n="delete">削除</div>
+    </div>
+
+    <!-- デスクトップコンテキストメニュー -->
+    <div id="desktop_context_menu" class="context-menu" style="display: none;">
+      <div class="context-menu-item" id="desktop_context_add_app" data-i18n="add_app">アプリを追加</div>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-item" id="desktop_context_settings" data-i18n="settings">設定</div>
+      <div class="context-menu-item" id="desktop_context_change_position" data-i18n="change_position">位置の変更</div>
     </div>
 
     <!-- Webアプリ編集モーダル -->

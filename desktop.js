@@ -670,7 +670,7 @@ function getOverlappingIcon(draggedEl) {
   const icons = document.querySelectorAll('.appicon:not(.folder)');
   
   for (const icon of icons) {
-    if (icon === draggedEl || icon.id === 'appicon-add') continue;
+    if (icon === draggedEl) continue;
     
     const overlapArea = calculateOverlapArea(draggedRect, icon.getBoundingClientRect());
     if (overlapArea > OVERLAP_THRESHOLD) return icon;
@@ -777,9 +777,9 @@ function createFolder(icon1, icon2) {
   icon2.style.display = 'none';
   
   // フォルダーを追加
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(folderEl, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(folderEl);
   }
   
   // 位置変更モード中であれば、新しいフォルダーアイコンにもドラッグイベントを設定
@@ -1543,9 +1543,9 @@ function loadFolders() {
       }
     });
     
-    const addBtn = document.getElementById('appicon-add');
-    if (addBtn && addBtn.parentNode) {
-      addBtn.parentNode.insertBefore(folderEl, addBtn);
+    const desktopIcons = document.getElementById('desktop_icons');
+    if (desktopIcons) {
+      desktopIcons.appendChild(folderEl);
     }
   });
 }
@@ -1956,9 +1956,6 @@ if (gridModeBtn) {
 
 // 通常モードでのドラッグを設定する関数
 function setupNormalModeDrag(item) {
-  // 追加ボタンは除外
-  if (item.id === 'appicon-add') return;
-  
   // 画像のドラッグを防止
   const img = item.querySelector('img');
   if (img) {
@@ -2255,10 +2252,6 @@ document.getElementById('save_change_widget_position').onclick = () => {
   
   // 通常モードのドラッグを再設定
   initNormalModeDrag();
-}
-
-document.getElementById('appicon-add').onclick = () => {
-  document.getElementById('add_app_type_modal_overlay').style.display = 'flex';
 }
 
 // アプリ追加タイプ選択
@@ -2879,9 +2872,9 @@ function createDesktopIcon(appData) {
     showContextMenu(e, div, 'webapp');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
@@ -2998,9 +2991,9 @@ function createLinuxAppIcon(appData) {
     showContextMenu(e, div, 'linuxapp');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
@@ -3176,10 +3169,58 @@ function showContextMenu(e, iconEl, appType) {
 // コンテキストメニューを非表示
 function hideContextMenu() {
   contextMenu.style.display = 'none';
+  const desktopContextMenu = document.getElementById('desktop_context_menu');
+  if (desktopContextMenu) {
+    desktopContextMenu.style.display = 'none';
+  }
 }
 
 // 画面クリックでコンテキストメニューを閉じる
 document.addEventListener('click', hideContextMenu);
+
+// デスクトップのコンテキストメニュー
+const desktopIconsContainer = document.getElementById('desktop_icons');
+const desktopContextMenu = document.getElementById('desktop_context_menu');
+
+if (desktopIconsContainer && desktopContextMenu) {
+  desktopIconsContainer.addEventListener('contextmenu', (e) => {
+    // アイコンやウィジェットの上で右クリックされた場合は、その要素のコンテキストメニューを優先
+    if (e.target.closest('.appicon, .widget')) {
+      return;
+    }
+    e.preventDefault();
+    hideContextMenu(); // 他のメニューを隠す
+    
+    desktopContextMenu.style.display = 'block';
+    desktopContextMenu.style.left = e.clientX + 'px';
+    desktopContextMenu.style.top = e.clientY + 'px';
+
+    // 画面外にはみ出ないように調整
+    const rect = desktopContextMenu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+      desktopContextMenu.style.left = (e.clientX - rect.width) + 'px';
+    }
+    if (rect.bottom > window.innerHeight) {
+      desktopContextMenu.style.top = (e.clientY - rect.height) + 'px';
+    }
+  });
+
+  document.getElementById('desktop_context_add_app').onclick = (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    document.getElementById('add_app_type_modal_overlay').style.display = 'flex';
+  };
+  document.getElementById('desktop_context_settings').onclick = (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
+  };
+  document.getElementById('desktop_context_change_position').onclick = (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    enterPositionChangeMode();
+  };
+}
 
 // 編集ボタン
 document.getElementById('context_edit').onclick = (e) => {
@@ -4137,9 +4178,9 @@ function createFileShortcutIcon(fileData) {
     showContextMenu(e, div, 'file');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
@@ -4198,9 +4239,9 @@ function createFolderShortcutIcon(folderData) {
     showContextMenu(e, div, 'folder-shortcut');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
