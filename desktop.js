@@ -875,7 +875,7 @@ function createFolder(icon1, icon2) {
   }
   
   // 位置変更モード中であれば、新しいフォルダーアイコンにもドラッグイベントを設定
-  if (typeof setupDraggableItem === 'function') {
+  if (isPositionChangeMode && typeof setupDraggableItem === 'function') {
     setupDraggableItem(folderEl);
   }
   
@@ -1447,6 +1447,7 @@ function removeFromFolder(folderId, appIndex, dropX, dropY) {
   } else if (app.isBuiltin && app.id) {
     const el = document.getElementById(app.id);
     if (el) el.style.display = '';
+    if (el && dropX !== undefined && dropY !== undefined) positionCreatedIcon(el, dropX, dropY);
   } else if (app.id) {
     let el = document.querySelector(`[data-save-key="${app.id}"]`);
     if (el) {
@@ -1516,22 +1517,15 @@ function positionCreatedIcon(el, clientX, clientY) {
   const containerRect = desktop ? desktop.getBoundingClientRect() : { left: 0, top: 0 };
   const elRect = el.getBoundingClientRect();
   // 中心を合わせる
-  const left = clientX - containerRect.left - (elRect.width / 2);
-  const top = clientY - containerRect.top - (elRect.height / 2);
+  const startX = clientX - containerRect.left - (elRect.width / 2);
+  const startY = clientY - containerRect.top - (elRect.height / 2);
   
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-  
-  let finalLeft = Math.max(0, Math.round(left));
-  let finalTop = Math.max(0, Math.round(top));
-  
-  // 画面外にはみ出さないように調整
-  if (finalLeft + elRect.width > screenWidth) finalLeft = screenWidth - elRect.width;
-  if (finalTop + elRect.height > screenHeight) finalTop = screenHeight - elRect.height;
+  // グリッドスナップと重なり回避を適用
+  const pos = findNearestEmptyPosition(el, startX, startY);
   
   el.style.position = 'absolute';
-  el.style.left = Math.max(0, finalLeft) + 'px';
-  el.style.top = Math.max(0, finalTop) + 'px';
+  el.style.left = pos.x + 'px';
+  el.style.top = pos.y + 'px';
 
   // 保存（widgetPositions）
   try {
