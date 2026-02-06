@@ -73,13 +73,6 @@
   --clock-accent: #bbdefb;
   --clock-background: #1a365d;
   --clock-text-color: #ffffff;
-
-  /* GitHub Graph Colors (Light Mode) */
-  --github-level-0: var(--surface-dim);
-  --github-level-1: color-mix(in srgb, var(--primary-color) 30%, var(--surface-variant));
-  --github-level-2: color-mix(in srgb, var(--primary-color) 60%, var(--surface-variant));
-  --github-level-3: var(--primary-color);
-  --github-level-4: var(--primary-dark);
 }
 
 /* ========================================
@@ -396,6 +389,13 @@ body {
   background-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* GitHub Graph Colors (Light Mode) */
+  --github-level-0: var(--surface-dim);
+  --github-level-1: color-mix(in srgb, var(--primary-color) 30%, var(--surface-variant));
+  --github-level-2: color-mix(in srgb, var(--primary-color) 60%, var(--surface-variant));
+  --github-level-3: var(--primary-color);
+  --github-level-4: var(--primary-dark);
 }
 
 /* ========================================
