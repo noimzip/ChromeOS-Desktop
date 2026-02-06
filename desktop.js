@@ -244,12 +244,16 @@ const mediaPlayIcon = document.getElementById('media_play_icon');
 const mediaPrevBtn = document.getElementById('media_prev');
 const mediaPlayPauseBtn = document.getElementById('media_play_pause');
 const mediaNextBtn = document.getElementById('media_next');
+const mediaShuffleBtn = document.getElementById('media_shuffle');
+const mediaRepeatBtn = document.getElementById('media_repeat');
 const mediaSeekbar = document.getElementById('media_seekbar');
 const mediaTimeCurrent = document.getElementById('media_time_current');
 const mediaTimeTotal = document.getElementById('media_time_total');
 
 let currentMediaStatus = 'Stopped';
 let currentDuration = 0; // 曲の長さ（秒）
+let currentShuffle = 'Off';
+let currentLoop = 'None';
 let isSeeking = false; // シーク中フラグ
 
 /**
@@ -358,6 +362,53 @@ async function updateMediaPlayer() {
     if (mediaTimeTotal) {
       mediaTimeTotal.textContent = formatTime(duration);
     }
+    
+    // シャッフル・リピート状態の更新
+    if (info.shuffle) {
+      currentShuffle = info.shuffle;
+      if (mediaShuffleBtn) {
+        mediaShuffleBtn.classList.toggle('active', currentShuffle === 'On');
+        mediaShuffleBtn.title = currentShuffle === 'On' ? 'Shuffle: On' : 'Shuffle: Off';
+        mediaShuffleBtn.disabled = false;
+      }
+    } else if (mediaShuffleBtn) {
+      mediaShuffleBtn.disabled = true;
+      mediaShuffleBtn.classList.remove('active');
+      mediaShuffleBtn.title = 'Shuffle';
+    }
+
+    if (info.loop) {
+      currentLoop = info.loop;
+      if (mediaRepeatBtn) {
+        const loopStatus = currentLoop.toLowerCase();
+        const isTrack = loopStatus === 'track' || loopStatus === 'one';
+        const isPlaylist = loopStatus === 'playlist' || loopStatus === 'all';
+        const isActive = isTrack || isPlaylist;
+        
+        mediaRepeatBtn.classList.toggle('active', isActive);
+        mediaRepeatBtn.classList.toggle('repeat-one', isTrack);
+        
+        const icon = mediaRepeatBtn.querySelector('m3e-icon');
+        if (icon) {
+          const iconName = isTrack ? 'repeat_one' : 'repeat';
+          icon.setAttribute('name', iconName);
+          icon.name = iconName; // プロパティも更新
+        }
+        
+        // ツールチップ更新
+        let title = 'Repeat: Off';
+        if (isPlaylist) title = 'Repeat: All';
+        if (isTrack) title = 'Repeat: One';
+        mediaRepeatBtn.title = title;
+        
+        mediaRepeatBtn.disabled = false;
+      }
+    } else if (mediaRepeatBtn) {
+      mediaRepeatBtn.disabled = true;
+      mediaRepeatBtn.classList.remove('active');
+      mediaRepeatBtn.classList.remove('repeat-one');
+      mediaRepeatBtn.title = 'Repeat';
+    }
   }
 }
 
@@ -412,6 +463,20 @@ setupMediaButton(mediaPlayPauseBtn, async () => {
 
 setupMediaButton(mediaNextBtn, async () => {
   await mediaControl('next');
+});
+
+setupMediaButton(mediaShuffleBtn, async () => {
+  const newValue = currentShuffle === 'On' ? 'Off' : 'On';
+  await mediaControl('shuffle', newValue);
+});
+
+setupMediaButton(mediaRepeatBtn, async () => {
+  let newValue = 'None';
+  if (currentLoop === 'None') newValue = 'Playlist';
+  else if (currentLoop === 'Playlist') newValue = 'Track';
+  else newValue = 'None';
+  
+  await mediaControl('loop', newValue);
 });
 
 // シークバーのイベント

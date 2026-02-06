@@ -129,7 +129,9 @@ ipcMain.handle('get-media-info', async () => {
       artUrl: 'playerctl metadata mpris:artUrl 2>/dev/null || echo ""',
       position: 'playerctl position 2>/dev/null || echo "0"',
       length: 'playerctl metadata mpris:length 2>/dev/null || echo "0"',
-      player: 'playerctl -l 2>/dev/null | head -1 || echo ""'
+      player: 'playerctl -l 2>/dev/null | head -1 || echo ""',
+      shuffle: 'playerctl shuffle 2>/dev/null || echo ""',
+      loop: 'playerctl loop 2>/dev/null || echo ""'
     };
     
     const results = {};
@@ -154,6 +156,20 @@ ipcMain.handle('media-control', async (event, action, value) => {
     // シーク操作の場合
     if (action === 'seek' && value !== undefined) {
       exec(`playerctl position ${value}`, (error) => {
+        resolve({ success: !error, error: error?.message });
+      });
+      return;
+    }
+    
+    // シャッフル・リピート操作
+    if (action === 'shuffle' && value !== undefined) {
+      exec(`playerctl shuffle ${value}`, (error) => {
+        resolve({ success: !error, error: error?.message });
+      });
+      return;
+    }
+    if (action === 'loop' && value !== undefined) {
+      exec(`playerctl loop ${value}`, (error) => {
         resolve({ success: !error, error: error?.message });
       });
       return;
