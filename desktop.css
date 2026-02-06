@@ -373,8 +373,16 @@ body.dark-mode .icon-label {
 
 /* Clock Background */
 .clock-background {
-  fill: var(--clock-background, #25352a);
-  transition: fill 0.3s ease;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.clock-surface {
+  width: 100%;
+  height: 100%;
+  background-color: var(--clock-background, #25352a);
+  transition: background-color 0.3s ease;
 }
 
 body {

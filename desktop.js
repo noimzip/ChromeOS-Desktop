@@ -103,6 +103,12 @@ function applyShapeToAll(shape) {
   // フォルダアイコンのプレビュー画像
   const folderImages = document.querySelectorAll('.appicon.folder .folder-preview img');
   folderImages.forEach(img => wrapImageWithShape(img, shape));
+
+  // 時計の背景形状
+  const clockBg = document.querySelector('.clock-background');
+  if (clockBg && clockBg.tagName === 'M3E-SHAPE') {
+    clockBg.setAttribute('name', shape);
+  }
 }
 
 function updateIconShape(shape) {
