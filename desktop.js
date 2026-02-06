@@ -16,10 +16,32 @@ const builtinIconUrls = {
   'appicon-settings': 'chrome://os-settings'
 };
 
+// localStorageで使用するキーを一元管理
+const LS_KEYS = {
+  WIDGET_POSITIONS: 'widgetPositions',
+  CUSTOM_APPS: 'customApps',
+  LINUX_APPS: 'linuxApps',
+  FILE_SHORTCUTS: 'fileShortcuts',
+  FOLDER_SHORTCUTS: 'folderShortcuts',
+  APP_FOLDERS: 'appFolders',
+  LANGUAGE: 'language',
+  GRID_MODE_ENABLED: 'gridModeEnabled',
+  ICON_SHAPE: 'iconShape',
+  COLOR_SCHEME: 'colorScheme',
+  CUSTOM_COLOR: 'customColor',
+  SHOW_SETTINGS_FAB: 'showSettingsFab',
+  BLUR_EFFECT_ENABLED: 'blurEffectEnabled',
+  DARK_MODE_ENABLED: 'darkModeEnabled',
+  GITHUB_USERNAME: 'githubUsername',
+  GOOGLE_CALENDAR_URL: 'googleCalendarUrl',
+  WIDGET_VISIBILITY: 'widgetVisibility',
+  WIDGET_SIZE_PREFIX: 'widgetSize:',
+};
+
 // ========================================
 // アイコン形状の設定
 function getCurrentIconShape() {
-  return localStorage.getItem('iconShape') || 'square';
+  return localStorage.getItem(LS_KEYS.ICON_SHAPE) || 'square';
 }
 
 function wrapIconWithShape(appiconEl, shape) {
@@ -125,7 +147,7 @@ function updateIconShape(shape) {
     applyShapeToAll(shape);
   }
 
-  localStorage.setItem('iconShape', shape);
+  localStorage.setItem(LS_KEYS.ICON_SHAPE, shape);
 
   // セレクターの値を更新（実際の要素は後で代入される）
   if (typeof iconShapeSelector !== 'undefined' && iconShapeSelector && iconShapeSelector.value !== undefined) {
@@ -531,6 +553,72 @@ setTimeout(() => {
 }, 1000);
 
 // ========================================
+// ウィジェット管理
+// ========================================
+
+const availableWidgets = {
+  'widget-clock': { name: '時計', element: document.getElementById('widget-clock') },
+  'media_player_widget': { name: 'メディアプレイヤー', element: document.getElementById('media_player_widget') },
+  'github_contribution_widget': { name: 'GitHub Contributions', element: document.getElementById('github_contribution_widget') },
+  'google_calendar_widget': { name: 'Google Calendar', element: document.getElementById('google_calendar_widget') }
+};
+
+let widgetVisibility = {};
+
+function loadWidgetVisibility() {
+  const saved = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_VISIBILITY) || '{}');
+  const defaults = {};
+  Object.keys(availableWidgets).forEach(id => {
+    defaults[id] = true; // デフォルトはすべて表示
+  });
+  widgetVisibility = { ...defaults, ...saved };
+}
+
+function applyWidgetVisibility() {
+  for (const widgetId in availableWidgets) {
+    const widget = availableWidgets[widgetId].element;
+    if (widget) {
+      widget.style.display = widgetVisibility[widgetId] ? '' : 'none';
+    }
+  }
+}
+
+function setWidgetVisibility(widgetId, isVisible) {
+  const widget = availableWidgets[widgetId]?.element;
+  if (widget) {
+    widget.style.display = isVisible ? '' : 'none';
+    widgetVisibility[widgetId] = isVisible;
+    localStorage.setItem(LS_KEYS.WIDGET_VISIBILITY, JSON.stringify(widgetVisibility));
+  }
+}
+
+// すべてのモーダルを閉じる関数
+function closeAllModals() {
+  // すべてのオーバーレイを非表示
+  const overlays = document.querySelectorAll('.modal_overlay');
+  overlays.forEach(el => {
+    el.style.display = 'none';
+    el.classList.remove('fade-out');
+  });
+
+  // フォルダーの状態をリセット
+  currentOpenFolderId = null;
+  const folderModal = document.getElementById('folder_modal');
+  if (folderModal) {
+    folderModal.classList.remove('folder-opening', 'folder-closing');
+  }
+
+  // 位置変更モードを終了
+  if (isPositionChangeMode) {
+    isPositionChangeMode = false;
+    const desktopIcons = document.getElementById('desktop_icons');
+    if (desktopIcons) desktopIcons.style.zIndex = '';
+  }
+
+  hideContextMenu();
+}
+
+// ========================================
 // ビルトインアイコンのクリックイベント
 // ========================================
 
@@ -546,42 +634,45 @@ setupBuiltinIconClick('appicon-settings', 'chrome://os-settings');
 
 document.addEventListener('keydown', function(e) {
   if(e.key === 'Escape'){
+    closeAllModals();
     document.getElementById('escmenu_modal_overlay').style.display = 'flex';
   }
 });
 
 // 右下の設定ボタン
 document.getElementById('settings_fab').onclick = () => {
+  closeAllModals();
   document.getElementById('escmenu_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('close_menu_modal').onclick = () => {
-  document.getElementById('escmenu_modal_overlay').style.display = 'none';
+  closeAllModals();
 }
 
 document.getElementById('open_settingsmenu_modal').onclick = () => {
-  document.getElementById('escmenu_modal_overlay').style.display = 'none';
+  closeAllModals();
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('close_settingsmenu_modal').onclick = () => {
-  document.getElementById('settingsmenu_modal_overlay').style.display = 'none';
+  closeAllModals();
 }
 
 // ========================================
 // アプリケーション状態
 // ========================================
 
-let isGridModeEnabled = localStorage.getItem('gridModeEnabled') === 'true';
+let isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
 let isPositionChangeMode = false;
 let draggedItem = null;
-let folders = JSON.parse(localStorage.getItem('appFolders') || '{}');
+let folders = JSON.parse(localStorage.getItem(LS_KEYS.APP_FOLDERS) || '{}');
 let currentOpenFolderId = null;
 let currentFolderPage = 0;
 
 // グリッドモードのデフォルト設定
-// CSS のグリッド背景サイズ (desktop.css) に合わせる: 80px マス、20px オフセット
-const GRID_SIZE = 80;
+// アイコンサイズ (80x90) とギャップ (20px) に合わせる
+const GRID_SIZE_X = 80;
+const GRID_SIZE_Y = 90;
 const GRID_OFFSET = 20;
 // ドラッグ開始判定に使う閾値（ピクセル）
 const DRAG_THRESHOLD = 8;
@@ -629,15 +720,16 @@ function resizeImage(dataUrl, targetWidth, targetHeight) {
  * @param {number} value - 元の値
  * @returns {number} スナップされた値
  */
-function snapToGrid(value) {
-  return Math.round((value - GRID_OFFSET) / GRID_SIZE) * GRID_SIZE + GRID_OFFSET;
+function snapToGrid(value, axis = 'x') {
+  const size = axis === 'y' ? GRID_SIZE_Y : GRID_SIZE_X;
+  return Math.round((value - GRID_OFFSET) / size) * size + GRID_OFFSET;
 }
 
 /**
  * フォルダーデータを保存
  */
 function saveFolders() {
-  localStorage.setItem('appFolders', JSON.stringify(folders));
+  localStorage.setItem(LS_KEYS.APP_FOLDERS, JSON.stringify(folders));
 }
 
 /**
@@ -645,7 +737,7 @@ function saveFolders() {
  * @returns {string} 言語コード ('ja' または 'en')
  */
 function getCurrentLanguage() {
-  return localStorage.getItem('language') || 'ja';
+  return localStorage.getItem(LS_KEYS.LANGUAGE) || 'ja';
 }
 
 /**
@@ -670,7 +762,7 @@ function getOverlappingIcon(draggedEl) {
   const icons = document.querySelectorAll('.appicon:not(.folder)');
   
   for (const icon of icons) {
-    if (icon === draggedEl || icon.id === 'appicon-add') continue;
+    if (icon === draggedEl) continue;
     
     const overlapArea = calculateOverlapArea(draggedRect, icon.getBoundingClientRect());
     if (overlapArea > OVERLAP_THRESHOLD) return icon;
@@ -777,9 +869,9 @@ function createFolder(icon1, icon2) {
   icon2.style.display = 'none';
   
   // フォルダーを追加
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(folderEl, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(folderEl);
   }
   
   // 位置変更モード中であれば、新しいフォルダーアイコンにもドラッグイベントを設定
@@ -873,6 +965,7 @@ function closeFolder() {
 
 // フォルダーを開く
 function openFolder(folderId) {
+  closeAllModals();
   const folderData = folders[folderId];
   if (!folderData) return;
   
@@ -1444,9 +1537,9 @@ function positionCreatedIcon(el, clientX, clientY) {
   try {
     const saveKey = el.dataset.saveKey;
     if (saveKey) {
-      const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+      const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
       positions[saveKey] = { position: 'absolute', left: el.style.left, top: el.style.top };
-      localStorage.setItem('widgetPositions', JSON.stringify(positions));
+      localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
     }
   } catch (e) {
     console.warn('Failed to save widget position', e);
@@ -1543,9 +1636,9 @@ function loadFolders() {
       }
     });
     
-    const addBtn = document.getElementById('appicon-add');
-    if (addBtn && addBtn.parentNode) {
-      addBtn.parentNode.insertBefore(folderEl, addBtn);
+    const desktopIcons = document.getElementById('desktop_icons');
+    if (desktopIcons) {
+      desktopIcons.appendChild(folderEl);
     }
   });
 }
@@ -1593,6 +1686,7 @@ document.getElementById('folder_bg_opacity').addEventListener('input', (e) => {
 
 // 位置変更モードを有効にする
 function enterPositionChangeMode() {
+  closeAllModals();
   if (isPositionChangeMode) return;
   isPositionChangeMode = true;
   
@@ -1603,10 +1697,15 @@ function enterPositionChangeMode() {
   if (desktopIcons) {
     desktopIcons.style.zIndex = '5';
   }
+
+  // すべてのアイコンにドラッグイベントを設定
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
+    setupDraggableItem(item);
+  });
   
-  // グリッドモードのボタンの状態を復元
-  isGridModeEnabled = localStorage.getItem('gridModeEnabled') === 'true';
-  updateGridModeButton();
+  // グリッドモードのスイッチの状態を復元
+  isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
+  updateGridModeSwitch();
   
   // グリッド線の表示/非表示
   if (isGridModeEnabled) {
@@ -1626,7 +1725,6 @@ function exitPositionChangeMode() {
 }
 
 document.getElementById('open_change_widget_position_modal').onclick = () => {
-  document.getElementById('escmenu_modal_overlay').style.display = 'none';
   enterPositionChangeMode();
 };
 
@@ -1702,12 +1800,12 @@ function findNearestEmptyPosition(element, startX, startY) {
   
   // グリッドモードならスナップ
   if (isGridModeEnabled) {
-    x = snapToGrid(x);
-    y = snapToGrid(y);
+    x = snapToGrid(x, 'x');
+    y = snapToGrid(y, 'y');
     
     // スナップ後に画面外に出た場合は調整
-    if (x + elWidth > screenWidth) x -= GRID_SIZE;
-    if (y + elHeight > screenHeight) y -= GRID_SIZE;
+    if (x + elWidth > screenWidth) x -= GRID_SIZE_X;
+    if (y + elHeight > screenHeight) y -= GRID_SIZE_Y;
     x = Math.max(0, x);
     y = Math.max(0, y);
   }
@@ -1719,8 +1817,8 @@ function findNearestEmptyPosition(element, startX, startY) {
   
   // 重なっている場合、周囲を探索
   // 探索ステップ: グリッドサイズまたはアイコンサイズ
-  const stepX = isGridModeEnabled ? GRID_SIZE : 80;
-  const stepY = isGridModeEnabled ? GRID_SIZE : 85;
+  const stepX = isGridModeEnabled ? GRID_SIZE_X : 80;
+  const stepY = isGridModeEnabled ? GRID_SIZE_Y : 95;
   
   // 渦巻き状に探索
   let radius = 1;
@@ -1912,23 +2010,27 @@ function setupDraggableItem(item) {
   };
 }
 
-// グリッドモードボタンのテキスト更新関数
-function updateGridModeButton() {
-  const gridModeBtn = document.getElementById('toggle_grid_mode');
-  if (gridModeBtn) {
-    const lang = getCurrentLanguage();
-    const key = isGridModeEnabled ? 'grid_mode_on' : 'grid_mode_off';
-    gridModeBtn.textContent = translations[lang][key];
+// グリッドモードスイッチの状態更新関数 (m3e-switchのプロパティを考慮)
+function updateGridModeSwitch() {
+  const gridModeSwitch = document.getElementById('toggle_grid_mode');
+  if (gridModeSwitch) {
+    // m3e-switch は 'selected' プロパティを使用するが、念のため 'checked' も考慮
+    if (typeof gridModeSwitch.selected !== 'undefined') {
+      gridModeSwitch.selected = isGridModeEnabled;
+    } else {
+      gridModeSwitch.checked = isGridModeEnabled;
+    }
   }
 }
 
-// グリッドモードボタンのイベント
-const gridModeBtn = document.getElementById('toggle_grid_mode');
-if (gridModeBtn) {
-  gridModeBtn.onclick = () => {
-    isGridModeEnabled = !isGridModeEnabled;
-    localStorage.setItem('gridModeEnabled', isGridModeEnabled);
-    updateGridModeButton();
+// グリッドモードスイッチのイベント
+const gridModeSwitch = document.getElementById('toggle_grid_mode');
+if (gridModeSwitch) {
+  gridModeSwitch.addEventListener('change', (e) => {
+    // m3e-switch は 'selected' プロパティで状態を公開するが、念のため 'checked' も考慮
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    isGridModeEnabled = newState;
+    localStorage.setItem(LS_KEYS.GRID_MODE_ENABLED, isGridModeEnabled);
     
     // グリッド線の表示/非表示
     const overlay = document.getElementById('change_widget_position_modal_overlay');
@@ -1947,18 +2049,15 @@ if (gridModeBtn) {
         
         // グリッドにスナップ
         item.style.position = 'absolute';
-        item.style.left = snapToGrid(currentLeft) + 'px';
-        item.style.top = snapToGrid(currentTop) + 'px';
+        item.style.left = snapToGrid(currentLeft, 'x') + 'px';
+        item.style.top = snapToGrid(currentTop, 'y') + 'px';
       });
     }
-  };
+  });
 }
 
 // 通常モードでのドラッグを設定する関数
 function setupNormalModeDrag(item) {
-  // 追加ボタンは除外
-  if (item.id === 'appicon-add') return;
-  
   // 画像のドラッグを防止
   const img = item.querySelector('img');
   if (img) {
@@ -2097,13 +2196,13 @@ function setupNormalModeDrag(item) {
     const key = this.id || this.dataset.saveKey;
     if (key) {
       try {
-        const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+        const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
         positions[key] = {
           left: this.style.left,
           top: this.style.top,
           position: 'absolute'
         };
-        localStorage.setItem('widgetPositions', JSON.stringify(positions));
+        localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
       } catch (e) {}
     }
     
@@ -2130,7 +2229,7 @@ function initNormalModeDrag() {
 // 位置をリセットする関数
 function resetWidgetPositions() {
   // localStorageから位置データを削除
-  localStorage.removeItem('widgetPositions');
+  localStorage.removeItem(LS_KEYS.WIDGET_POSITIONS);
   
   // すべてのアイコンとウィジェットの位置をリセット
   document.querySelectorAll('.appicon, .widget').forEach(el => {
@@ -2211,7 +2310,7 @@ document.getElementById('save_change_widget_position').onclick = () => {
       };
     }
   });
-  localStorage.setItem('widgetPositions', JSON.stringify(positions));
+  localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
   
   exitPositionChangeMode();
   
@@ -2257,18 +2356,14 @@ document.getElementById('save_change_widget_position').onclick = () => {
   initNormalModeDrag();
 }
 
-document.getElementById('appicon-add').onclick = () => {
-  document.getElementById('add_app_type_modal_overlay').style.display = 'flex';
-}
-
 // アプリ追加タイプ選択
 document.getElementById('add_web_app_btn').onclick = () => {
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   document.getElementById('add_newapp_modal_overlay').style.display = 'flex';
 }
 
 document.getElementById('add_linux_app_btn').onclick = () => {
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   document.getElementById('add_linuxapp_modal_overlay').style.display = 'flex';
 }
 
@@ -2294,6 +2389,7 @@ const translations = {
     files: "ファイル",
     settings: "設定",
     add_app: "アプリを追加",
+    add_widget: "ウィジェットを追加",
     upload_image: "アプリ画像をアップロード",
     app_name: "アプリ名",
     url: "URL",
@@ -2331,6 +2427,7 @@ const translations = {
     dark_mode: "ダークモード",
     edit: "編集",
     delete: "削除",
+    hide_widget: "ウィジェットを非表示",
     edit_app: "アプリを編集",
     edit_linux_app: "Linuxアプリを編集",
     change_image: "画像を変更",
@@ -2367,6 +2464,7 @@ const translations = {
     files: "Files",
     settings: "Settings",
     add_app: "Add an app",
+    add_widget: "Add a widget",
     upload_image: "Upload app image",
     app_name: "App Name",
     url: "URL",
@@ -2404,6 +2502,7 @@ const translations = {
     dark_mode: "Dark Mode",
     edit: "Edit",
     delete: "Delete",
+    hide_widget: "Hide widget",
     edit_app: "Edit App",
     edit_linux_app: "Edit Linux App",
     change_image: "Change Image",
@@ -2445,7 +2544,7 @@ function updateLanguage(lang) {
       el.textContent = translations[lang][key];
     }
   });
-  localStorage.setItem('language', lang);
+  localStorage.setItem(LS_KEYS.LANGUAGE, lang);
 }
 
 const languageSelector = document.getElementById('language_selector');
@@ -2454,7 +2553,7 @@ if (languageSelector) {
     updateLanguage(e.target.value);
   });
   
-  const currentLang = localStorage.getItem('language') || 'ja';
+  const currentLang = localStorage.getItem(LS_KEYS.LANGUAGE) || 'ja';
   languageSelector.value = currentLang;
   updateLanguage(currentLang);
 }
@@ -2476,12 +2575,12 @@ function updateColorScheme(scheme, customColor = null) {
     // カスタムカラーを適用
     document.body.classList.add('color-scheme-custom');
     applyCustomColor(customColor);
-    localStorage.setItem('colorScheme', 'custom');
-    localStorage.setItem('customColor', customColor);
+    localStorage.setItem(LS_KEYS.COLOR_SCHEME, 'custom');
+    localStorage.setItem(LS_KEYS.CUSTOM_COLOR, customColor);
   } else {
     // プリセットカラースキームを適用
     document.body.classList.add(`color-scheme-${scheme}`);
-    localStorage.setItem('colorScheme', scheme);
+    localStorage.setItem(LS_KEYS.COLOR_SCHEME, scheme);
   }
   
   // パレットの選択状態を更新
@@ -2607,8 +2706,8 @@ if (colorPalette) {
   });
   
   // 保存された設定を復元
-  const savedScheme = localStorage.getItem('colorScheme') || 'blue';
-  const savedCustomColor = localStorage.getItem('customColor');
+  const savedScheme = localStorage.getItem(LS_KEYS.COLOR_SCHEME) || 'blue';
+  const savedCustomColor = localStorage.getItem(LS_KEYS.CUSTOM_COLOR);
   
   if (savedScheme === 'custom' && savedCustomColor) {
     if (customColorPicker) {
@@ -2652,12 +2751,12 @@ function updateSettingsFabVisibility(isVisible) {
       toggleSettingsFabBtn.checked = isVisible;
     }
   }
-  localStorage.setItem('showSettingsFab', isVisible);
+  localStorage.setItem(LS_KEYS.SHOW_SETTINGS_FAB, isVisible);
 }
 
 if (toggleSettingsFabBtn) {
   // 保存された設定を復元（デフォルトは表示）
-  const showFab = localStorage.getItem('showSettingsFab') !== 'false';
+  const showFab = localStorage.getItem(LS_KEYS.SHOW_SETTINGS_FAB) !== 'false';
   updateSettingsFabVisibility(showFab);
   
   toggleSettingsFabBtn.addEventListener('change', (e) => {
@@ -2682,12 +2781,12 @@ function updateBlurEffect(isEnabled) {
       toggleBlurEffectBtn.checked = isEnabled;
     }
   }
-  localStorage.setItem('blurEffectEnabled', isEnabled);
+  localStorage.setItem(LS_KEYS.BLUR_EFFECT_ENABLED, isEnabled);
 }
 
 if (toggleBlurEffectBtn) {
   // 保存された設定を復元（デフォルトは有効）
-  const blurEnabled = localStorage.getItem('blurEffectEnabled') !== 'false';
+  const blurEnabled = localStorage.getItem(LS_KEYS.BLUR_EFFECT_ENABLED) !== 'false';
   updateBlurEffect(blurEnabled);
   
   toggleBlurEffectBtn.addEventListener('change', (e) => {
@@ -2712,12 +2811,12 @@ function updateDarkMode(isEnabled) {
       toggleDarkModeBtn.checked = isEnabled;
     }
   }
-  localStorage.setItem('darkModeEnabled', isEnabled);
+  localStorage.setItem(LS_KEYS.DARK_MODE_ENABLED, isEnabled);
 }
 
 if (toggleDarkModeBtn) {
   // 保存された設定を復元（デフォルトは無効）
-  const darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
+  const darkModeEnabled = localStorage.getItem(LS_KEYS.DARK_MODE_ENABLED) === 'true';
   updateDarkMode(darkModeEnabled);
   
   toggleDarkModeBtn.addEventListener('change', (e) => {
@@ -2854,11 +2953,11 @@ function createDesktopIcon(appData) {
   
   // saveKeyがなかった場合はlocalStorageを更新
   if (!appData.saveKey) {
-    const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+    const customApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
     const index = customApps.findIndex(a => a.name === appData.name && a.url === appData.url);
     if (index !== -1) {
       customApps[index].saveKey = saveKey;
-      localStorage.setItem('customApps', JSON.stringify(customApps));
+      localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(customApps));
     }
   }
   
@@ -2879,13 +2978,13 @@ function createDesktopIcon(appData) {
     showContextMenu(e, div, 'webapp');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
   if (positions[saveKey]) {
     div.style.position = positions[saveKey].position;
     div.style.left = positions[saveKey].left;
@@ -2915,9 +3014,9 @@ if (saveNewAppBtn) {
       saveKey: 'custom-app-' + name.replace(/\s+/g, '-') + '-' + Date.now()
     };
     
-    const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+    const customApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
     customApps.push(newApp);
-    localStorage.setItem('customApps', JSON.stringify(customApps));
+    localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(customApps));
     
     createDesktopIcon(newApp);
     
@@ -2943,7 +3042,7 @@ function isCustomAppInFolder(app) {
 }
 
 // Load saved apps (skip those in folders)
-const savedCustomApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+const savedCustomApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
 savedCustomApps.forEach(app => {
   if (!isCustomAppInFolder(app)) {
     createDesktopIcon(app);
@@ -2963,11 +3062,11 @@ function createLinuxAppIcon(appData) {
   
   // saveKeyがなかった場合はlocalStorageを更新
   if (!appData.saveKey) {
-    const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+    const linuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
     const index = linuxApps.findIndex(a => a.name === appData.name && a.command === appData.command);
     if (index !== -1) {
       linuxApps[index].saveKey = saveKey;
-      localStorage.setItem('linuxApps', JSON.stringify(linuxApps));
+      localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(linuxApps));
     }
   }
   
@@ -2998,13 +3097,13 @@ function createLinuxAppIcon(appData) {
     showContextMenu(e, div, 'linuxapp');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
   if (positions[saveKey]) {
     div.style.position = positions[saveKey].position;
     div.style.left = positions[saveKey].left;
@@ -3073,9 +3172,9 @@ if (saveLinuxAppBtn) {
       saveKey: 'linux-app-' + name.replace(/\s+/g, '-') + '-' + Date.now()
     };
     
-    const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+    const linuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
     linuxApps.push(newApp);
-    localStorage.setItem('linuxApps', JSON.stringify(linuxApps));
+    localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(linuxApps));
     
     createLinuxAppIcon(newApp);
     
@@ -3107,7 +3206,7 @@ function isLinuxAppInFolder(app) {
 }
 
 // Load saved Linux apps (skip those in folders)
-const savedLinuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+const savedLinuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
 savedLinuxApps.forEach(app => {
   if (!isLinuxAppInFolder(app)) {
     createLinuxAppIcon(app);
@@ -3122,7 +3221,7 @@ const mediaPlayerWidgetEl = document.querySelector('.media-player');
 if (mediaPlayerWidgetEl && !mediaPlayerWidgetEl.id) mediaPlayerWidgetEl.id = 'widget-media-player';
 
 function restoreWidgetPositions() {
-  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
   Object.keys(positions).forEach(key => {
     let el = document.getElementById(key);
     if (!el) {
@@ -3155,6 +3254,7 @@ const contextMenu = document.getElementById('app_context_menu');
 
 // コンテキストメニューを表示
 function showContextMenu(e, iconEl, appType) {
+  hideContextMenu();
   currentEditingIcon = iconEl;
   currentEditingApp = iconEl._appData;
   currentContextAppType = appType;
@@ -3175,11 +3275,116 @@ function showContextMenu(e, iconEl, appType) {
 
 // コンテキストメニューを非表示
 function hideContextMenu() {
-  contextMenu.style.display = 'none';
+  document.querySelectorAll('.context-menu').forEach(menu => {
+    menu.style.display = 'none';
+  });
 }
 
 // 画面クリックでコンテキストメニューを閉じる
 document.addEventListener('click', hideContextMenu);
+
+// デスクトップのコンテキストメニュー
+const desktopIconsContainer = document.getElementById('desktop_icons');
+const desktopContextMenu = document.getElementById('desktop_context_menu');
+
+if (desktopIconsContainer && desktopContextMenu) {
+  desktopIconsContainer.addEventListener('contextmenu', (e) => {
+    // アイコンやウィジェットの上で右クリックされた場合は、その要素のコンテキストメニューを優先
+    if (e.target.closest('.appicon, .widget')) {
+      return;
+    }
+    e.preventDefault();
+    hideContextMenu(); // 他のメニューを隠す
+    
+    desktopContextMenu.style.display = 'block';
+    desktopContextMenu.style.left = e.clientX + 'px';
+    desktopContextMenu.style.top = e.clientY + 'px';
+
+    // 画面外にはみ出ないように調整
+    const rect = desktopContextMenu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+      desktopContextMenu.style.left = (e.clientX - rect.width) + 'px';
+    }
+    if (rect.bottom > window.innerHeight) {
+      desktopContextMenu.style.top = (e.clientY - rect.height) + 'px';
+    }
+  });
+
+  document.getElementById('desktop_context_add_app').onclick = (e) => {
+    e.stopPropagation();
+    closeAllModals();
+    document.getElementById('add_app_type_modal_overlay').style.display = 'flex';
+  };
+  document.getElementById('desktop_context_add_widget').onclick = (e) => {
+    e.stopPropagation();
+    closeAllModals();
+    openAddWidgetModal();
+  };
+  document.getElementById('desktop_context_settings').onclick = (e) => {
+    e.stopPropagation();
+    closeAllModals();
+    document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
+  };
+  document.getElementById('desktop_context_change_position').onclick = (e) => {
+    e.stopPropagation();
+    // closeAllModals is called inside enterPositionChangeMode
+    enterPositionChangeMode();
+  };
+}
+
+// ========================================
+// ウィジェット追加モーダル
+// ========================================
+const addWidgetModalOverlay = document.getElementById('add_widget_modal_overlay');
+const closeAddWidgetModalBtn = document.getElementById('close_add_widget_modal');
+const widgetListContainer = document.getElementById('widget_list');
+
+function openAddWidgetModal() {
+  if (!widgetListContainer || !addWidgetModalOverlay) return;
+
+  widgetListContainer.innerHTML = ''; // リストをクリア
+
+  for (const widgetId in availableWidgets) {
+    const widgetInfo = availableWidgets[widgetId];
+    const btn = document.createElement('m3e-button');
+    btn.variant = 'outlined';
+    btn.textContent = widgetInfo.name;
+    btn.dataset.widgetId = widgetId;
+    btn.disabled = widgetVisibility[widgetId]; // 既に表示されている場合は無効化
+    btn.style.width = '100%';
+
+    btn.onclick = () => {
+      setWidgetVisibility(widgetId, true);
+      addWidgetModalOverlay.style.display = 'none';
+    };
+    widgetListContainer.appendChild(btn);
+  }
+
+  addWidgetModalOverlay.style.display = 'flex';
+}
+
+if (closeAddWidgetModalBtn) {
+  closeAddWidgetModalBtn.onclick = () => {
+    if (addWidgetModalOverlay) addWidgetModalOverlay.style.display = 'none';
+  };
+}
+
+// ========================================
+// ウィジェットのコンテキストメニュー
+// ========================================
+const widgetContextMenu = document.getElementById('widget_context_menu');
+let currentEditingWidget = null;
+
+function showWidgetContextMenu(e, widgetEl) {
+  e.preventDefault();
+  e.stopPropagation();
+  hideContextMenu(); // 他のメニューを隠す
+  currentEditingWidget = widgetEl;
+
+  widgetContextMenu.style.display = 'block';
+  widgetContextMenu.style.left = e.clientX + 'px';
+  widgetContextMenu.style.top = e.clientY + 'px';
+}
 
 // 編集ボタン
 document.getElementById('context_edit').onclick = (e) => {
@@ -3227,28 +3432,28 @@ document.getElementById('context_delete').onclick = (e) => {
     currentEditingIcon.remove();
     
     if (currentContextAppType === 'webapp') {
-      const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+      const customApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
       const newApps = customApps.filter(a => !(a.name === currentEditingApp.name && a.url === currentEditingApp.url));
-      localStorage.setItem('customApps', JSON.stringify(newApps));
+      localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(newApps));
     } else if (currentContextAppType === 'linuxapp') {
-      const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+      const linuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
       const newApps = linuxApps.filter(a => !(a.name === currentEditingApp.name && a.command === currentEditingApp.command));
-      localStorage.setItem('linuxApps', JSON.stringify(newApps));
+      localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(newApps));
     } else if (currentContextAppType === 'file') {
-      const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+      const fileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS) || '[]');
       const newShortcuts = fileShortcuts.filter(f => f.path !== currentEditingIcon._filePath);
-      localStorage.setItem('fileShortcuts', JSON.stringify(newShortcuts));
+      localStorage.setItem(LS_KEYS.FILE_SHORTCUTS, JSON.stringify(newShortcuts));
     } else if (currentContextAppType === 'folder-shortcut') {
-      const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+      const folderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
       const newShortcuts = folderShortcuts.filter(f => f.path !== currentEditingIcon._filePath);
-      localStorage.setItem('folderShortcuts', JSON.stringify(newShortcuts));
+      localStorage.setItem(LS_KEYS.FOLDER_SHORTCUTS, JSON.stringify(newShortcuts));
     }
     
     // 位置データも削除
-    const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+    const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
     if (positions[saveKey]) {
       delete positions[saveKey];
-      localStorage.setItem('widgetPositions', JSON.stringify(positions));
+      localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
     }
   }
 };
@@ -3285,6 +3490,7 @@ if (editWebappImageTrigger && editWebappImageInput) {
 }
 
 function openEditWebappModal() {
+  closeAllModals();
   if (!currentEditingApp) return;
   
   document.getElementById('edit_webapp_name').value = currentEditingApp.name;
@@ -3328,7 +3534,7 @@ document.getElementById('save_edit_webapp').onclick = () => {
   }
   
   // localStorageを更新
-  const customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+  const customApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
   const index = customApps.findIndex(a => a.name === currentEditingApp.name && a.url === currentEditingApp.url);
   
   const updatedApp = {
@@ -3340,7 +3546,7 @@ document.getElementById('save_edit_webapp').onclick = () => {
   if (index !== -1) {
     customApps[index] = updatedApp;
   }
-  localStorage.setItem('customApps', JSON.stringify(customApps));
+  localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(customApps));
   
   // アイコンを更新
   if (currentEditingIcon) {
@@ -3394,6 +3600,7 @@ if (editLinuxappImageTrigger && editLinuxappImageInput) {
 }
 
 function openEditLinuxappModal() {
+  closeAllModals();
   if (!currentEditingApp) return;
   
   document.getElementById('edit_linuxapp_name').value = currentEditingApp.name;
@@ -3569,6 +3776,7 @@ function hideGitHubTooltip() {
  * GitHub詳細モーダルを表示
  */
 function showGitHubDetailsModal(dateStr, count, level) {
+  closeAllModals();
   if (!githubDetailsModal) return;
   
   currentDetailDate = dateStr;
@@ -3789,7 +3997,7 @@ function populateGitHubYearSelect(data) {
  * GitHubウィジェットを更新
  */
 async function updateGitHubWidget() {
-  const username = localStorage.getItem('githubUsername');
+  const username = localStorage.getItem(LS_KEYS.GITHUB_USERNAME);
   
   if (!username) {
     if (githubGraph) {
@@ -3845,7 +4053,8 @@ if (githubSettingsBtn) {
   githubSettingsBtn.onclick = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    const savedUsername = localStorage.getItem('githubUsername') || '';
+    closeAllModals();
+    const savedUsername = localStorage.getItem(LS_KEYS.GITHUB_USERNAME) || '';
     if (githubUsernameInput) {
       githubUsernameInput.value = savedUsername;
     }
@@ -3864,9 +4073,9 @@ document.getElementById('close_github_settings_modal')?.addEventListener('click'
 document.getElementById('save_github_settings')?.addEventListener('click', async () => {
   const username = githubUsernameInput?.value?.trim();
   if (username) {
-    localStorage.setItem('githubUsername', username);
+    localStorage.setItem(LS_KEYS.GITHUB_USERNAME, username);
   } else {
-    localStorage.removeItem('githubUsername');
+    localStorage.removeItem(LS_KEYS.GITHUB_USERNAME);
   }
   
   if (githubSettingsModal) {
@@ -3883,7 +4092,7 @@ document.getElementById('close_github_details_modal')?.addEventListener('click',
 
 openGitHubActivityBtn?.addEventListener('click', () => {
   if (currentDetailDate) {
-    const username = localStorage.getItem('githubUsername');
+    const username = localStorage.getItem(LS_KEYS.GITHUB_USERNAME);
     if (username) {
       const url = `https://github.com/${username}?tab=overview&from=${currentDetailDate}&to=${currentDetailDate}`;
       window.open(url, '_blank');
@@ -3915,7 +4124,7 @@ const googleCalendarModeSelect = document.getElementById('google_calendar_mode_s
  * Google Calendarウィジェットを更新
  */
 function updateGoogleCalendarWidget() {
-  const calendarUrl = localStorage.getItem('googleCalendarUrl');
+  const calendarUrl = localStorage.getItem(LS_KEYS.GOOGLE_CALENDAR_URL);
 
   if (calendarUrl) {
     if (googleCalendarIframe.src !== calendarUrl) {
@@ -3951,7 +4160,8 @@ if (googleCalendarSettingsBtn) {
   };
   googleCalendarSettingsBtn.onclick = (e) => {
     e.stopPropagation();
-    const url = localStorage.getItem('googleCalendarUrl') || '';
+    closeAllModals();
+    const url = localStorage.getItem(LS_KEYS.GOOGLE_CALENDAR_URL) || '';
     googleCalendarUrlInput.value = url;
     
     // 現在のモードを検出してセレクトボックスに反映
@@ -3987,9 +4197,9 @@ document.getElementById('save_google_calendar_settings')?.addEventListener('clic
     const separator = url.includes('?') ? '&' : '?';
     url = `${url}${separator}mode=${mode}`;
 
-    localStorage.setItem('googleCalendarUrl', url);
+    localStorage.setItem(LS_KEYS.GOOGLE_CALENDAR_URL, url);
   } else {
-    localStorage.removeItem('googleCalendarUrl');
+    localStorage.removeItem(LS_KEYS.GOOGLE_CALENDAR_URL);
   }
   googleCalendarSettingsModal.style.display = 'none';
   updateGoogleCalendarWidget();
@@ -4036,7 +4246,7 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
     }
   
   // localStorageを更新
-  const linuxApps = JSON.parse(localStorage.getItem('linuxApps') || '[]');
+  const linuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
   const index = linuxApps.findIndex(a => a.name === currentEditingApp.name && a.command === currentEditingApp.command);
   
   const updatedApp = {
@@ -4049,7 +4259,7 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
   if (index !== -1) {
     linuxApps[index] = updatedApp;
   }
-  localStorage.setItem('linuxApps', JSON.stringify(linuxApps));
+  localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(linuxApps));
   
   // アイコンを更新
   if (currentEditingIcon) {
@@ -4108,11 +4318,11 @@ function createFileShortcutIcon(fileData) {
   
   // saveKeyがなかった場合はlocalStorageを更新
   if (!fileData.saveKey) {
-    const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+    const fileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS) || '[]');
     const index = fileShortcuts.findIndex(f => f.path === fileData.path);
     if (index !== -1) {
       fileShortcuts[index].saveKey = saveKey;
-      localStorage.setItem('fileShortcuts', JSON.stringify(fileShortcuts));
+      localStorage.setItem(LS_KEYS.FILE_SHORTCUTS, JSON.stringify(fileShortcuts));
     }
   }
   
@@ -4137,13 +4347,13 @@ function createFileShortcutIcon(fileData) {
     showContextMenu(e, div, 'file');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
   if (positions[saveKey]) {
     div.style.position = positions[saveKey].position;
     div.style.left = positions[saveKey].left;
@@ -4169,11 +4379,11 @@ function createFolderShortcutIcon(folderData) {
   
   // saveKeyがなかった場合はlocalStorageを更新
   if (!folderData.saveKey) {
-    const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+    const folderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
     const index = folderShortcuts.findIndex(f => f.path === folderData.path);
     if (index !== -1) {
       folderShortcuts[index].saveKey = saveKey;
-      localStorage.setItem('folderShortcuts', JSON.stringify(folderShortcuts));
+      localStorage.setItem(LS_KEYS.FOLDER_SHORTCUTS, JSON.stringify(folderShortcuts));
     }
   }
   
@@ -4198,13 +4408,13 @@ function createFolderShortcutIcon(folderData) {
     showContextMenu(e, div, 'folder-shortcut');
   };
   
-  const addBtn = document.getElementById('appicon-add');
-  if (addBtn && addBtn.parentNode) {
-    addBtn.parentNode.insertBefore(div, addBtn);
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.appendChild(div);
   }
   
   // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem('widgetPositions') || '{}');
+  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
   if (positions[saveKey]) {
     div.style.position = positions[saveKey].position;
     div.style.left = positions[saveKey].left;
@@ -4233,8 +4443,7 @@ function getFileIcon(filePath, isDirectory) {
 
 // ファイル追加ボタンのイベント
 document.getElementById('add_file_btn')?.addEventListener('click', async () => {
-  // モーダルを閉じる
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   
   // ファイル選択ダイアログを開く
   if (window.electronAPI && window.electronAPI.selectFile) {
@@ -4248,9 +4457,9 @@ document.getElementById('add_file_btn')?.addEventListener('click', async () => {
       };
       
       // localStorageに保存
-      const fileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+      const fileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS) || '[]');
       fileShortcuts.push(fileData);
-      localStorage.setItem('fileShortcuts', JSON.stringify(fileShortcuts));
+      localStorage.setItem(LS_KEYS.FILE_SHORTCUTS, JSON.stringify(fileShortcuts));
       
       // アイコンを作成
       createFileShortcutIcon(fileData);
@@ -4260,8 +4469,7 @@ document.getElementById('add_file_btn')?.addEventListener('click', async () => {
 
 // フォルダ追加ボタンのイベント
 document.getElementById('add_folder_btn')?.addEventListener('click', async () => {
-  // モーダルを閉じる
-  document.getElementById('add_app_type_modal_overlay').style.display = 'none';
+  closeAllModals();
   
   // フォルダ選択ダイアログを開く
   if (window.electronAPI && window.electronAPI.selectFolder) {
@@ -4275,9 +4483,9 @@ document.getElementById('add_folder_btn')?.addEventListener('click', async () =>
       };
       
       // localStorageに保存
-      const folderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+      const folderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
       folderShortcuts.push(folderData);
-      localStorage.setItem('folderShortcuts', JSON.stringify(folderShortcuts));
+      localStorage.setItem(LS_KEYS.FOLDER_SHORTCUTS, JSON.stringify(folderShortcuts));
       
       // アイコンを作成
       createFolderShortcutIcon(folderData);
@@ -4310,7 +4518,7 @@ function isFolderShortcutInFolder(folder) {
 }
 
 // 保存されたファイルショートカットを読み込み
-const savedFileShortcuts = JSON.parse(localStorage.getItem('fileShortcuts') || '[]');
+const savedFileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS) || '[]');
 savedFileShortcuts.forEach(file => {
   if (!isFileShortcutInFolder(file)) {
     createFileShortcutIcon(file);
@@ -4318,7 +4526,7 @@ savedFileShortcuts.forEach(file => {
 });
 
 // 保存されたフォルダショートカットを読み込み
-const savedFolderShortcuts = JSON.parse(localStorage.getItem('folderShortcuts') || '[]');
+const savedFolderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
 savedFolderShortcuts.forEach(folder => {
   if (!isFolderShortcutInFolder(folder)) {
     createFolderShortcutIcon(folder);
@@ -4330,7 +4538,7 @@ function applySavedWidgetSizes() {
   document.querySelectorAll('.widget').forEach(w => {
     const id = w.id || w.dataset.widgetKey;
     if (!id) return;
-    const raw = localStorage.getItem('widgetSize:' + id);
+    const raw = localStorage.getItem(`${LS_KEYS.WIDGET_SIZE_PREFIX}${id}`);
     if (!raw) return;
     try {
       const s = JSON.parse(raw);
@@ -4415,7 +4623,7 @@ function enableWidgetResizers() {
         if (id) {
           const w = widgetEl.offsetWidth;
           const h = widgetEl.offsetHeight;
-          localStorage.setItem('widgetSize:' + id, JSON.stringify({w,h}));
+          localStorage.setItem(`${LS_KEYS.WIDGET_SIZE_PREFIX}${id}`, JSON.stringify({w,h}));
         }
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
@@ -4436,7 +4644,7 @@ setTimeout(() => { applySavedWidgetSizes(); enableWidgetResizers(); }, 500);
 function resetWidgetSizes() {
   // localStorage キーを削除
   Object.keys(localStorage).forEach(k => {
-    if (k && k.startsWith('widgetSize:')) localStorage.removeItem(k);
+    if (k && k.startsWith(LS_KEYS.WIDGET_SIZE_PREFIX)) localStorage.removeItem(k);
   });
 
   // 要素のサイズをクリア
@@ -4503,4 +4711,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ウィジェットのコンテキストメニューを設定
+  Object.values(availableWidgets).forEach(widgetInfo => {
+    if (widgetInfo.element) {
+      widgetInfo.element.addEventListener('contextmenu', (e) => showWidgetContextMenu(e, widgetInfo.element));
+    }
+  });
+
+  // ウィジェット非表示ボタンの処理
+  document.getElementById('widget_context_hide').onclick = (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    if (currentEditingWidget) {
+      const widgetId = currentEditingWidget.id;
+      if (widgetId) {
+        setWidgetVisibility(widgetId, false);
+      }
+    }
+  };
+
+  loadWidgetVisibility();
+  applyWidgetVisibility();
 });

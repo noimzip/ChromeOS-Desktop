@@ -53,10 +53,6 @@
         <img src="./assets/settings.webp" />
         <p data-i18n="settings">Settings</p>
       </div>
-      <div class="appicon" id="appicon-add">
-        <img src="./assets/add.webp" />
-        <p data-i18n="add_app">Add an app</p>
-      </div>
     </div>
 
     <!-- アプリ追加タイプ選択メニュー -->
@@ -71,7 +67,18 @@
       </div>
     </div>
     
-    <div class="clock widget">
+    <!-- ウィジェット追加モーダル -->
+    <div id="add_widget_modal_overlay" class="modal_overlay">
+      <div id="add_widget_modal" class="modal">
+        <h3 data-i18n="add_widget">ウィジェットを追加</h3>
+        <div id="widget_list">
+          <!-- JSで動的に生成 -->
+        </div>
+        <m3e-button variant="filled" id="close_add_widget_modal" data-i18n="close">とじる</m3e-button>
+      </div>
+    </div>
+    
+    <div id="widget-clock" class="clock widget">
     <m3e-shape class="clock-background" name="12-sided-cookie">
       <div class="clock-surface"></div>
     </m3e-shape>
@@ -301,6 +308,20 @@
       <div class="context-menu-item" id="context_delete" data-i18n="delete">削除</div>
     </div>
 
+    <!-- デスクトップコンテキストメニュー -->
+    <div id="desktop_context_menu" class="context-menu" style="display: none;">
+      <div class="context-menu-item" id="desktop_context_add_app" data-i18n="add_app">アプリを追加</div>
+      <div class="context-menu-item" id="desktop_context_add_widget" data-i18n="add_widget">ウィジェットを追加</div>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-item" id="desktop_context_settings" data-i18n="settings">設定</div>
+      <div class="context-menu-item" id="desktop_context_change_position" data-i18n="change_position">位置の変更</div>
+    </div>
+
+    <!-- ウィジェットコンテキストメニュー -->
+    <div id="widget_context_menu" class="context-menu" style="display: none;">
+      <div class="context-menu-item" id="widget_context_hide" data-i18n="hide_widget">ウィジェットを非表示</div>
+    </div>
+
     <!-- Webアプリ編集モーダル -->
     <div id="edit_webapp_modal_overlay" class="modal_overlay">
       <div id="edit_webapp_modal" class="modal">
@@ -388,9 +409,11 @@
 
     <div id="change_widget_position_modal_overlay" class="modal_overlay">
       <div id="change_widget_position_modal" class="modal">
-        <div class="settings_row">
-          <span data-i18n="grid_mode">グリッドモード</span>
-          <m3e-button variant="filled" id="toggle_grid_mode" data-i18n="grid_mode_off">OFF</m3e-button>
+        <div class="settings-item" style="width: 100%;">
+          <div class="settings-item-label">
+            <span data-i18n="grid_mode">グリッドモード</span>
+          </div>
+          <m3e-switch id="toggle_grid_mode"></m3e-switch>
         </div>
         <m3e-button variant="filled" id="save_change_widget_position" data-i18n="save">保存</m3e-button>
         <m3e-button variant="filled" id="reset_widget_position" data-i18n="reset_position">位置をリセット</m3e-button>
@@ -575,5 +598,6 @@
       </div>
     </div>
     <div id="github_tooltip" class="github-tooltip"></div>
+    <div id="media_seek_tooltip" class="media-seek-tooltip"></div>
   </body>
 </html>
