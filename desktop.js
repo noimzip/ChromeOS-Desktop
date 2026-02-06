@@ -893,6 +893,15 @@ function createFolderIcon(folderId, folderData) {
   const previewDiv = document.createElement('div');
   previewDiv.className = 'folder-preview';
   
+  // スタイルを適用
+  if (folderData.style) {
+    const { color, opacity } = folderData.style;
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+    }
+  }
+  
   // 最大4つのアイコンをプレビュー表示
   folderData.apps.slice(0, 4).forEach(app => {
     const img = document.createElement('img');
@@ -1582,6 +1591,17 @@ function updateFolderIcon(folderId) {
   
   const previewDiv = folderEl.querySelector('.folder-preview');
   if (previewDiv) {
+    // スタイルを適用
+    if (folderData.style) {
+      const { color, opacity } = folderData.style;
+      const rgb = hexToRgb(color);
+      if (rgb) {
+        previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+      }
+    } else {
+      previewDiv.style.background = '';
+    }
+
     previewDiv.innerHTML = '';
     folderData.apps.slice(0, 4).forEach(app => {
       const img = document.createElement('img');
@@ -2834,6 +2854,7 @@ if (applyFolderStyleAllBtn) {
     Object.keys(folders).forEach(folderId => {
       folders[folderId].style = { color, opacity };
     });
+    Object.keys(folders).forEach(folderId => updateFolderIcon(folderId));
     saveFolders();
     
     // 開いているフォルダーがあれば更新
@@ -3574,6 +3595,7 @@ document.getElementById('close_folder_settings_modal').onclick = () => {
   if (currentSettingsFolderId) {
     applyFolderStyle(currentSettingsFolderId);
   }
+  if (currentSettingsFolderId) updateFolderIcon(currentSettingsFolderId);
   currentSettingsFolderId = null;
 };
 
@@ -3605,25 +3627,36 @@ document.getElementById('save_folder_settings').onclick = () => {
     if (title) title.textContent = folderData.name;
   }
   
+  updateFolderIcon(currentSettingsFolderId);
+  
   document.getElementById('folder_settings_modal_overlay').style.display = 'none';
   currentSettingsFolderId = null;
 };
 
 // 設定モーダルでのライブプレビュー（フォルダーが開いている場合）
 function updateFolderPreview() {
+  const color = document.getElementById('folder_settings_color').value;
+  const opacitySlider = document.getElementById('folder_settings_opacity');
+  const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
+  const rgb = hexToRgb(color);
+
   if (currentSettingsFolderId && currentOpenFolderId === currentSettingsFolderId) {
-    const color = document.getElementById('folder_settings_color').value;
-    const opacitySlider = document.getElementById('folder_settings_opacity');
-    const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
-    
     // 一時的にスタイル適用（保存はしない）
     const modal = document.getElementById('folder_modal');
-    const rgb = hexToRgb(color);
     if (rgb && modal) {
       modal.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
       const textColor = getContrastColor(rgb.r, rgb.g, rgb.b);
       modal.style.setProperty('--on-surface', textColor);
       modal.style.setProperty('--on-surface-variant', textColor);
+    }
+  }
+  
+  // アイコンのプレビューも更新
+  if (currentSettingsFolderId && rgb) {
+    const folderEl = document.querySelector(`[data-folder-id="${currentSettingsFolderId}"]`);
+    const previewDiv = folderEl?.querySelector('.folder-preview');
+    if (previewDiv) {
+      previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
     }
   }
 }
