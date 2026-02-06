@@ -969,8 +969,10 @@ function createFolderIcon(folderId, folderData) {
     const img = document.createElement('img');
     img.src = app.icon;
     previewDiv.appendChild(img);
-    // フォルダ内プレビュー画像に形状を適用
-    wrapImageWithShape(img, getCurrentIconShape());
+    if (!app.path) {
+      // フォルダ内プレビュー画像に形状を適用
+      wrapImageWithShape(img, getCurrentIconShape());
+    }
   });
   
   const nameP = document.createElement('p');
@@ -1306,18 +1308,20 @@ function renderFolderPage(folderId) {
     contents.appendChild(div);
 
     // 形状を適用（モーダル内のアイテムは後から生成されるため明示的にラップする）
-    try {
-      wrapIconWithShape(div, getCurrentIconShape());
-      // フォルダ内のアイテムは通常プレビューより大きめに表示
-      const wrapper = div.querySelector('m3e-shape');
-      if (wrapper) {
-        wrapper.style.width = '50px';
-        wrapper.style.height = '50px';
-        // ensure slotted img fills wrapper
-        wrapper.style.display = 'inline-block';
+    if (!app.path) {
+      try {
+        wrapIconWithShape(div, getCurrentIconShape());
+        // フォルダ内のアイテムは通常プレビューより大きめに表示
+        const wrapper = div.querySelector('m3e-shape');
+        if (wrapper) {
+          wrapper.style.width = '50px';
+          wrapper.style.height = '50px';
+          // ensure slotted img fills wrapper
+          wrapper.style.display = 'inline-block';
+        }
+      } catch (e) {
+        console.warn('Failed to apply shape to folder item:', e);
       }
-    } catch (e) {
-      console.warn('Failed to apply shape to folder item:', e);
     }
   });
   
@@ -1669,7 +1673,9 @@ function updateFolderIcon(folderId) {
       const img = document.createElement('img');
       img.src = app.icon;
       previewDiv.appendChild(img);
-      wrapImageWithShape(img, getCurrentIconShape());
+      if (!app.path) {
+        wrapImageWithShape(img, getCurrentIconShape());
+      }
     });
   }
 }
@@ -3105,9 +3111,6 @@ function createDesktopIcon(appData) {
     div.style.left = positions[saveKey].left;
     div.style.top = positions[saveKey].top;
   }
-  
-  // アイコン形状を適用
-  wrapIconWithShape(div, getCurrentIconShape());
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
@@ -4608,9 +4611,6 @@ function createFileShortcutIcon(fileData) {
     div.style.top = positions[saveKey].top;
   }
   
-  // アイコン形状を適用
-  wrapIconWithShape(div, getCurrentIconShape());
-  
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
   return div;
@@ -4671,9 +4671,6 @@ function createFolderShortcutIcon(folderData) {
     div.style.left = positions[saveKey].left;
     div.style.top = positions[saveKey].top;
   }
-  
-  // アイコン形状を適用
-  wrapIconWithShape(div, getCurrentIconShape());
   
   // 通常モードのドラッグを設定
   setupNormalModeDrag(div);
