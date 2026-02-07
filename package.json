@@ -10,7 +10,7 @@
   "license": "GPL3",
   "dependencies": {
     "@m3e/all": "^1.1.11",
-    "electron": "^40.1.0",
+    "electron": "^40.2.1",
     "ws": "^8.19.0"
   }
 }
