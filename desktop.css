@@ -943,7 +943,7 @@ body.no-blur .modal_overlay {
 #change_widget_position_modal_overlay {
   background-color: rgba(0, 0, 0, 0.15);
   backdrop-filter: none;
-  z-index: 10;
+  z-index: 100;
   pointer-events: none;
 }
 
@@ -964,6 +964,7 @@ body.no-blur .modal_overlay {
   gap: 16px;
   justify-content: center;
   pointer-events: auto;
+  z-index: 1000;
 }
 #change_widget_position_modal {
   flex-direction: column;

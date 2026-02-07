@@ -521,6 +521,9 @@ function enterPositionChangeMode() {
   // すべてのアイコンにドラッグイベントを設定
   document.querySelectorAll(".appicon,.widget").forEach(item => {
     setupDraggableItem(item);
+    if (item.classList.contains('widget')) {
+      item.style.zIndex = '15'; // オーバーレイ(10)より上
+    }
   });
   
   // グリッドモードのスイッチの状態を復元
@@ -547,6 +550,9 @@ function exitPositionChangeMode() {
   if (desktopIcons) {
     desktopIcons.style.zIndex = '';
   }
+  document.querySelectorAll('.widget').forEach(w => {
+    w.style.zIndex = '';
+  });
   
   // 位置変更モード終了時にクリックイベントを復元
   document.querySelectorAll(".appicon,.widget").forEach(item => {
