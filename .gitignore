@@ -1,5 +1,6 @@
 node_modules
 package-lock.json
+startup.log
 
 chrome_extension.crx
 chrome_extension.pem
