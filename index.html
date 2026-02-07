@@ -754,6 +754,26 @@
         </div>
       </div>
     </div>
+    <!-- カスタムシェイプ追加モーダル -->
+    <div id="add_custom_shape_modal_overlay" class="modal_overlay">
+      <div id="add_custom_shape_modal" class="modal">
+        <h3 data-i18n="add_custom_shape">カスタムシェイプを追加</h3>
+        <p class="modal-description" data-i18n="custom_shape_desc">SVGの clip-path (polygon または path) を入力してください。</p>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="custom_shape_name" data-i18n="shape_name">名前</label>
+          <input id="custom_shape_name" placeholder="my-awesome-shape" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="custom_shape_path" data-i18n="clip_path_value">clip-path 値</label>
+          <input id="custom_shape_path" placeholder="polygon(50% 0%, 0% 100%, 100% 100%)" />
+        </m3e-form-field>
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="close_add_custom_shape_modal" data-i18n="close">とじる</m3e-button>
+          <m3e-button variant="filled" id="save_custom_shape" data-i18n="save">保存</m3e-button>
+        </div>
+      </div>
+    </div>
+
     <div id="github_tooltip" class="github-tooltip"></div>
     <div id="media_seek_tooltip" class="media-seek-tooltip"></div>
   </body>

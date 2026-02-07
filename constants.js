@@ -23,6 +23,7 @@ const LS_KEYS = {
   GRID_MODE_ENABLED: 'gridModeEnabled',
   ICON_SHAPE: 'iconShape',
   CLOCK_SHAPE: 'clockShape',
+  CUSTOM_SHAPES: 'customShapes',
   COLOR_SCHEME: 'colorScheme',
   CUSTOM_COLOR: 'customColor',
   SHOW_SETTINGS_FAB: 'showSettingsFab',

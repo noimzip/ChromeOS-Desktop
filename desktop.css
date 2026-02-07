@@ -1468,6 +1468,51 @@ body.no-blur .folder-drag-clone {
 }
 
 /* Icon Shape Buttons */
+.custom-shape-wrapper {
+  display: inline-block;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: var(--m3e-shape-size, 3rem);
+  overflow: hidden;
+  background-color: var(--md-sys-color-primary);
+}
+
+.custom-shape-wrapper img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.add-shape-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px dashed var(--md-sys-color-outline);
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-shape-button:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  border-style: solid;
+}
+
+.appicon > .custom-shape-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.appicon > .custom-shape-wrapper img {
+  border-radius: 0;
+}
+
 #icon_shape_buttons,
 #clock_shape_buttons,
 .shape-buttons-grid {

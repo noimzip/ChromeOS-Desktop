@@ -34,15 +34,38 @@ window.wrapIconWithShape = function(appiconEl, shape) {
   const img = appiconEl.querySelector('img');
   if (!img) return;
 
-  const parentTag = img.parentElement && img.parentElement.tagName && img.parentElement.tagName.toLowerCase();
+  const parent = img.parentElement;
+  const parentTag = parent && parent.tagName && parent.tagName.toLowerCase();
 
   // square/circle は CSS の border-radius で処理する — m3e-shape が不要
   if (shape === 'square' || shape === 'circle') {
-    // もし m3e-shape でラップされていればアンラップする
-    if (parentTag === 'm3e-shape') {
-      const wrapper = img.parentElement;
-      wrapper.replaceWith(img);
+    if (parentTag === 'm3e-shape' || (parent && parent.classList.contains('custom-shape-wrapper'))) {
+      parent.replaceWith(img);
     }
+    return;
+  }
+
+  // カスタムシェイプのチェック
+  const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
+  if (customShapes[shape]) {
+    if (parent && parent.classList.contains('custom-shape-wrapper')) {
+      parent.style.clipPath = customShapes[shape];
+      return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-shape-wrapper';
+    wrapper.style.clipPath = customShapes[shape];
+    img.replaceWith(wrapper);
+    wrapper.appendChild(img);
+    return;
+  }
+
+  // もし custom-shape-wrapper でラップされていれば m3e-shape に戻すために置換準備
+  if (parent && parent.classList.contains('custom-shape-wrapper')) {
+    const wrapper = document.createElement('m3e-shape');
+    wrapper.setAttribute('name', shape);
+    parent.replaceWith(wrapper);
+    wrapper.appendChild(img);
     return;
   }
 
@@ -62,7 +85,7 @@ window.wrapIconWithShape = function(appiconEl, shape) {
     const wrapper = document.createElement('m3e-shape');
     wrapper.setAttribute('name', shape);
     // move the image into wrapper
-    appiconEl.replaceChild(wrapper, img);
+    img.replaceWith(wrapper);
     wrapper.appendChild(img);
   } catch (e) {
     // 何か失敗したらフォールバックで何もしない
@@ -73,14 +96,36 @@ window.wrapIconWithShape = function(appiconEl, shape) {
 
 window.wrapImageWithShape = function(img, shape) {
   if (!img) return;
-  const parentTag = img.parentElement && img.parentElement.tagName && img.parentElement.tagName.toLowerCase();
+  const parent = img.parentElement;
+  const parentTag = parent && parent.tagName && parent.tagName.toLowerCase();
 
   if (shape === 'square' || shape === 'circle') {
-    // アンラップが必要ならアンラップ
-    if (parentTag === 'm3e-shape') {
-      const wrapper = img.parentElement;
-      wrapper.replaceWith(img);
+    if (parentTag === 'm3e-shape' || (parent && parent.classList.contains('custom-shape-wrapper'))) {
+      parent.replaceWith(img);
     }
+    return;
+  }
+
+  // カスタムシェイプのチェック
+  const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
+  if (customShapes[shape]) {
+    if (parent && parent.classList.contains('custom-shape-wrapper')) {
+      parent.style.clipPath = customShapes[shape];
+      return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-shape-wrapper';
+    wrapper.style.clipPath = customShapes[shape];
+    img.replaceWith(wrapper);
+    wrapper.appendChild(img);
+    return;
+  }
+
+  if (parent && parent.classList.contains('custom-shape-wrapper')) {
+    const wrapper = document.createElement('m3e-shape');
+    wrapper.setAttribute('name', shape);
+    parent.replaceWith(wrapper);
+    wrapper.appendChild(img);
     return;
   }
 
@@ -124,8 +169,64 @@ window.applyShapeToAll = function(shape) {
 // 時計に形状を適用する
 window.applyClockShape = function(shape) {
   const clockBg = document.querySelector('.clock-background');
-  if (clockBg && clockBg.tagName === 'M3E-SHAPE') {
+  if (!clockBg) return;
+
+  // square/circle は CSS の border-radius で処理する — m3e-shape が不要
+  if (shape === 'square' || shape === 'circle') {
+    if (clockBg.tagName === 'M3E-SHAPE' || clockBg.classList.contains('custom-shape-wrapper')) {
+      const surface = clockBg.querySelector('.clock-surface');
+      if (surface) {
+        const newDiv = document.createElement('div');
+        newDiv.className = 'clock-background';
+        newDiv.appendChild(surface);
+        clockBg.replaceWith(newDiv);
+      }
+    }
+    return;
+  }
+
+  // カスタムシェイプのチェック
+  const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
+  if (customShapes[shape]) {
+    const surface = clockBg.querySelector('.clock-surface');
+    if (!surface) return;
+
+    if (clockBg.classList.contains('custom-shape-wrapper')) {
+      clockBg.style.clipPath = customShapes[shape];
+    } else {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'clock-background custom-shape-wrapper';
+      wrapper.style.clipPath = customShapes[shape];
+      clockBg.replaceWith(wrapper);
+      wrapper.appendChild(surface);
+    }
+    return;
+  }
+
+  // もし custom-shape-wrapper でラップされていれば m3e-shape に戻す
+  if (clockBg.classList.contains('custom-shape-wrapper')) {
+    const surface = clockBg.querySelector('.clock-surface');
+    if (surface) {
+      const wrapper = document.createElement('m3e-shape');
+      wrapper.className = 'clock-background';
+      wrapper.setAttribute('name', shape);
+      clockBg.replaceWith(wrapper);
+      wrapper.appendChild(surface);
+    }
+    return;
+  }
+
+  if (clockBg.tagName === 'M3E-SHAPE') {
     clockBg.setAttribute('name', shape);
+  } else {
+    const surface = clockBg.querySelector('.clock-surface');
+    if (surface) {
+      const wrapper = document.createElement('m3e-shape');
+      wrapper.className = 'clock-background';
+      wrapper.setAttribute('name', shape);
+      clockBg.replaceWith(wrapper);
+      wrapper.appendChild(surface);
+    }
   }
 };
 
@@ -1224,42 +1325,13 @@ document.getElementById('context_shape').onclick = (e) => {
 };
 
 function openIconIndividualShapeModal(iconEl) {
-  const container = document.getElementById('icon_individual_shape_buttons');
-  if (!container) return;
-  
-  container.innerHTML = '';
+  const containerId = 'icon_individual_shape_buttons';
   const currentShape = iconEl.dataset.shape || '';
-  
-  let selectedBtn = null;
-  function markSelected(btn) {
-    if (selectedBtn) selectedBtn.classList.remove('selected');
-    selectedBtn = btn;
-    if (selectedBtn) selectedBtn.classList.add('selected');
-  }
+  const imgSrc = iconEl.querySelector('img')?.src;
 
-  SHAPES.forEach(s => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.title = s;
-    
-    const preview = document.createElement('m3e-shape');
-    preview.setAttribute('name', s);
-    const img = document.createElement('img');
-    img.src = iconEl.querySelector('img')?.src || './assets/settings.webp';
-    img.alt = s;
-    preview.appendChild(img);
-    btn.appendChild(preview);
-
-    btn.addEventListener('click', () => {
-      updateIndividualIconShape(iconEl, s);
-      markSelected(btn);
-    });
-
-    if (s === currentShape) {
-      markSelected(btn);
-    }
-    container.appendChild(btn);
-  });
+  setupShapeButtons(containerId, currentShape, (s) => {
+    updateIndividualIconShape(iconEl, s);
+  }, imgSrc);
 
   document.getElementById('icon_individual_shape_modal_overlay').style.display = 'flex';
 }
@@ -1992,9 +2064,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // アイコン形状選択UIの生成
-  function setupShapeButtons(containerId, currentShape, onSelect) {
+  function setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc = './assets/settings.webp') {
     const container = document.getElementById(containerId);
     if (!container) return;
+    container.innerHTML = '';
 
     let selectedBtn = null;
     function markSelected(btn) {
@@ -2003,18 +2076,48 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedBtn) selectedBtn.classList.add('selected');
     }
 
-    SHAPES.forEach(s => {
+    const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
+    const allShapes = [...SHAPES, ...Object.keys(customShapes)];
+
+    allShapes.forEach(s => {
       const btn = document.createElement('button');
       btn.type = 'button';
+      btn.className = 'shape-button';
       btn.title = s;
       
-      const preview = document.createElement('m3e-shape');
-      preview.setAttribute('name', s);
-      const img = document.createElement('img');
-      img.src = './assets/settings.webp';
-      img.alt = s;
-      preview.appendChild(img);
-      btn.appendChild(preview);
+      if (customShapes[s]) {
+        // カスタムシェイプのプレビュー
+        const preview = document.createElement('div');
+        preview.className = 'custom-shape-wrapper';
+        preview.style.clipPath = customShapes[s];
+        preview.style.width = '32px';
+        preview.style.height = '32px';
+        
+        const img = document.createElement('img');
+        img.src = previewImgSrc;
+        img.alt = s;
+        preview.appendChild(img);
+        btn.appendChild(preview);
+        
+        // 右クリックで削除
+        btn.oncontextmenu = (e) => {
+          e.preventDefault();
+          if (confirm(`Delete custom shape "${s}"?`)) {
+            delete customShapes[s];
+            localStorage.setItem(LS_KEYS.CUSTOM_SHAPES, JSON.stringify(customShapes));
+            setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc);
+          }
+        };
+      } else {
+        // ビルトインシェイプ
+        const preview = document.createElement('m3e-shape');
+        preview.setAttribute('name', s);
+        const img = document.createElement('img');
+        img.src = previewImgSrc;
+        img.alt = s;
+        preview.appendChild(img);
+        btn.appendChild(preview);
+      }
 
       btn.addEventListener('click', () => {
         onSelect(s);
@@ -2026,6 +2129,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       container.appendChild(btn);
     });
+
+    // 追加ボタン
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'add-shape-button';
+    addBtn.innerHTML = '<m3e-icon name="add"></m3e-icon>';
+    addBtn.title = 'Add Custom Shape';
+    addBtn.onclick = () => openAddCustomShapeModal(() => {
+        // 全てのシェイプボタンを更新
+        const iconShapes = document.getElementById('icon_shape_buttons');
+        if (iconShapes) setupShapeButtons('icon_shape_buttons', window.getCurrentIconShape(), (s) => window.StyleManager.updateIconShape(s));
+        
+        const clockShapes = document.getElementById('clock_shape_buttons');
+        if (clockShapes) setupShapeButtons('clock_shape_buttons', window.getCurrentClockShape(), (s) => window.StyleManager.updateClockShape(s));
+        
+        const individualShapes = document.getElementById('icon_individual_shape_buttons');
+        if (individualShapes && currentEditingIcon) {
+            setupShapeButtons('icon_individual_shape_buttons', currentEditingIcon.dataset.shape || '', (s) => updateIndividualIconShape(currentEditingIcon, s), currentEditingIcon.querySelector('img')?.src);
+        }
+    });
+    container.appendChild(addBtn);
   }
 
   setupShapeButtons('icon_shape_buttons', getCurrentIconShape(), (s) => {
@@ -2118,6 +2242,38 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('close_widget_settings_modal').onclick = () => {
     document.getElementById('widget_settings_modal_overlay').style.display = 'none';
   };
+
+  function openAddCustomShapeModal(onSaved) {
+    const modal = document.getElementById('add_custom_shape_modal_overlay');
+    const nameInput = document.getElementById('custom_shape_name');
+    const pathInput = document.getElementById('custom_shape_path');
+    const saveBtn = document.getElementById('save_custom_shape');
+    const closeBtn = document.getElementById('close_add_custom_shape_modal');
+
+    nameInput.value = '';
+    pathInput.value = '';
+    modal.style.display = 'flex';
+
+    closeBtn.onclick = () => {
+      modal.style.display = 'none';
+    };
+
+    saveBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      const path = pathInput.value.trim();
+      if (!name || !path) {
+        alert('Please enter both name and path.');
+        return;
+      }
+      
+      const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
+      customShapes[name] = path;
+      localStorage.setItem(LS_KEYS.CUSTOM_SHAPES, JSON.stringify(customShapes));
+      
+      modal.style.display = 'none';
+      if (onSaved) onSaved();
+    };
+  }
 
   loadWidgetVisibility();
   applyWidgetVisibility();
