@@ -22,6 +22,7 @@ const LS_KEYS = {
   LANGUAGE: 'language',
   GRID_MODE_ENABLED: 'gridModeEnabled',
   ICON_SHAPE: 'iconShape',
+  CLOCK_SHAPE: 'clockShape',
   COLOR_SCHEME: 'colorScheme',
   CUSTOM_COLOR: 'customColor',
   SHOW_SETTINGS_FAB: 'showSettingsFab',

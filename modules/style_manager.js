@@ -103,6 +103,16 @@ window.StyleManager = {
   },
 
   /**
+   * 時計の形状を更新
+   */
+  updateClockShape(shape) {
+    if (typeof window.applyClockShape === 'function') {
+      window.applyClockShape(shape);
+    }
+    localStorage.setItem(LS_KEYS.CLOCK_SHAPE, shape);
+  },
+
+  /**
    * テーマを適用（ライト/ダーク/システム）
    */
   applyTheme(mode) {

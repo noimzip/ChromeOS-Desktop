@@ -23,6 +23,10 @@ window.getCurrentIconShape = function() {
   return localStorage.getItem(LS_KEYS.ICON_SHAPE) || 'square';
 };
 
+window.getCurrentClockShape = function() {
+  return localStorage.getItem(LS_KEYS.CLOCK_SHAPE) || '12-sided-cookie';
+};
+
 
 
 window.wrapIconWithShape = function(appiconEl, shape) {
@@ -107,8 +111,10 @@ window.applyShapeToAll = function(shape) {
   // フォルダアイコンのプレビュー画像
   const folderImages = document.querySelectorAll('.appicon.folder .folder-preview img');
   folderImages.forEach(img => window.wrapImageWithShape(img, shape));
+};
 
-  // 時計の背景形状
+// 時計に形状を適用する
+window.applyClockShape = function(shape) {
   const clockBg = document.querySelector('.clock-background');
   if (clockBg && clockBg.tagName === 'M3E-SHAPE') {
     clockBg.setAttribute('name', shape);
@@ -1055,6 +1061,7 @@ initNormalModeDrag();
 // 起動時に保存された形状を全アイコン（およびフォルダ内プレビュー）に適用
 try {
   applyShapeToAll(getCurrentIconShape());
+  applyClockShape(getCurrentClockShape());
 } catch (e) {
   console.warn('Failed to apply shapes on init:', e);
 }
@@ -1830,14 +1837,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // アイコン形状選択UIの生成
-  const shapeButtonContainer = document.getElementById('icon_shape_buttons');
-  if (shapeButtonContainer) {
-    const shapes = [
-      "square", "circle", "rounded", "cut",
-      "4-leaf-clover", "4-sided-cookie", "6-sided-cookie", "7-sided-cookie", "8-leaf-clover", "9-sided-cookie", "12-sided-cookie",
-      "arch", "arrow", "boom", "bun", "burst", "diamond", "fan", "flower", "gem", "ghost-ish", "heart", "hexagon", "oval", "pentagon", "pill", "pixel-circle", "pixel-triangle", "puffy", "puffy-diamond", "semicircle", "slanted", "soft-boom", "soft-burst", "sunny", "triangle", "very-sunny"
-    ];
-    const currentShape = getCurrentIconShape();
+  const shapes = [
+    "square", "circle", "rounded", "cut",
+    "4-leaf-clover", "4-sided-cookie", "6-sided-cookie", "7-sided-cookie", "8-leaf-clover", "9-sided-cookie", "12-sided-cookie",
+    "arch", "arrow", "boom", "bun", "burst", "diamond", "fan", "flower", "gem", "ghost-ish", "heart", "hexagon", "oval", "pentagon", "pill", "pixel-circle", "pixel-triangle", "puffy", "puffy-diamond", "semicircle", "slanted", "soft-boom", "soft-burst", "sunny", "triangle", "very-sunny"
+  ];
+
+  function setupShapeButtons(containerId, currentShape, onSelect) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
     let selectedBtn = null;
     function markSelected(btn) {
@@ -1860,16 +1868,24 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.appendChild(preview);
 
       btn.addEventListener('click', () => {
-        updateIconShape(s);
+        onSelect(s);
         markSelected(btn);
       });
 
       if (s === currentShape) {
         markSelected(btn);
       }
-      shapeButtonContainer.appendChild(btn);
+      container.appendChild(btn);
     });
   }
+
+  setupShapeButtons('icon_shape_buttons', getCurrentIconShape(), (s) => {
+    window.StyleManager.updateIconShape(s);
+  });
+
+  setupShapeButtons('clock_shape_buttons', getCurrentClockShape(), (s) => {
+    window.StyleManager.updateClockShape(s);
+  });
 
   // ウィジェットのコンテキストメニューを設定
   Object.values(availableWidgets).forEach(widgetInfo => {
