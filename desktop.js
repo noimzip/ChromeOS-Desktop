@@ -269,6 +269,7 @@ document.getElementById('open_settingsmenu_modal').onclick = () => {
   closeAllModals();
   initDisplaySelector(); // 設定メニューを開くたびにディスプレイ情報を更新
   initWindowResizableSwitch();
+  initAutoOpenDevToolsSwitch();
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
@@ -800,6 +801,9 @@ const initDisplaySelector = window.SystemSettingsManager.initDisplaySelector.bin
 
 // ウィンドウリサイズ設定の初期化
 const initWindowResizableSwitch = window.SystemSettingsManager.initWindowResizableSwitch.bind(window.SystemSettingsManager);
+
+// デベロッパーツール自動起動設定の初期化
+const initAutoOpenDevToolsSwitch = window.SystemSettingsManager.initAutoOpenDevToolsSwitch.bind(window.SystemSettingsManager);
 
 // 適用ボタンのイベント
 if (applyWindowCountBtn && windowCountSelector) {

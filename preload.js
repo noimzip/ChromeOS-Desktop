@@ -36,6 +36,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setTargetDisplay: (displayId) => ipcRenderer.invoke('set-target-display', displayId),
   getWindowResizable: () => ipcRenderer.invoke('get-window-resizable'),
   setWindowResizable: (resizable) => ipcRenderer.invoke('set-window-resizable', resizable),
+  getAutoOpenDevTools: () => ipcRenderer.invoke('get-auto-open-devtools'),
+  setAutoOpenDevTools: (autoOpen) => ipcRenderer.invoke('set-auto-open-devtools', autoOpen),
   restartApp: () => ipcRenderer.invoke('restart-app'),
   openDevTools: () => ipcRenderer.invoke('open-devtools'),
   openGoogleLogin: () => ipcRenderer.invoke('open-google-login'),

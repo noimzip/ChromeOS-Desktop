@@ -90,6 +90,7 @@
   "delete_all_data": "Delete all data",
   "user_agent": "User Agent:",
   "open_devtools": "Open Developer Tools",
+  "auto_open_devtools": "Open DevTools at startup",
   "open": "Open",
 
   "select": "Select"

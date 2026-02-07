@@ -90,6 +90,7 @@
   "delete_all_data": "すべてのデータを削除",
   "user_agent": "ユーザーエージェント:",
   "open_devtools": "開発者ツールを開く",
+  "auto_open_devtools": "起動時に開発者ツールを開く",
   "open": "開く",
 
   "select": "選択"

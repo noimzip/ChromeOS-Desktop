@@ -73,5 +73,29 @@ window.SystemSettingsManager = {
         console.error('Failed to init window resizable switch:', e);
       }
     }
+  },
+
+  /**
+   * デベロッパーツール自動起動設定の初期化
+   */
+  async initAutoOpenDevToolsSwitch() {
+    const btn = document.getElementById('toggle_auto_open_devtools');
+    if (btn && window.electronAPI && window.electronAPI.getAutoOpenDevTools) {
+      try {
+        const autoOpen = await window.electronAPI.getAutoOpenDevTools();
+        if (typeof btn.selected !== 'undefined') {
+          btn.selected = autoOpen;
+        } else {
+          btn.checked = autoOpen;
+        }
+        
+        btn.addEventListener('change', async (e) => {
+          const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+          await window.electronAPI.setAutoOpenDevTools(newState);
+        });
+      } catch (e) {
+        console.error('Failed to init auto open devtools switch:', e);
+      }
+    }
   }
 };

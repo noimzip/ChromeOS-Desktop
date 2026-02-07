@@ -141,6 +141,19 @@ ipcMain.handle('set-window-resizable', async (event, resizable) => {
   }
 });
 
+// デベロッパーツールの自動起動設定を取得
+ipcMain.handle('get-auto-open-devtools', async () => {
+  const settings = loadSettings();
+  return settings.autoOpenDevTools !== undefined ? settings.autoOpenDevTools : false;
+});
+
+// デベロッパーツールの自動起動設定を保存
+ipcMain.handle('set-auto-open-devtools', async (event, autoOpen) => {
+  const settings = loadSettings();
+  settings.autoOpenDevTools = autoOpen;
+  saveSettings(settings);
+});
+
 // アプリを再起動するIPCハンドラ
 ipcMain.handle('restart-app', async () => {
   app.relaunch();
@@ -372,6 +385,7 @@ app.whenReady().then(() => {
   // 設定からウィンドウ数を取得
   const windowCount = settings.windowCount || 1;
   const windowResizable = settings.windowResizable !== undefined ? settings.windowResizable : true;
+  const autoOpenDevTools = settings.autoOpenDevTools !== undefined ? settings.autoOpenDevTools : false;
   
   console.log('Creating', windowCount, 'window(s)');
   // 複数のウィンドウを作成
@@ -407,8 +421,8 @@ app.whenReady().then(() => {
     // ウィンドウIDを渡してロード
     win.loadFile('index.html', { query: { windowId: i.toString() } });
     
-    // 最初のウィンドウのみDevToolsを開く
-    if (i === 0) {
+    // DevToolsの自動起動設定に従う（最初のウィンドウのみ）
+    if (i === 0 && autoOpenDevTools) {
       win.webContents.openDevTools();
     }
     
