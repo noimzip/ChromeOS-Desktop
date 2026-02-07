@@ -79,6 +79,8 @@
   "system_settings": "システム設定",
   "settings_button_label": "設定ボタン",
   "target_display": "ターゲットディスプレイ",
+  "window_resizable": "ウィンドウのリサイズ",
+  "window_resizable_desc": "ウィンドウサイズの変更を許可する",
   "window_count": "ウィンドウ数",
   "apply_restart": "適用",
 

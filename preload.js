@@ -74,6 +74,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDisplays: () => ipcRenderer.invoke('get-displays'),
   getTargetDisplayId: () => ipcRenderer.invoke('get-target-display-id'),
   setTargetDisplay: (displayId) => ipcRenderer.invoke('set-target-display', displayId),
+  getWindowResizable: () => ipcRenderer.invoke('get-window-resizable'),
+  setWindowResizable: (resizable) => ipcRenderer.invoke('set-window-resizable', resizable),
   restartApp: () => ipcRenderer.invoke('restart-app'),
   openGoogleLogin: () => ipcRenderer.invoke('open-google-login'),
   // ブラウザメディア用API

@@ -760,6 +760,7 @@ document.getElementById('close_menu_modal').onclick = () => {
 document.getElementById('open_settingsmenu_modal').onclick = () => {
   closeAllModals();
   initDisplaySelector(); // 設定メニューを開くたびにディスプレイ情報を更新
+  initWindowResizableSwitch();
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
@@ -3182,6 +3183,29 @@ async function initDisplaySelector() {
       };
     } catch (e) {
       console.error('Failed to init display selector:', e);
+    }
+  }
+}
+
+// ウィンドウリサイズ設定の初期化
+const toggleWindowResizableBtn = document.getElementById('toggle_window_resizable');
+
+async function initWindowResizableSwitch() {
+  if (toggleWindowResizableBtn && window.electronAPI && window.electronAPI.getWindowResizable) {
+    try {
+      const resizable = await window.electronAPI.getWindowResizable();
+      if (typeof toggleWindowResizableBtn.selected !== 'undefined') {
+        toggleWindowResizableBtn.selected = resizable;
+      } else {
+        toggleWindowResizableBtn.checked = resizable;
+      }
+      
+      toggleWindowResizableBtn.addEventListener('change', async (e) => {
+        const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+        await window.electronAPI.setWindowResizable(newState);
+      });
+    } catch (e) {
+      console.error('Failed to init window resizable switch:', e);
     }
   }
 }

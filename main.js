@@ -74,6 +74,25 @@ ipcMain.handle('set-target-display', async (event, displayId) => {
   }
 });
 
+// ウィンドウのリサイズ設定を取得
+ipcMain.handle('get-window-resizable', async () => {
+  const settings = loadSettings();
+  return settings.windowResizable !== undefined ? settings.windowResizable : true;
+});
+
+// ウィンドウのリサイズ設定を保存
+ipcMain.handle('set-window-resizable', async (event, resizable) => {
+  const settings = loadSettings();
+  settings.windowResizable = resizable;
+  saveSettings(settings);
+  
+  for (const win of windows) {
+    if (win && !win.isDestroyed()) {
+      win.setResizable(resizable);
+    }
+  }
+});
+
 // アプリを再起動するIPCハンドラ
 ipcMain.handle('restart-app', async () => {
   app.relaunch();
@@ -271,6 +290,7 @@ app.whenReady().then(() => {
 
   // 設定からウィンドウ数を取得
   const windowCount = settings.windowCount || 1;
+  const windowResizable = settings.windowResizable !== undefined ? settings.windowResizable : true;
   
   console.log('Creating', windowCount, 'window(s)');
   // 複数のウィンドウを作成
@@ -282,6 +302,7 @@ app.whenReady().then(() => {
       height: height,
       frame: false,
       transparent: true,
+      resizable: windowResizable,
       webPreferences: {
         preload: path.join(process.cwd(), 'preload.js'),
         sandbox: false

@@ -79,6 +79,8 @@
   "system_settings": "System",
   "settings_button_label": "Settings Button",
   "target_display": "Target Display",
+  "window_resizable": "Window Resizable",
+  "window_resizable_desc": "Allow window resizing",
   "window_count": "Window Count",
   "apply_restart": "Apply",
 
