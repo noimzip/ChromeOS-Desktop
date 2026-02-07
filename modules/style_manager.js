@@ -103,6 +103,42 @@ window.StyleManager = {
   },
 
   /**
+   * 時計の形状を更新
+   */
+  updateClockShape(shape) {
+    if (typeof window.applyClockShape === 'function') {
+      window.applyClockShape(shape);
+    }
+    localStorage.setItem(LS_KEYS.CLOCK_SHAPE, shape);
+  },
+
+  /**
+   * メディアプレーヤーのパーツ表示・非表示を更新
+   */
+  updateMediaPlayerVisibility(part, isVisible) {
+    const player = document.getElementById('media_player_widget');
+    if (!player) return;
+
+    switch (part) {
+      case 'seekbar':
+        const seekbar = player.querySelector('.media-seekbar');
+        if (seekbar) seekbar.style.display = isVisible ? '' : 'none';
+        localStorage.setItem(LS_KEYS.MEDIA_PLAYER_SHOW_SEEKBAR, isVisible);
+        break;
+      case 'shuffle':
+        const shuffle = document.getElementById('media_shuffle');
+        if (shuffle) shuffle.style.display = isVisible ? '' : 'none';
+        localStorage.setItem(LS_KEYS.MEDIA_PLAYER_SHOW_SHUFFLE, isVisible);
+        break;
+      case 'repeat':
+        const repeat = document.getElementById('media_repeat');
+        if (repeat) repeat.style.display = isVisible ? '' : 'none';
+        localStorage.setItem(LS_KEYS.MEDIA_PLAYER_SHOW_REPEAT, isVisible);
+        break;
+    }
+  },
+
+  /**
    * テーマを適用（ライト/ダーク/システム）
    */
   applyTheme(mode) {

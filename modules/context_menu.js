@@ -85,6 +85,13 @@ window.ContextMenuManager = {
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
 
+    // 設定項目があるウィジェットのみ「ウィジェット設定」を表示
+    const settingsItem = document.getElementById('widget_context_settings');
+    if (settingsItem) {
+      const hasSettings = ['widget-clock', 'media_player_widget'].includes(widgetEl.id);
+      settingsItem.style.display = hasSettings ? 'flex' : 'none';
+    }
+
     const closeMenu = () => {
       menu.style.display = 'none';
       window.removeEventListener('click', closeMenu);

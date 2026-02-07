@@ -27,6 +27,9 @@ window.AppManager = {
       });
     }
     div._appData = { ...data, saveKey };
+    if (data.shape) {
+      div.dataset.shape = data.shape;
+    }
 
     // イベント
     div.onclick = options.onclick;
@@ -52,7 +55,7 @@ window.AppManager = {
 
     // 共通UI処理 (desktop.jsのグローバル関数に依存しているが、後で整理可能)
     if (typeof window.wrapIconWithShape === 'function') {
-      window.wrapIconWithShape(div, window.getCurrentIconShape());
+      window.wrapIconWithShape(div, data.shape || window.getCurrentIconShape());
     }
 
     if (typeof setupNormalModeDrag === 'function') {
@@ -346,7 +349,8 @@ window.AppManager = {
       name,
       icon: img?.src || '',
       url,
-      isBuiltin
+      isBuiltin,
+      shape: icon.dataset.shape || ''
     };
     
     if (isLinuxApp && icon._appCommand) {

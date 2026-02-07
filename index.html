@@ -315,7 +315,20 @@
     <!-- アプリコンテキストメニュー -->
     <div id="app_context_menu" class="context-menu" style="display: none;">
       <div class="context-menu-item" id="context_edit" data-i18n="edit">編集</div>
+      <div class="context-menu-item" id="context_shape" data-i18n="icon_shape">アイコンの形</div>
       <div class="context-menu-item" id="context_delete" data-i18n="delete">削除</div>
+    </div>
+
+    <!-- 個別アイコン形状設定モーダル -->
+    <div id="icon_individual_shape_modal_overlay" class="modal_overlay">
+      <div id="icon_individual_shape_modal" class="modal">
+        <h3 data-i18n="icon_shape">アイコンの形</h3>
+        <div id="icon_individual_shape_buttons" class="shape-buttons-grid"></div>
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="reset_individual_shape" data-i18n="reset">リセット</m3e-button>
+          <m3e-button variant="filled" id="close_icon_individual_shape_modal" data-i18n="close">とじる</m3e-button>
+        </div>
+      </div>
     </div>
 
     <!-- デスクトップコンテキストメニュー -->
@@ -329,7 +342,59 @@
 
     <!-- ウィジェットコンテキストメニュー -->
     <div id="widget_context_menu" class="context-menu" style="display: none;">
+      <div class="context-menu-item" id="widget_context_settings" data-i18n="widget_settings">ウィジェット設定</div>
       <div class="context-menu-item" id="widget_context_hide" data-i18n="hide_widget">ウィジェットを非表示</div>
+    </div>
+
+    <!-- ウィジェット設定モーダル -->
+    <div id="widget_settings_modal_overlay" class="modal_overlay">
+      <div id="widget_settings_modal" class="modal">
+        <h3 id="widget_settings_title" data-i18n="widget_settings">ウィジェット設定</h3>
+        
+        <!-- 時計設定 -->
+        <div id="clock_settings_content" class="widget-settings-content" style="display: none; width: 100%;">
+          <div class="settings-item settings-item-column">
+            <div class="settings-item-label">
+              <span data-i18n="clock_shape">時計の形</span>
+            </div>
+            <div class="settings-item-control">
+              <div id="clock_shape_buttons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- メディアプレーヤー設定 -->
+        <div id="media_player_settings_content" class="widget-settings-content" style="display: none; width: 100%;">
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="show_seekbar">シークバーを表示</span>
+            </div>
+            <div class="settings-item-control">
+              <m3e-switch id="toggle_media_seekbar"></m3e-switch>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="show_shuffle">シャッフルボタンを表示</span>
+            </div>
+            <div class="settings-item-control">
+              <m3e-switch id="toggle_media_shuffle"></m3e-switch>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="show_repeat">リピートボタンを表示</span>
+            </div>
+            <div class="settings-item-control">
+              <m3e-switch id="toggle_media_repeat"></m3e-switch>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <m3e-button variant="filled" id="close_widget_settings_modal" data-i18n="close">とじる</m3e-button>
+        </div>
+      </div>
     </div>
 
     <!-- Webアプリ編集モーダル -->
@@ -689,6 +754,26 @@
         </div>
       </div>
     </div>
+    <!-- カスタムシェイプ追加モーダル -->
+    <div id="add_custom_shape_modal_overlay" class="modal_overlay">
+      <div id="add_custom_shape_modal" class="modal">
+        <h3 data-i18n="add_custom_shape">カスタムシェイプを追加</h3>
+        <p class="modal-description" data-i18n="custom_shape_desc">SVGの clip-path (polygon または path) を入力してください。</p>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="custom_shape_name" data-i18n="shape_name">名前</label>
+          <input id="custom_shape_name" placeholder="my-awesome-shape" />
+        </m3e-form-field>
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="custom_shape_path" data-i18n="clip_path_value">clip-path 値</label>
+          <input id="custom_shape_path" placeholder="polygon(50% 0%, 0% 100%, 100% 100%)" />
+        </m3e-form-field>
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="close_add_custom_shape_modal" data-i18n="close">とじる</m3e-button>
+          <m3e-button variant="filled" id="save_custom_shape" data-i18n="save">保存</m3e-button>
+        </div>
+      </div>
+    </div>
+
     <div id="github_tooltip" class="github-tooltip"></div>
     <div id="media_seek_tooltip" class="media-seek-tooltip"></div>
   </body>

@@ -22,6 +22,8 @@ const LS_KEYS = {
   LANGUAGE: 'language',
   GRID_MODE_ENABLED: 'gridModeEnabled',
   ICON_SHAPE: 'iconShape',
+  CLOCK_SHAPE: 'clockShape',
+  CUSTOM_SHAPES: 'customShapes',
   COLOR_SCHEME: 'colorScheme',
   CUSTOM_COLOR: 'customColor',
   SHOW_SETTINGS_FAB: 'showSettingsFab',
@@ -30,9 +32,18 @@ const LS_KEYS = {
   DARK_MODE_SETTING: 'darkModeSetting',
   GITHUB_USERNAME: 'githubUsername',
   GOOGLE_CALENDAR_URL: 'googleCalendarUrl',
+  MEDIA_PLAYER_SHOW_SEEKBAR: 'mediaPlayerShowSeekbar',
+  MEDIA_PLAYER_SHOW_SHUFFLE: 'mediaPlayerShowShuffle',
+  MEDIA_PLAYER_SHOW_REPEAT: 'mediaPlayerShowRepeat',
   WIDGET_VISIBILITY: 'widgetVisibility',
   WIDGET_SIZE_PREFIX: 'widgetSize:',
 };
+
+const SHAPES = [
+  "square", "circle", "rounded", "cut",
+  "4-leaf-clover", "4-sided-cookie", "6-sided-cookie", "7-sided-cookie", "8-leaf-clover", "9-sided-cookie", "12-sided-cookie",
+  "arch", "arrow", "boom", "bun", "burst", "diamond", "fan", "flower", "gem", "ghost-ish", "heart", "hexagon", "oval", "pentagon", "pill", "pixel-circle", "pixel-triangle", "puffy", "puffy-diamond", "semicircle", "slanted", "soft-boom", "soft-burst", "sunny", "triangle", "very-sunny"
+];
 
 // グリッド設定
 const GRID_SIZE_X = 80;

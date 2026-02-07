@@ -1199,6 +1199,10 @@ body.no-blur .modal_overlay {
    Edit App Modals
    ======================================== */
 
+#widget_settings_modal {
+  width: 500px;
+}
+
 #edit_webapp_modal_overlay,
 #edit_linuxapp_modal_overlay {
   background-color: rgba(0, 0, 0, 0.5);
@@ -1464,7 +1468,54 @@ body.no-blur .folder-drag-clone {
 }
 
 /* Icon Shape Buttons */
-#icon_shape_buttons {
+.custom-shape-wrapper {
+  display: inline-block;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: var(--m3e-shape-size, 3rem);
+  overflow: hidden;
+  background-color: var(--md-sys-color-primary);
+}
+
+.custom-shape-wrapper img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.add-shape-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px dashed var(--md-sys-color-outline);
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-shape-button:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  border-style: solid;
+}
+
+.appicon > .custom-shape-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.appicon > .custom-shape-wrapper img {
+  border-radius: 0;
+}
+
+#icon_shape_buttons,
+#clock_shape_buttons,
+.shape-buttons-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -1472,7 +1523,16 @@ body.no-blur .folder-drag-clone {
   justify-content: flex-start;
 }
 
-#icon_shape_buttons button {
+.shape-buttons-grid {
+  justify-content: center;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+#icon_shape_buttons button,
+#clock_shape_buttons button,
+.shape-buttons-grid button {
   width: 44px;
   height: 44px;
   padding: 4px;
@@ -1486,24 +1546,32 @@ body.no-blur .folder-drag-clone {
   transition: all var(--transition-fast);
 }
 
-#icon_shape_buttons button:hover {
+#icon_shape_buttons button:hover,
+#clock_shape_buttons button:hover,
+.shape-buttons-grid button:hover {
   border-color: var(--primary-color);
   background: var(--md-sys-color-primary-container);
 }
 
-#icon_shape_buttons button.selected {
+#icon_shape_buttons button.selected,
+#clock_shape_buttons button.selected,
+.shape-buttons-grid button.selected {
   border-color: var(--primary-color);
   background: var(--md-sys-color-primary-container);
   box-shadow: 0 0 0 2px var(--primary-color);
 }
 
-#icon_shape_buttons m3e-shape {
+#icon_shape_buttons m3e-shape,
+#clock_shape_buttons m3e-shape,
+.shape-buttons-grid m3e-shape {
   width: 28px;
   height: 28px;
   display: inline-block;
 }
 
-#icon_shape_buttons m3e-shape img {
+#icon_shape_buttons m3e-shape img,
+#clock_shape_buttons m3e-shape img,
+.shape-buttons-grid m3e-shape img {
   width: 100%;
   height: 100%;
   object-fit: contain;
