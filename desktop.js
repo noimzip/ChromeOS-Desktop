@@ -219,15 +219,8 @@ window.closeAllModals = function() {
 
 
   // 位置変更モードを終了
-
   if (window.isPositionChangeMode) {
-
-    window.isPositionChangeMode = false;
-
-    const desktopIcons = document.getElementById('desktop_icons');
-
-    if (desktopIcons) desktopIcons.style.zIndex = '';
-
+    exitPositionChangeMode();
   }
 
 
@@ -428,11 +421,62 @@ function enterPositionChangeMode() {
 
 // 位置変更モードを終了する（保存または閉じる時に呼ばれる）
 function exitPositionChangeMode() {
+  if (!window.isPositionChangeMode) return;
   window.isPositionChangeMode = false;
+  
   document.getElementById('change_widget_position_modal_overlay').style.display = 'none';
   
   // z-indexを元に戻す
-  document.getElementById('desktop_icons').style.zIndex = '';
+  const desktopIcons = document.getElementById('desktop_icons');
+  if (desktopIcons) {
+    desktopIcons.style.zIndex = '';
+  }
+  
+  // 位置変更モード終了時にクリックイベントを復元
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
+    if (item._savedOnclick) {
+      item.onclick = item._savedOnclick;
+    } else if (!item.dataset.originalOnclick) {
+      item.onclick = null;
+    }
+    delete item._savedOnclick;
+    delete item.dataset.originalOnclick;
+    
+    // 右クリックイベントを復元
+    if (item._savedOncontextmenu) {
+      item.oncontextmenu = item._savedOncontextmenu;
+      delete item._savedOncontextmenu;
+    }
+    
+    // リンクタグのクリックイベントを復元
+    const links = item.querySelectorAll('a');
+    links.forEach(link => {
+      link.onclick = null;
+    });
+    
+    // 画像のドラッグ設定を復元
+    const images = item.querySelectorAll('img');
+    images.forEach(img => {
+      img.draggable = true;
+      img.style.pointerEvents = '';
+    });
+    
+    // ポインターイベントをクリア（initNormalModeDragで再設定される）
+    item.onpointerdown = null;
+    item.onpointermove = null;
+    item.onpointerup = null;
+    
+    // ドラッグ関連のプロパティもクリア
+    delete item._isDragging;
+    delete item._startX;
+    delete item._startY;
+    delete item._startLeft;
+    delete item._startTop;
+    delete item._normalModeDragStarted;
+  });
+  
+  // 通常モードのドラッグを再設定
+  initNormalModeDrag();
 }
 
 
@@ -509,55 +553,7 @@ function resetWidgetPositions() {
   });
   
   // モーダルを閉じる
-  document.getElementById('change_widget_position_modal_overlay').style.display = 'none';
-  
-  // z-indexを元に戻す
-  const desktopIcons = document.getElementById('desktop_icons');
-  if (desktopIcons) {
-    desktopIcons.style.zIndex = '0';
-  }
-  
-  // 位置変更モード終了時にクリックイベントを復元
-  document.querySelectorAll(".appicon,.widget").forEach(item => {
-    if (item._savedOnclick) {
-      item.onclick = item._savedOnclick;
-    } else if (!item.dataset.originalOnclick) {
-      item.onclick = null;
-    }
-    delete item._savedOnclick;
-    delete item.dataset.originalOnclick;
-    
-    // 右クリックイベントを復元
-    if (item._savedOncontextmenu) {
-      item.oncontextmenu = item._savedOncontextmenu;
-      delete item._savedOncontextmenu;
-    }
-    
-    // リンクタグのクリックイベントを復元
-    const links = item.querySelectorAll('a');
-    links.forEach(link => {
-      link.onclick = null;
-    });
-    
-    // 画像のドラッグ設定を復元
-    const images = item.querySelectorAll('img');
-    images.forEach(img => {
-      img.draggable = true;
-      img.style.pointerEvents = '';
-    });
-    
-    // 位置変更モードで設定されたポインターイベントを削除
-    item.onpointerdown = null;
-    item.onpointermove = null;
-    item.onpointerup = null;
-    
-    // ドラッグ関連のプロパティもクリア
-    delete item._isDragging;
-    delete item._startX;
-    delete item._startY;
-    delete item._startLeft;
-    delete item._startTop;
-  });
+  exitPositionChangeMode();
 }
 
 document.getElementById('reset_widget_position').onclick = () => {
@@ -585,47 +581,6 @@ document.getElementById('save_change_widget_position').onclick = () => {
   localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
   
   exitPositionChangeMode();
-  
-  // 位置変更モード終了時にクリックイベントを復元
-  document.querySelectorAll(".appicon,.widget").forEach(item => {
-    if (item._savedOnclick) {
-      item.onclick = item._savedOnclick;
-    } else if (!item.dataset.originalOnclick) {
-      item.onclick = null;
-    }
-    delete item._savedOnclick;
-    delete item.dataset.originalOnclick;
-    
-    // 右クリックイベントを復元
-    if (item._savedOncontextmenu) {
-      item.oncontextmenu = item._savedOncontextmenu;
-      delete item._savedOncontextmenu;
-    }
-    
-    // リンクタグのクリックイベントを復元
-    const links = item.querySelectorAll('a');
-    links.forEach(link => {
-      link.onclick = null;
-    });
-    
-    // 画像のドラッグ設定を復元
-    const images = item.querySelectorAll('img');
-    images.forEach(img => {
-      img.draggable = true;
-      img.style.pointerEvents = '';
-    });
-    
-    // ドラッグ関連のプロパティをクリア
-    delete item._isDragging;
-    delete item._startX;
-    delete item._startY;
-    delete item._startLeft;
-    delete item._startTop;
-    delete item._normalModeDragStarted;
-  });
-  
-  // 通常モードのドラッグを再設定
-  initNormalModeDrag();
 }
 
 // アプリ追加タイプ選択
