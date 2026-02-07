@@ -9,20 +9,20 @@ window.WidgetLoader = {
   // ウィジェットのリソース定義
   registry: {
     'widget-clock': {
-      js: './widgets/clock.js',
-      css: './widgets/clock.css'
+      js: './widgets/clock/clock.js',
+      css: './widgets/clock/clock.css'
     },
     'media_player_widget': {
-      js: './widgets/media_player.js',
-      css: './widgets/media_player.css'
+      js: './widgets/media_player/media_player.js',
+      css: './widgets/media_player/media_player.css'
     },
     'github_contribution_widget': {
-      js: './widgets/github_widget.js',
-      css: './widgets/github_widget.css'
+      js: './widgets/github/github_widget.js',
+      css: './widgets/github/github_widget.css'
     },
     'google_calendar_widget': {
-      js: './widgets/google_calendar.js',
-      css: './widgets/google_calendar.css'
+      js: './widgets/google_calendar/google_calendar.js',
+      css: './widgets/google_calendar/google_calendar.css'
     }
   },
 
