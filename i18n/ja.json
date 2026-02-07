@@ -67,6 +67,9 @@
   "language": "言語",
   "color_scheme": "カラースキーム",
   "dark_mode": "ダークモード",
+  "light_mode": "ライトモード",
+  "system_default": "システム設定に従う",
+  "theme": "テーマ",
   "blur_effect": "ブラー効果",
 
   "icon_settings": "アイコン設定",

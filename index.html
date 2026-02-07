@@ -527,10 +527,14 @@
             </div>
             <div class="settings-item">
               <div class="settings-item-label">
-                <span data-i18n="dark_mode">ダークモード</span>
+                <span data-i18n="theme">テーマ</span>
               </div>
               <div class="settings-item-control">
-                <m3e-switch id="toggle_dark_mode"></m3e-switch>
+                <select id="dark_mode_selector">
+                  <option value="system" data-i18n="system_default">システム設定に従う</option>
+                  <option value="light" data-i18n="light_mode">ライトモード</option>
+                  <option value="dark" data-i18n="dark_mode">ダークモード</option>
+                </select>
               </div>
             </div>
             <div class="settings-item">

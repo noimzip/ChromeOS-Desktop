@@ -67,6 +67,9 @@
   "language": "Language",
   "color_scheme": "Color Scheme",
   "dark_mode": "Dark Mode",
+  "light_mode": "Light Mode",
+  "system_default": "Follow System",
+  "theme": "Theme",
   "blur_effect": "Blur Effect",
 
   "icon_settings": "Icon Settings",
@@ -93,5 +96,3 @@
   "extract_color_from_image": "Extract color from image",
   "upload_image_generic": "Upload image"
 }
-
-

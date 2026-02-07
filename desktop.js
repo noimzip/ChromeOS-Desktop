@@ -32,6 +32,7 @@ const LS_KEYS = {
   SHOW_SETTINGS_FAB: 'showSettingsFab',
   BLUR_EFFECT_ENABLED: 'blurEffectEnabled',
   DARK_MODE_ENABLED: 'darkModeEnabled',
+  DARK_MODE_SETTING: 'darkModeSetting',
   GITHUB_USERNAME: 'githubUsername',
   GOOGLE_CALENDAR_URL: 'googleCalendarUrl',
   WIDGET_VISIBILITY: 'widgetVisibility',
@@ -2915,33 +2916,57 @@ if (toggleBlurEffectBtn) {
   });
 }
 
-// ダークモードの設定
-const toggleDarkModeBtn = document.getElementById('toggle_dark_mode');
+// テーマ設定
+const darkModeSelector = document.getElementById('dark_mode_selector');
+const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
 
-function updateDarkMode(isEnabled) {
-  if (isEnabled) {
+function applyTheme(mode) {
+  let isDark = false;
+  if (mode === 'system') {
+    isDark = systemDarkMode.matches;
+  } else if (mode === 'dark') {
+    isDark = true;
+  } else {
+    isDark = false;
+  }
+
+  if (isDark) {
     document.body.classList.add('dark-mode');
   } else {
     document.body.classList.remove('dark-mode');
   }
-  if (toggleDarkModeBtn) {
-    if (typeof toggleDarkModeBtn.selected !== 'undefined') {
-      toggleDarkModeBtn.selected = isEnabled;
-    } else {
-      toggleDarkModeBtn.checked = isEnabled;
-    }
-  }
-  localStorage.setItem(LS_KEYS.DARK_MODE_ENABLED, isEnabled);
+  
+  localStorage.setItem(LS_KEYS.DARK_MODE_SETTING, mode);
 }
 
-if (toggleDarkModeBtn) {
-  // 保存された設定を復元（デフォルトは無効）
-  const darkModeEnabled = localStorage.getItem(LS_KEYS.DARK_MODE_ENABLED) === 'true';
-  updateDarkMode(darkModeEnabled);
+if (darkModeSelector) {
+  // 保存された設定を読み込み
+  let savedMode = localStorage.getItem(LS_KEYS.DARK_MODE_SETTING);
   
-  toggleDarkModeBtn.addEventListener('change', (e) => {
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
-    updateDarkMode(newState);
+  // 以前の設定からの移行
+  if (!savedMode) {
+    const oldEnabled = localStorage.getItem(LS_KEYS.DARK_MODE_ENABLED);
+    if (oldEnabled !== null) {
+      savedMode = oldEnabled === 'true' ? 'dark' : 'light';
+    } else {
+      savedMode = 'system';
+    }
+  }
+  
+  // セレクターの初期値を設定
+  darkModeSelector.value = savedMode;
+  applyTheme(savedMode);
+  
+  darkModeSelector.addEventListener('change', (e) => {
+    applyTheme(e.target.value);
+  });
+  
+  // システム設定の変更監視
+  systemDarkMode.addEventListener('change', (e) => {
+    const currentMode = localStorage.getItem(LS_KEYS.DARK_MODE_SETTING) || 'system';
+    if (currentMode === 'system') {
+      applyTheme('system');
+    }
   });
 }
 
