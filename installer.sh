@@ -2,6 +2,13 @@
 
 # Soul Widgets Manager Installer
 
+# bash または zsh で実行されているかチェック
+if [ -z "$BASH_VERSION" ] && [ -z "$ZSH_VERSION" ]; then
+    echo "Warning: This script is optimized for bash/zsh. Using 'sh' may cause unexpected behavior."
+    echo "Recommended: 'bash installer.sh' or './installer.sh'"
+    echo "--------------------------------------------------"
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

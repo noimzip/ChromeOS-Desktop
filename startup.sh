@@ -2,6 +2,13 @@
 
 # Soul Widgets Manager Startup Script
 
+# bash または zsh で実行されているかチェック
+if [ -z "$BASH_VERSION" ] && [ -z "$ZSH_VERSION" ]; then
+    echo "Warning: This script is optimized for bash/zsh. Using 'sh' may cause unexpected behavior."
+    echo "Recommended: 'bash startup.sh' or './startup.sh'"
+    echo "--------------------------------------------------"
+fi
+
 # スクリプトの実行ディレクトリに移動（どこから実行しても動作するようにする）
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
