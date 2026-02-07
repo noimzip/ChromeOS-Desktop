@@ -1,9 +1,13 @@
 <div align="center">
 
-<img src="../chrome_extension/assets/soul-128.png">
+<img src="../chrome_extension/assets/soul-128.png" width="128px" height="128px">
 
 # Soul Widgets Manager
 ## A Windows-like desktop experience for ChromeOS
+
+[English](README.md) | [日本語](README_JA.md)
+
+---
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Version](https://img.shields.io/badge/Version-0.1-green.svg)](https://github.com/noimzip/Soul-Widgets-Manager)
