@@ -263,19 +263,36 @@ function loadWidgetVisibility() {
   widgetVisibility = { ...defaults, ...saved };
 }
 
-function applyWidgetVisibility() {
+async function applyWidgetVisibility() {
   for (const widgetId in availableWidgets) {
     const widget = availableWidgets[widgetId].element;
+    const isVisible = widgetVisibility[widgetId];
     if (widget) {
-      widget.style.display = widgetVisibility[widgetId] ? '' : 'none';
+      if (isVisible) {
+        // 表示する前にリソースを読み込む
+        if (window.WidgetLoader) {
+          await window.WidgetLoader.load(widgetId);
+        }
+        widget.style.display = '';
+      } else {
+        widget.style.display = 'none';
+      }
     }
   }
 }
 
-function setWidgetVisibility(widgetId, isVisible) {
+async function setWidgetVisibility(widgetId, isVisible) {
   const widget = availableWidgets[widgetId]?.element;
   if (widget) {
-    widget.style.display = isVisible ? '' : 'none';
+    if (isVisible) {
+      // 表示する前にリソースを読み込む
+      if (window.WidgetLoader) {
+        await window.WidgetLoader.load(widgetId);
+      }
+      widget.style.display = '';
+    } else {
+      widget.style.display = 'none';
+    }
     widgetVisibility[widgetId] = isVisible;
     localStorage.setItem(LS_KEYS.WIDGET_VISIBILITY, JSON.stringify(widgetVisibility));
   }
