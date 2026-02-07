@@ -315,7 +315,20 @@
     <!-- アプリコンテキストメニュー -->
     <div id="app_context_menu" class="context-menu" style="display: none;">
       <div class="context-menu-item" id="context_edit" data-i18n="edit">編集</div>
+      <div class="context-menu-item" id="context_shape" data-i18n="icon_shape">アイコンの形</div>
       <div class="context-menu-item" id="context_delete" data-i18n="delete">削除</div>
+    </div>
+
+    <!-- 個別アイコン形状設定モーダル -->
+    <div id="icon_individual_shape_modal_overlay" class="modal_overlay">
+      <div id="icon_individual_shape_modal" class="modal">
+        <h3 data-i18n="icon_shape">アイコンの形</h3>
+        <div id="icon_individual_shape_buttons" class="shape-buttons-grid"></div>
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="reset_individual_shape" data-i18n="reset">リセット</m3e-button>
+          <m3e-button variant="filled" id="close_icon_individual_shape_modal" data-i18n="close">とじる</m3e-button>
+        </div>
+      </div>
     </div>
 
     <!-- デスクトップコンテキストメニュー -->

@@ -52,6 +52,10 @@ window.FolderManager = {
     div.dataset.folderId = folderId;
     div.dataset.saveKey = folderId;
     
+    if (folderData.shape) {
+      div.dataset.shape = folderData.shape;
+    }
+    
     const previewDiv = document.createElement('div');
     previewDiv.className = 'folder-preview';
     
@@ -68,7 +72,7 @@ window.FolderManager = {
       img.src = app.icon;
       previewDiv.appendChild(img);
       if (!app.path && typeof window.wrapImageWithShape === 'function') {
-        window.wrapImageWithShape(img, window.getCurrentIconShape());
+        window.wrapImageWithShape(img, folderData.shape || window.getCurrentIconShape());
       }
     });
     
@@ -89,7 +93,7 @@ window.FolderManager = {
     };
     
     if (typeof window.wrapIconWithShape === 'function') {
-      window.wrapIconWithShape(div, window.getCurrentIconShape());
+      window.wrapIconWithShape(div, folderData.shape || window.getCurrentIconShape());
     }
     if (typeof window.DragManager.setupNormalModeDrag === 'function') {
       window.DragManager.setupNormalModeDrag(div);
@@ -107,6 +111,18 @@ window.FolderManager = {
     
     if (!folderEl || !folderData) return;
     
+    if (folderData.shape) {
+      folderEl.dataset.shape = folderData.shape;
+      if (typeof window.wrapIconWithShape === 'function') {
+        window.wrapIconWithShape(folderEl, folderData.shape);
+      }
+    } else {
+      delete folderEl.dataset.shape;
+      if (typeof window.wrapIconWithShape === 'function') {
+        window.wrapIconWithShape(folderEl, window.getCurrentIconShape());
+      }
+    }
+
     const previewDiv = folderEl.querySelector('.folder-preview');
     if (previewDiv) {
       if (folderData.style) {
@@ -125,7 +141,7 @@ window.FolderManager = {
         img.src = app.icon;
         previewDiv.appendChild(img);
         if (!app.path && typeof window.wrapImageWithShape === 'function') {
-          window.wrapImageWithShape(img, window.getCurrentIconShape());
+          window.wrapImageWithShape(img, folderData.shape || window.getCurrentIconShape());
         }
       });
     }
@@ -330,12 +346,13 @@ window.FolderManager = {
         if (app.isLinuxApp || app.command) type = 'folder-item-linuxapp';
         else if (app.url) type = 'folder-item-webapp';
         div._appData = app; div._folderId = folderId; div._folderIndex = index;
+        if (app.shape) div.dataset.shape = app.shape;
         if (window.ContextMenuManager) window.ContextMenuManager.showContextMenu(e, div, type);
       };
       
       contents.appendChild(div);
       if (!app.path && typeof window.wrapIconWithShape === 'function') {
-        window.wrapIconWithShape(div, window.getCurrentIconShape());
+        window.wrapIconWithShape(div, app.shape || window.getCurrentIconShape());
         const wrapper = div.querySelector('m3e-shape');
         if (wrapper) {
           wrapper.style.width = '50px'; wrapper.style.height = '50px';

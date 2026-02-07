@@ -106,11 +106,19 @@ window.wrapImageWithShape = function(img, shape) {
 window.applyShapeToAll = function(shape) {
   // 通常のアイコンとフォルダ内アイテム（モーダル）
   const icons = document.querySelectorAll('.appicon:not(.folder)');
-  icons.forEach(icon => window.wrapIconWithShape(icon, shape));
+  icons.forEach(icon => {
+    // 個別設定がある場合はそれを優先、なければグローバル設定
+    const targetShape = icon.dataset.shape || shape;
+    window.wrapIconWithShape(icon, targetShape);
+  });
 
   // フォルダアイコンのプレビュー画像
   const folderImages = document.querySelectorAll('.appicon.folder .folder-preview img');
-  folderImages.forEach(img => window.wrapImageWithShape(img, shape));
+  folderImages.forEach(img => {
+    const folderEl = img.closest('.appicon.folder');
+    const targetShape = folderEl?.dataset.shape || shape;
+    window.wrapImageWithShape(img, targetShape);
+  });
 };
 
 // 時計に形状を適用する
@@ -1060,6 +1068,15 @@ initNormalModeDrag();
 
 // 起動時に保存された形状を全アイコン（およびフォルダ内プレビュー）に適用
 try {
+  // ビルトインアイコンの個別形状を復元
+  const builtinShapes = JSON.parse(localStorage.getItem('builtin_icon_shapes') || '{}');
+  Object.keys(builtinShapes).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.dataset.shape = builtinShapes[id];
+    }
+  });
+
   applyShapeToAll(getCurrentIconShape());
   applyClockShape(getCurrentClockShape());
 } catch (e) {
@@ -1197,6 +1214,144 @@ document.getElementById('context_edit').onclick = async (e) => {
     await showAlertDialog(msg);
   }
 };
+
+document.getElementById('context_shape').onclick = (e) => {
+  e.stopPropagation();
+  hideContextMenu();
+  if (currentEditingIcon) {
+    openIconIndividualShapeModal(currentEditingIcon);
+  }
+};
+
+function openIconIndividualShapeModal(iconEl) {
+  const container = document.getElementById('icon_individual_shape_buttons');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  const currentShape = iconEl.dataset.shape || '';
+  
+  let selectedBtn = null;
+  function markSelected(btn) {
+    if (selectedBtn) selectedBtn.classList.remove('selected');
+    selectedBtn = btn;
+    if (selectedBtn) selectedBtn.classList.add('selected');
+  }
+
+  SHAPES.forEach(s => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.title = s;
+    
+    const preview = document.createElement('m3e-shape');
+    preview.setAttribute('name', s);
+    const img = document.createElement('img');
+    img.src = iconEl.querySelector('img')?.src || './assets/settings.webp';
+    img.alt = s;
+    preview.appendChild(img);
+    btn.appendChild(preview);
+
+    btn.addEventListener('click', () => {
+      updateIndividualIconShape(iconEl, s);
+      markSelected(btn);
+    });
+
+    if (s === currentShape) {
+      markSelected(btn);
+    }
+    container.appendChild(btn);
+  });
+
+  document.getElementById('icon_individual_shape_modal_overlay').style.display = 'flex';
+}
+
+document.getElementById('close_icon_individual_shape_modal').onclick = () => {
+  document.getElementById('icon_individual_shape_modal_overlay').style.display = 'none';
+};
+
+document.getElementById('reset_individual_shape').onclick = () => {
+  if (currentEditingIcon) {
+    updateIndividualIconShape(currentEditingIcon, '');
+    document.getElementById('icon_individual_shape_modal_overlay').style.display = 'none';
+  }
+};
+
+function updateIndividualIconShape(iconEl, shape) {
+  if (shape) {
+    iconEl.dataset.shape = shape;
+    window.wrapIconWithShape(iconEl, shape);
+  } else {
+    delete iconEl.dataset.shape;
+    window.wrapIconWithShape(iconEl, window.getCurrentIconShape());
+  }
+
+  // データを保存
+  saveIconShape(iconEl, shape);
+  
+  // フォルダ内のプレビュー画像も更新が必要な場合
+  if (iconEl.classList.contains('folder')) {
+    const folderImages = iconEl.querySelectorAll('.folder-preview img');
+    folderImages.forEach(img => window.wrapImageWithShape(img, shape || window.getCurrentIconShape()));
+  }
+}
+
+function saveIconShape(iconEl, shape) {
+  const appData = window.AppManager.getIconData(iconEl);
+  appData.shape = shape;
+  
+  const type = currentContextAppType || '';
+  
+  if (type === 'webapp' || iconEl.classList.contains('custom-app')) {
+    const customApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
+    const index = customApps.findIndex(a => a.saveKey === iconEl.dataset.saveKey || (a.name === appData.name && a.url === appData.url));
+    if (index !== -1) {
+      customApps[index].shape = shape;
+      localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(customApps));
+    }
+  } else if (type === 'linuxapp' || iconEl.classList.contains('linux-app')) {
+    const linuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
+    const index = linuxApps.findIndex(a => a.saveKey === iconEl.dataset.saveKey || (a.name === appData.name && a.command === appData.command));
+    if (index !== -1) {
+      linuxApps[index].shape = shape;
+      localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(linuxApps));
+    }
+  } else if (type === 'file' || iconEl.classList.contains('file-shortcut')) {
+    const fileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS) || '[]');
+    const index = fileShortcuts.findIndex(f => f.saveKey === iconEl.dataset.saveKey || f.path === iconEl._filePath);
+    if (index !== -1) {
+      fileShortcuts[index].shape = shape;
+      localStorage.setItem(LS_KEYS.FILE_SHORTCUTS, JSON.stringify(fileShortcuts));
+    }
+  } else if (type === 'folder-shortcut' || iconEl.classList.contains('folder-shortcut')) {
+    const folderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
+    const index = folderShortcuts.findIndex(f => f.saveKey === iconEl.dataset.saveKey || f.path === iconEl._filePath);
+    if (index !== -1) {
+      folderShortcuts[index].shape = shape;
+      localStorage.setItem(LS_KEYS.FOLDER_SHORTCUTS, JSON.stringify(folderShortcuts));
+    }
+  } else if (type === 'folder' || iconEl.classList.contains('folder')) {
+    const folderId = iconEl._folderId;
+    if (window.folders[folderId]) {
+      window.folders[folderId].shape = shape;
+      saveFolders();
+    }
+  } else if (type.startsWith('folder-item')) {
+    const folderId = iconEl._folderId;
+    const index = iconEl._folderIndex;
+    if (window.folders[folderId] && window.folders[folderId].apps[index]) {
+      window.folders[folderId].apps[index].shape = shape;
+      saveFolders();
+    }
+  } else if (iconEl.id && iconEl.id.startsWith('appicon-')) {
+    // ビルトインアイコンの形状保存
+    const builtinShapes = JSON.parse(localStorage.getItem('builtin_icon_shapes') || '{}');
+    if (shape) {
+      builtinShapes[iconEl.id] = shape;
+    } else {
+      delete builtinShapes[iconEl.id];
+    }
+    localStorage.setItem('builtin_icon_shapes', JSON.stringify(builtinShapes));
+  }
+}
 
 document.getElementById('context_delete').onclick = async (e) => {
   e.stopPropagation();
@@ -1837,12 +1992,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // アイコン形状選択UIの生成
-  const shapes = [
-    "square", "circle", "rounded", "cut",
-    "4-leaf-clover", "4-sided-cookie", "6-sided-cookie", "7-sided-cookie", "8-leaf-clover", "9-sided-cookie", "12-sided-cookie",
-    "arch", "arrow", "boom", "bun", "burst", "diamond", "fan", "flower", "gem", "ghost-ish", "heart", "hexagon", "oval", "pentagon", "pill", "pixel-circle", "pixel-triangle", "puffy", "puffy-diamond", "semicircle", "slanted", "soft-boom", "soft-burst", "sunny", "triangle", "very-sunny"
-  ];
-
   function setupShapeButtons(containerId, currentShape, onSelect) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -1854,7 +2003,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedBtn) selectedBtn.classList.add('selected');
     }
 
-    shapes.forEach(s => {
+    SHAPES.forEach(s => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.title = s;
