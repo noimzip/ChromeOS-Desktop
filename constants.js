@@ -33,3 +33,9 @@ const LS_KEYS = {
   WIDGET_VISIBILITY: 'widgetVisibility',
   WIDGET_SIZE_PREFIX: 'widgetSize:',
 };
+
+// グリッド設定
+const GRID_SIZE_X = 80;
+const GRID_SIZE_Y = 90;
+const GRID_OFFSET = 20;
+const OVERLAP_THRESHOLD = 800;

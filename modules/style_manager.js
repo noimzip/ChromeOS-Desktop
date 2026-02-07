@@ -11,14 +11,14 @@ window.StyleManager = {
    * カラースキームを更新
    */
   updateColorScheme(scheme, customColor = null) {
-    this.colorSchemes.forEach(s => {
+    window.StyleManager.colorSchemes.forEach(s => {
       document.body.classList.remove(`color-scheme-${s}`);
     });
     document.body.classList.remove('color-scheme-custom');
     
     if (scheme === 'custom' && customColor) {
       document.body.classList.add('color-scheme-custom');
-      this.applyCustomColor(customColor);
+      window.StyleManager.applyCustomColor(customColor);
       localStorage.setItem(LS_KEYS.COLOR_SCHEME, 'custom');
       localStorage.setItem(LS_KEYS.CUSTOM_COLOR, customColor);
     } else {
@@ -42,15 +42,15 @@ window.StyleManager = {
     const rgb = window.UIUtils.hexToRgb(hexColor);
     if (!rgb) return;
     
-    const hsl = this.rgbToHsl(rgb.r, rgb.g, rgb.b);
+    const hsl = window.StyleManager.rgbToHsl(rgb.r, rgb.g, rgb.b);
     
-    const primaryLight = this.hslToHex(hsl.h, Math.min(hsl.s + 10, 100), Math.min(hsl.l + 15, 85));
-    const primaryDark = this.hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 15, 15));
-    const clockPrimary = this.hslToHex(hsl.h, Math.min(hsl.s + 5, 100), Math.min(hsl.l + 10, 70));
-    const clockSecondary = this.hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 20, 20));
-    const clockAccent = this.hslToHex(hsl.h, Math.max(hsl.s - 30, 20), Math.min(hsl.l + 30, 90));
-    const clockBackground = this.hslToHex(hsl.h, Math.max(hsl.s - 20, 10), Math.max(hsl.l - 40, 10));
-    const primaryContainer = this.hslToHex(hsl.h, Math.max(hsl.s - 40, 20), 90);
+    const primaryLight = window.StyleManager.hslToHex(hsl.h, Math.min(hsl.s + 10, 100), Math.min(hsl.l + 15, 85));
+    const primaryDark = window.StyleManager.hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 15, 15));
+    const clockPrimary = window.StyleManager.hslToHex(hsl.h, Math.min(hsl.s + 5, 100), Math.min(hsl.l + 10, 70));
+    const clockSecondary = window.StyleManager.hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 20, 20));
+    const clockAccent = window.StyleManager.hslToHex(hsl.h, Math.max(hsl.s - 30, 20), Math.min(hsl.l + 30, 90));
+    const clockBackground = window.StyleManager.hslToHex(hsl.h, Math.max(hsl.s - 20, 10), Math.max(hsl.l - 40, 10));
+    const primaryContainer = window.StyleManager.hslToHex(hsl.h, Math.max(hsl.s - 40, 20), 90);
     
     const bgRgb = window.UIUtils.hexToRgb(clockBackground);
     const clockTextColor = window.UIUtils.getContrastColor(bgRgb.r, bgRgb.g, bgRgb.b);
@@ -88,10 +88,10 @@ window.StyleManager = {
 
     if (shape === 'square' || shape === 'circle') {
       document.body.classList.add(`icon-shape-${shape}`);
-      if (typeof applyShapeToAll === 'function') applyShapeToAll(shape);
+      if (typeof window.applyShapeToAll === 'function') window.applyShapeToAll(shape);
     } else {
       document.body.classList.add('icon-shape-custom');
-      if (typeof applyShapeToAll === 'function') applyShapeToAll(shape);
+      if (typeof window.applyShapeToAll === 'function') window.applyShapeToAll(shape);
     }
 
     localStorage.setItem(LS_KEYS.ICON_SHAPE, shape);

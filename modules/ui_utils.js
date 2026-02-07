@@ -149,5 +149,52 @@ window.UIUtils = {
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
     } : null;
+  },
+
+  /**
+   * 画像からドミナントカラー（主要な色）を抽出する
+   */
+  getDominantColor(imageSrc) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 64;
+        canvas.height = 64;
+        ctx.drawImage(img, 0, 0, 64, 64);
+        const { data } = ctx.getImageData(0, 0, 64, 64);
+        
+        const colorCounts = {};
+        let maxCount = 0;
+        let dominantColor = null;
+        
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+          if (a < 128) continue;
+          
+          const q = 20;
+          const rQ = Math.round(r / q) * q, gQ = Math.round(g / q) * q, bQ = Math.round(b / q) * q;
+          const key = `${rQ},${gQ},${bQ}`;
+          colorCounts[key] = (colorCounts[key] || 0) + 1;
+          
+          if (colorCounts[key] > maxCount) {
+            maxCount = colorCounts[key];
+            dominantColor = { r: rQ, g: gQ, b: bQ };
+          }
+        }
+        
+        if (dominantColor) {
+          const toHex = c => Math.min(255, Math.max(0, c)).toString(16).padStart(2, '0');
+          resolve(`#${toHex(dominantColor.r)}${toHex(dominantColor.g)}${toHex(dominantColor.b)}`);
+        } else {
+          resolve('#4285f4');
+        }
+      };
+      img.onerror = reject;
+      img.src = imageSrc;
+    });
   }
 };
+

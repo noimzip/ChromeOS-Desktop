@@ -12,22 +12,20 @@ let iconShapeSelector = null;
 // Constants are defined in constants.js
 
 // ========================================
-// ダイアログヘルパー関数 (UIUtilsに移動)
+// ダイアログヘルパー関数 (UIUtilsより取得)
 // ========================================
 
-const showAlertDialog = window.UIUtils.showAlertDialog;
-const showConfirmDialog = window.UIUtils.showConfirmDialog;
-const resizeImage = window.UIUtils.resizeImage;
-const hexToRgb = window.UIUtils.hexToRgb;
-const getContrastColor = window.UIUtils.getContrastColor;
+const { showAlertDialog, showConfirmDialog, resizeImage, hexToRgb, getContrastColor } = window.UIUtils;
 
 // ========================================
 // アイコン形状の設定
-function getCurrentIconShape() {
+window.getCurrentIconShape = function() {
   return localStorage.getItem(LS_KEYS.ICON_SHAPE) || 'square';
-}
+};
 
-function wrapIconWithShape(appiconEl, shape) {
+
+
+window.wrapIconWithShape = function(appiconEl, shape) {
   if (!appiconEl) return;
   const img = appiconEl.querySelector('img');
   if (!img) return;
@@ -66,10 +64,10 @@ function wrapIconWithShape(appiconEl, shape) {
     // 何か失敗したらフォールバックで何もしない
     console.warn('Failed to wrap icon with m3e-shape:', e);
   }
-}
+};
 
-// 単一の img 要素を形状でラップする（フォルダプレビュー用）
-function wrapImageWithShape(img, shape) {
+
+window.wrapImageWithShape = function(img, shape) {
   if (!img) return;
   const parentTag = img.parentElement && img.parentElement.tagName && img.parentElement.tagName.toLowerCase();
 
@@ -97,36 +95,39 @@ function wrapImageWithShape(img, shape) {
   } catch (e) {
     console.warn('Failed to wrap preview img with m3e-shape:', e);
   }
-}
+};
+
 
 // 全アイコンに形状を適用する
-function applyShapeToAll(shape) {
+window.applyShapeToAll = function(shape) {
   // 通常のアイコンとフォルダ内アイテム（モーダル）
   const icons = document.querySelectorAll('.appicon:not(.folder)');
-  icons.forEach(icon => wrapIconWithShape(icon, shape));
+  icons.forEach(icon => window.wrapIconWithShape(icon, shape));
 
   // フォルダアイコンのプレビュー画像
   const folderImages = document.querySelectorAll('.appicon.folder .folder-preview img');
-  folderImages.forEach(img => wrapImageWithShape(img, shape));
+  folderImages.forEach(img => window.wrapImageWithShape(img, shape));
 
   // 時計の背景形状
   const clockBg = document.querySelector('.clock-background');
   if (clockBg && clockBg.tagName === 'M3E-SHAPE') {
     clockBg.setAttribute('name', shape);
   }
-}
+};
+
 
 /**
  * アイコン形状を更新
  */
 const updateIconShape = window.StyleManager.updateIconShape.bind(window.StyleManager);
 
-async function launchLinuxApp(command) {
+window.launchLinuxApp = async function(command) {
   if (window.electronAPI && window.electronAPI.launchLinuxApp) {
     return await window.electronAPI.launchLinuxApp(command);
   }
   return { success: false, error: 'Electron API not available' };
-}
+};
+
 
 // ========================================
 // ウィジェット管理
@@ -186,30 +187,56 @@ async function setWidgetVisibility(widgetId, isVisible) {
 }
 
 // すべてのモーダルを閉じる関数
-function closeAllModals() {
+
+window.closeAllModals = function() {
+
   // すべてのオーバーレイを非表示
+
   const overlays = document.querySelectorAll('.modal_overlay');
+
   overlays.forEach(el => {
+
     el.style.display = 'none';
+
     el.classList.remove('fade-out');
+
   });
 
+
+
   // フォルダーの状態をリセット
-  currentOpenFolderId = null;
+
+  window.currentOpenFolderId = null;
+
   const folderModal = document.getElementById('folder_modal');
+
   if (folderModal) {
+
     folderModal.classList.remove('folder-opening', 'folder-closing');
+
   }
+
+
 
   // 位置変更モードを終了
-  if (isPositionChangeMode) {
-    isPositionChangeMode = false;
+
+  if (window.isPositionChangeMode) {
+
+    window.isPositionChangeMode = false;
+
     const desktopIcons = document.getElementById('desktop_icons');
+
     if (desktopIcons) desktopIcons.style.zIndex = '';
+
   }
 
+
+
   hideContextMenu();
-}
+
+};
+
+
 
 // ========================================
 // ビルトインアイコンのクリックイベント
@@ -218,8 +245,11 @@ function closeAllModals() {
 /** アイコンクリックハンドラを設定 */
 function setupBuiltinIconClick(id, url) {
   const el = document.getElementById(id);
-  if (el) el.onclick = () => openURL(url);
+  if (el) el.onclick = () => {
+    if (typeof window.openURL === 'function') window.openURL(url);
+  };
 }
+
 
 setupBuiltinIconClick('appicon-chrome', 'chrome://newtab');
 setupBuiltinIconClick('appicon-files', 'chrome://file-manager');
@@ -257,22 +287,16 @@ document.getElementById('close_settingsmenu_modal').onclick = () => {
 // アプリケーション状態
 // ========================================
 
-let isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
-let isPositionChangeMode = false;
-let draggedItem = null;
-let folders = JSON.parse(localStorage.getItem(LS_KEYS.APP_FOLDERS) || '{}');
-let currentOpenFolderId = null;
-let currentFolderPage = 0;
+window.isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
+window.isPositionChangeMode = false;
+window.draggedItem = null;
+window.folders = JSON.parse(localStorage.getItem(LS_KEYS.APP_FOLDERS) || '{}');
+window.currentOpenFolderId = null;
+window.currentFolderPage = 0;
 
-// グリッドモードのデフォルト設定
-// アイコンサイズ (80x90) とギャップ (20px) に合わせる
-const GRID_SIZE_X = 80;
-const GRID_SIZE_Y = 90;
-const GRID_OFFSET = 20;
 // ドラッグ開始判定に使う閾値（ピクセル）
 const DRAG_THRESHOLD = 8;
-// 最小オーバーラップ面積（ピクセル）: これを超えたら重なりと判定
-const OVERLAP_THRESHOLD = 800;
+
 
 // 編集機能用 (ContextMenuManagerと同期)
 Object.defineProperty(window, 'currentEditingApp', { 
@@ -297,16 +321,12 @@ Object.defineProperty(window, 'currentEditingWidget', {
 // ========================================
 
 /**
- * 値をグリッドにスナップさせる
- */
-const snapToGrid = window.DragManager.snapToGrid.bind(window.DragManager);
-
-/**
  * フォルダーデータを保存
  */
 function saveFolders() {
-  localStorage.setItem(LS_KEYS.APP_FOLDERS, JSON.stringify(folders));
+  localStorage.setItem(LS_KEYS.APP_FOLDERS, JSON.stringify(window.folders));
 }
+
 
 /**
  * 現在の言語を取得
@@ -316,808 +336,57 @@ function getCurrentLanguage() {
   return localStorage.getItem(LS_KEYS.LANGUAGE) || 'ja';
 }
 
-/**
- * 2つの要素の重なり面積を計算
- */
-const calculateOverlapArea = window.DragManager.calculateOverlapArea.bind(window.DragManager);
+const getDominantColor = window.UIUtils.getDominantColor;
 
-// アイコンの矩形情報をキャッシュする（ドラッグ中の負荷軽減）
-const cacheIconRects = window.DragManager.cacheIconRects.bind(window.DragManager);
+// 他のモジュールから関数を取得
+const { 
+  snapToGrid, 
+  calculateOverlapArea, 
+  cacheIconRects, 
+  getOverlappingIcon, 
+  getOverlappingFolder, 
+  isOverlappingAny, 
+  findNearestEmptyPosition,
+  setupDraggableItem,
+  setupNormalModeDrag
+} = window.DragManager;
 
-/**
- * 画像からドミナントカラー（主要な色）を抽出する
- * @param {string} imageSrc - 画像のソース (URL or Data URL)
- * @returns {Promise<string>} 抽出された色のHEXコード
- */
-function getDominantColor(imageSrc) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      // 処理高速化のために小さくリサイズ
-      canvas.width = 64;
-      canvas.height = 64;
-      ctx.drawImage(img, 0, 0, 64, 64);
-      const { data } = ctx.getImageData(0, 0, 64, 64);
-      
-      const colorCounts = {};
-      let maxCount = 0;
-      let dominantColor = null;
-      
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i+1];
-        const b = data[i+2];
-        const a = data[i+3];
-        
-        if (a < 128) continue; // 透明度が高いピクセルは無視
-        
-        // 色空間を量子化（似た色をまとめる）
-        const q = 20;
-        const rQ = Math.round(r / q) * q;
-        const gQ = Math.round(g / q) * q;
-        const bQ = Math.round(b / q) * q;
-        
-        const key = `${rQ},${gQ},${bQ}`;
-        colorCounts[key] = (colorCounts[key] || 0) + 1;
-        
-        if (colorCounts[key] > maxCount) {
-          maxCount = colorCounts[key];
-          dominantColor = { r: rQ, g: gQ, b: bQ };
-        }
-      }
-      
-      if (dominantColor) {
-        // HEXに変換
-        const toHex = c => {
-            const hex = Math.min(255, Math.max(0, c)).toString(16);
-            return hex.length === 1 ? "0" + hex : hex;
-        };
-        resolve(`#${toHex(dominantColor.r)}${toHex(dominantColor.g)}${toHex(dominantColor.b)}`);
-      } else {
-        resolve('#4285f4'); // フォールバック
-      }
-    };
-    img.onerror = reject;
-    img.src = imageSrc;
-  });
-}
 
-/**
- * ドラッグ中のアイコンと重なっているアイコンを検出
- */
-const getOverlappingIcon = window.DragManager.getOverlappingIcon.bind(window.DragManager);
 
-/**
- * ドラッグ中のアイコンと重なっているフォルダーを検出
- */
-const getOverlappingFolder = window.DragManager.getOverlappingFolder.bind(window.DragManager);
 
 // ========================================
 // フォルダー機能
 // ========================================
 
-/**
- * アイコン要素からデータを取得
- * @param {HTMLElement} icon - アイコン要素
- * @returns {Object} アイコンデータ
- */
-function getIconData(icon) {
-  const img = icon.querySelector('img');
-  const name = icon.querySelector('p')?.textContent || '';
-  const isBuiltin = !!icon.id && icon.id.startsWith('appicon-');
-  const isLinuxApp = icon.classList.contains('linux-app');
-  const isFileShortcut = icon.classList.contains('file-shortcut');
-  const isFolderShortcut = icon.classList.contains('folder-shortcut');
-  
-  // URLを取得
-  let url = icon._appUrl || '';
-  if (isBuiltin && icon.id && builtinIconUrls[icon.id]) {
-    url = builtinIconUrls[icon.id];
-  }
-  
-  const data = {
-    id: icon.id || icon.dataset.saveKey,
-    name,
-    icon: img?.src || '',
-    url,
-    isBuiltin
-  };
-  
-  // Linuxアプリの場合は追加情報
-  if (isLinuxApp && icon._appCommand) {
-    data.command = icon._appCommand;
-    data.runInTerminal = icon._runInTerminal || false;
-    data.isLinuxApp = true;
-  }
+const { 
+  getIconData, 
+  createDesktopIcon, 
+  createLinuxAppIcon, 
+  createFileShortcutIcon, 
+  createFolderShortcutIcon, 
+  getFileIcon 
+} = window.AppManager;
 
-  // ファイル/フォルダショートカットの場合
-  if ((isFileShortcut || isFolderShortcut) && icon._filePath) {
-    data.path = icon._filePath;
-    data.isDirectory = isFolderShortcut;
-  }
-  
-  return data;
-}
+const { 
+  createFolder, 
+  createFolderIcon, 
+  updateFolderIcon, 
+  closeFolder, 
+  openFolder, 
+  applyFolderStyle, 
+  renderFolderPage, 
+  updateFolderModalPosition,
+  loadFolders,
+  isAppInFolder,
+  removeFromFolder
+} = window.FolderManager;
 
-/**
- * フォルダーを作成
- */
-const createFolder = window.FolderManager.createFolder.bind(window.FolderManager);
-
-/**
- * フォルダーアイコンを作成
- */
-const createFolderIcon = window.FolderManager.createFolderIcon.bind(window.FolderManager);
-
-// フォルダーを閉じる（アニメーション付き）
-function closeFolder() {
-  const modal = document.getElementById('folder_modal_overlay');
-  const modalContent = document.getElementById('folder_modal');
-  
-  if (!modal || modal.style.display === 'none') return;
-
-  modal.classList.add('fade-out');
-  if (modalContent) {
-    modalContent.classList.remove('folder-opening');
-    modalContent.classList.add('folder-closing');
-  }
-  
-  const onAnimationEnd = () => {
-    modal.style.display = 'none';
-    modal.classList.remove('fade-out');
-    if (modalContent) {
-      modalContent.classList.remove('folder-closing');
-    }
-    currentOpenFolderId = null;
-  };
-  
-  // アニメーション終了を待つ
-  // アニメーションイベントが発火しない場合の保険としてsetTimeoutも併用
-  const timer = setTimeout(onAnimationEnd, 200);
-  modalContent?.addEventListener('animationend', () => { clearTimeout(timer); onAnimationEnd(); }, { once: true });
-}
-
-// フォルダーを開く
-function openFolder(folderId) {
-  closeAllModals();
-  const folderData = folders[folderId];
-  if (!folderData) return;
-  
-  currentOpenFolderId = folderId;
-  currentFolderPage = 0;
-  
-  const title = document.getElementById('folder_title');
-  const titleInput = document.getElementById('folder_title_input');
-  
-  title.textContent = folderData.name;
-  title.style.display = '';
-  titleInput.style.display = 'none';
-  
-  // スタイルデータがない場合はデフォルト値を設定
-  if (!folderData.style) {
-    const isDark = document.body.classList.contains('dark-mode');
-    folderData.style = { color: isDark ? '#1f1f1f' : '#ffffff', opacity: 1.0 };
-  }
-  
-  applyFolderStyle(folderId);
-  
-  // タイトルクリックで編集モードに
-  title.onclick = () => {
-    title.style.display = 'none';
-    titleInput.style.display = '';
-    titleInput.value = folderData.name;
-    titleInput.focus();
-    titleInput.select();
-  };
-  
-  // 編集完了時の処理
-  const saveTitle = () => {
-    const newName = titleInput.value.trim();
-    if (newName && newName !== folderData.name) {
-      folderData.name = newName;
-      title.textContent = newName;
-      saveFolders();
-      
-      // フォルダーアイコンの名前も更新
-      const folderIcon = document.querySelector(`[data-save-key="${folderId}"]`);
-      if (folderIcon) {
-        const nameEl = folderIcon.querySelector('p');
-        if (nameEl) nameEl.textContent = newName;
-      }
-    }
-    titleInput.style.display = 'none';
-    title.style.display = '';
-  };
-  
-  // タイトルクリックで編集モードに
-  title.onclick = () => {
-    title.style.display = 'none';
-    titleInput.style.display = '';
-    titleInput.value = folderData.name;
-    titleInput.onblur = saveTitle; // 編集モードに入るときにだけblurハンドラを設定
-    titleInput.focus();
-    titleInput.select();
-  };
-  
-  // キー入力の処理は一度だけ設定
-  titleInput.onkeydown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      titleInput.blur(); // Enterでblurを発火させて保存
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      titleInput.onblur = null; // Escapeでは保存しないようにblurハンドラを解除
-      titleInput.style.display = 'none';
-      title.style.display = '';
-    }
-  };
-  
-  renderFolderPage(folderId);
-}
-
-/**
- * フォルダーのスタイルを適用
- */
-const applyFolderStyle = window.FolderManager.applyFolderStyle.bind(window.FolderManager);
-
-function renderFolderPage(folderId) {
-  const folderData = folders[folderId];
-  if (!folderData) return;
-
-  const modal = document.getElementById('folder_modal_overlay');
-  const modalContent = document.getElementById('folder_modal');
-  const contents = document.getElementById('folder_contents');
-  
-  contents.innerHTML = '';
-  
-  // ページネーション計算
-  const itemsPerPage = 9;
-  const totalApps = folderData.apps.length;
-  const totalPages = Math.ceil(totalApps / itemsPerPage) || 1;
-  
-  if (currentFolderPage >= totalPages) currentFolderPage = totalPages - 1;
-  if (currentFolderPage < 0) currentFolderPage = 0;
-  
-  const startIdx = currentFolderPage * itemsPerPage;
-  const endIdx = Math.min(startIdx + itemsPerPage, totalApps);
-  const pageApps = folderData.apps.slice(startIdx, endIdx);
-  
-  // グリッドレイアウト決定: 4つまでは2列、それ以上は3列
-  const columns = totalApps > 4 ? 3 : 2;
-  
-  contents.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-  
-  pageApps.forEach((app, i) => {
-    const index = startIdx + i;
-    const div = document.createElement('div');
-    div.className = 'appicon folder-item';
-    div.dataset.folderItemIndex = index;
-    div.innerHTML = `
-      <img src="${app.icon}" />
-      <p>${app.name}</p>
-    `;
-    
-    // 画像のドラッグを防止
-    const img = div.querySelector('img');
-    if (img) {
-      img.ondragstart = (e) => e.preventDefault();
-    }
-    
-    // ドラッグ用の変数
-    let isDraggingFromFolder = false;
-    let ignoreClick = false;
-    let dragStartX, dragStartY;
-    let dragClone = null;
-    
-    div.onpointerdown = (e) => {
-      if (e.button !== 0) return;
-      div.setPointerCapture(e.pointerId);
-      isDraggingFromFolder = false;
-      ignoreClick = false;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-    };
-    
-    div.onpointermove = (e) => {
-      if (!e.buttons) return;
-      
-      const dx = e.clientX - dragStartX;
-      const dy = e.clientY - dragStartY;
-      
-      // ドラッグ開始判定
-      if (!isDraggingFromFolder && (Math.abs(dx) > DRAG_THRESHOLD * 2 || Math.abs(dy) > DRAG_THRESHOLD * 2)) {
-        isDraggingFromFolder = true;
-        ignoreClick = true;
-        
-        // ドラッグ用のクローンを作成
-        dragClone = div.cloneNode(true);
-        dragClone.className = 'appicon folder-drag-clone';
-        dragClone.style.position = 'fixed';
-        dragClone.style.pointerEvents = 'none';
-        dragClone.style.zIndex = '10000';
-        dragClone.style.opacity = '0.8';
-        dragClone.style.width = '80px';
-        document.body.appendChild(dragClone);
-      }
-      
-      if (isDraggingFromFolder && dragClone) {
-        dragClone.style.left = (e.clientX - 40) + 'px';
-        dragClone.style.top = (e.clientY - 40) + 'px';
-        
-        // モーダル外かどうかをチェック
-        const modalRect = document.getElementById('folder_modal').getBoundingClientRect();
-        const isOutsideModal = e.clientX < modalRect.left || e.clientX > modalRect.right ||
-                               e.clientY < modalRect.top || e.clientY > modalRect.bottom;
-        
-        // ハイライトをリセット
-        document.querySelectorAll('.folder-item.reorder-target').forEach(el => el.classList.remove('reorder-target'));
-        
-        if (isOutsideModal) {
-          dragClone.style.transform = 'scale(1.1)';
-          dragClone.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)';
-        } else {
-          dragClone.style.transform = 'scale(1)';
-          dragClone.style.boxShadow = '';
-          
-          // 並べ替えターゲットの検出
-          const elements = document.elementsFromPoint(e.clientX, e.clientY);
-          const targetItem = elements.find(el => el.classList.contains('folder-item') && el !== div);
-          if (targetItem) {
-            targetItem.classList.add('reorder-target');
-          }
-        }
-      }
-    };
-    
-    div.onpointerup = (e) => {
-      if (e.pointerId !== undefined) {
-        div.releasePointerCapture(e.pointerId);
-      }
-      
-      if (isDraggingFromFolder && dragClone) {
-        const modalRect = document.getElementById('folder_modal').getBoundingClientRect();
-        const isOutsideModal = e.clientX < modalRect.left || e.clientX > modalRect.right ||
-                               e.clientY < modalRect.top || e.clientY > modalRect.bottom;
-        
-        dragClone.remove();
-        dragClone = null;
-        
-        // ハイライトをリセット
-        document.querySelectorAll('.folder-item.reorder-target').forEach(el => el.classList.remove('reorder-target'));
-        
-        if (isOutsideModal) {
-          // フォルダから取り出す（ドロップ座標を渡す）
-          removeFromFolder(folderId, index, e.clientX, e.clientY);
-          closeFolder();
-        } else {
-          // 並べ替え処理
-          const elements = document.elementsFromPoint(e.clientX, e.clientY);
-          const targetItem = elements.find(el => el.classList.contains('folder-item'));
-          
-          if (targetItem) {
-            const targetIndex = parseInt(targetItem.dataset.folderItemIndex);
-            if (!isNaN(targetIndex) && targetIndex !== index) {
-              // 配列を並べ替え
-              const item = folderData.apps[index];
-              folderData.apps.splice(index, 1);
-              folderData.apps.splice(targetIndex, 0, item);
-              
-              saveFolders();
-              updateFolderIcon(folderId);
-              renderFolderPage(folderId);
-            }
-          }
-        }
-      }
-      
-      isDraggingFromFolder = false;
-    };
-
-    div.onclick = (e) => {
-      if (ignoreClick) {
-        e.stopPropagation();
-        return;
-      }
-      handleFolderItemClick(app, modal);
-    };
-    
-    // コンテキストメニュー表示
-    div.oncontextmenu = (e) => {
-      e.preventDefault();
-      
-      // アプリタイプを判定
-      let type = 'folder-item';
-      if (app.isLinuxApp || app.command) {
-        type = 'folder-item-linuxapp';
-      } else if (app.url) {
-        type = 'folder-item-webapp';
-      }
-      
-      // 編集用データを添付
-      div._appData = app;
-      div._folderId = folderId;
-      div._folderIndex = index;
-      
-      showContextMenu(e, div, type);
-    };
-    
-    contents.appendChild(div);
-
-    // 形状を適用（モーダル内のアイテムは後から生成されるため明示的にラップする）
-    if (!app.path) {
-      try {
-        wrapIconWithShape(div, getCurrentIconShape());
-        // フォルダ内のアイテムは通常プレビューより大きめに表示
-        const wrapper = div.querySelector('m3e-shape');
-        if (wrapper) {
-          wrapper.style.width = '50px';
-          wrapper.style.height = '50px';
-          // ensure slotted img fills wrapper
-          wrapper.style.display = 'inline-block';
-        }
-      } catch (e) {
-        console.warn('Failed to apply shape to folder item:', e);
-      }
-    }
-  });
-  
-  // ページネーション表示
-  const existingPagination = modalContent.querySelector('.folder-pagination');
-  if (existingPagination) existingPagination.remove();
-  
-  if (totalPages > 1) {
-    const paginationDiv = document.createElement('div');
-    paginationDiv.className = 'folder-pagination';
-    
-    for (let p = 0; p < totalPages; p++) {
-      const dot = document.createElement('div');
-      dot.className = 'folder-pagination-dot';
-      if (p === currentFolderPage) dot.classList.add('active');
-      
-      dot.onclick = (e) => {
-        e.stopPropagation();
-        currentFolderPage = p;
-        renderFolderPage(folderId);
-      };
-      paginationDiv.appendChild(dot);
-    }
-    modalContent.appendChild(paginationDiv);
-  }
-  
-  updateFolderModalPosition(folderId);
-}
-
-function updateFolderModalPosition(folderId) {
-  const modal = document.getElementById('folder_modal_overlay');
-  const modalContent = document.getElementById('folder_modal');
-  const folderIcon = document.querySelector(`[data-folder-id="${folderId}"]`);
-  
-  if (folderIcon && modalContent) {
-    const rect = folderIcon.getBoundingClientRect();
-    
-    // アニメーションクラスを追加（まだ表示されていない場合）
-    if (modal.style.display === 'none') {
-      modalContent.classList.remove('folder-closing');
-      modalContent.classList.add('folder-opening');
-    }
-    
-    modal.style.display = 'block'; // absolute配置のためにblockにする
-    modalContent.style.position = 'absolute';
-    modalContent.style.margin = '0';
-    
-    // サイズを計測
-    const modalWidth = modalContent.offsetWidth;
-    
-    // 横位置（アイコンの中央に合わせる）
-    let left = rect.left + (rect.width / 2) - (modalWidth / 2);
-    if (left < 10) left = 10;
-    if (left + modalWidth > window.innerWidth - 10) left = window.innerWidth - modalWidth - 10;
-    modalContent.style.left = `${left}px`;
-    
-    // 縦位置（画面の下半分にある場合は上に表示）
-    if (rect.top > window.innerHeight / 2) {
-      modalContent.style.top = 'auto';
-      modalContent.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
-      modalContent.style.transformOrigin = 'bottom center';
-    } else {
-      modalContent.style.bottom = 'auto';
-      modalContent.style.top = (rect.bottom + 10) + 'px';
-      modalContent.style.transformOrigin = 'top center';
-    }
-  } else {
-    modal.style.display = 'flex';
-    if (modalContent) {
-      modalContent.style.position = '';
-      modalContent.style.margin = '';
-      modalContent.style.left = '';
-      modalContent.style.top = '';
-      modalContent.style.bottom = '';
-    }
-  }
-}
-
-// フォルダ内アイテムのクリック処理
-async function handleFolderItemClick(app, modal) {
-  closeFolder();
-  
-  // Linuxアプリの場合
-  if (app.command || app.isLinuxApp) {
-    let command = app.command;
-    
-    // ターミナルで実行する場合
-    if (app.runInTerminal) {
-      command = `xterm -hold -e "${app.command}"`;
-    }
-    
-    const result = await launchLinuxApp(command);
-    if (!result.success) {
-      const lang = getCurrentLanguage();
-      const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
-      await showAlertDialog(errorMsg);
-    }
-    return;
-  }
-  
-  // ファイル/フォルダの場合
-  if (app.path) {
-    const result = await openFileOrFolder(app.path);
-    if (!result.success) {
-      const lang = getCurrentLanguage();
-      await showAlertDialog(i18n.t('open_failed') + ': ' + result.error);
-    }
-    return;
-  }
-  
-  // URLがある場合は開く
-  if (app.url) {
-    if (app.url.startsWith('chrome://')) {
-      if (typeof openURL === 'function') {
-        openURL(app.url);
-      }
-    } else {
-      window.open(app.url);
-    }
-  } else if (app.isBuiltin && app.id) {
-    // ビルトインアイコンでURLがない場合（フォールバック）
-    const builtinUrl = builtinIconUrls[app.id];
-    if (builtinUrl) {
-      if (builtinUrl.startsWith('chrome://')) {
-        if (typeof openURL === 'function') {
-          openURL(builtinUrl);
-        }
-      } else {
-        window.open(builtinUrl);
-      }
-    }
-  }
-}
-
-// フォルダーからアプリを取り出す
-function removeFromFolder(folderId, appIndex, dropX, dropY) {
-  const folderData = folders[folderId];
-  if (!folderData) return;
-  
-  const app = folderData.apps[appIndex];
-  folderData.apps.splice(appIndex, 1);
-  
-  // 元のアイコンを表示または再作成
-  if (app.command || app.isLinuxApp) {
-    // Linuxアプリは再作成
-    const created = createLinuxAppIcon({
-      name: app.name,
-      command: app.command,
-      icon: app.icon,
-      runInTerminal: app.runInTerminal || false
-    });
-    try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
-    if (created && dropX !== undefined && dropY !== undefined) {
-      positionCreatedIcon(created, dropX, dropY);
-    }
-  } else if (app.path) {
-    if (app.isDirectory) {
-      const created = createFolderShortcutIcon({
-        name: app.name,
-        path: app.path,
-        icon: app.icon,
-        saveKey: app.id
-      });
-      if (created && dropX !== undefined && dropY !== undefined) positionCreatedIcon(created, dropX, dropY);
-      try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
-    } else {
-      const created = createFileShortcutIcon({
-        name: app.name,
-        path: app.path,
-        icon: app.icon,
-        isDirectory: false,
-        saveKey: app.id
-      });
-      try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
-      if (created && dropX !== undefined && dropY !== undefined) positionCreatedIcon(created, dropX, dropY);
-    }
-  } else if (app.isBuiltin && app.id) {
-    const el = document.getElementById(app.id);
-    if (el) el.style.display = '';
-    if (el && dropX !== undefined && dropY !== undefined) positionCreatedIcon(el, dropX, dropY);
-  } else if (app.id) {
-    let el = document.querySelector(`[data-save-key="${app.id}"]`);
-    if (el) {
-      el.style.display = '';
-        try { wrapIconWithShape(el, getCurrentIconShape()); } catch (e) {}
-        if (dropX !== undefined && dropY !== undefined) positionCreatedIcon(el, dropX, dropY);
-    } else if (app.url) {
-      // カスタムアプリは再作成
-      const created = createDesktopIcon({
-        name: app.name,
-        url: app.url,
-        icon: app.icon
-      });
-      try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
-      if (created && dropX !== undefined && dropY !== undefined) positionCreatedIcon(created, dropX, dropY);
-    }
-  }
-  
-  // フォルダーが1つ以下になったら解散
-  if (folderData.apps.length <= 1) {
-    // 残りのアプリも表示または再作成
-    if (folderData.apps.length === 1) {
-      const remainingApp = folderData.apps[0];
-      if (remainingApp.command || remainingApp.isLinuxApp) {
-          const created = createLinuxAppIcon({
-            name: remainingApp.name,
-            command: remainingApp.command,
-            icon: remainingApp.icon,
-            runInTerminal: remainingApp.runInTerminal || false
-          });
-          try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
-      } else if (remainingApp.isBuiltin && remainingApp.id) {
-        const el = document.getElementById(remainingApp.id);
-        if (el) el.style.display = '';
-      } else if (remainingApp.id) {
-        let el = document.querySelector(`[data-save-key="${remainingApp.id}"]`);
-        if (el) {
-          el.style.display = '';
-        } else if (remainingApp.url) {
-          const created = createDesktopIcon({
-            name: remainingApp.name,
-            url: remainingApp.url,
-            icon: remainingApp.icon
-          });
-          try { wrapIconWithShape(created, getCurrentIconShape()); } catch (e) {}
-        }
-      }
-    }
-    
-    // フォルダーアイコンを削除
-    const folderEl = document.querySelector(`[data-folder-id="${folderId}"]`);
-    if (folderEl) folderEl.remove();
-    
-    delete folders[folderId];
-  }
-  
-  saveFolders();
-  
-  // フォルダーアイコンを更新
-  updateFolderIcon(folderId);
-}
-
-// ドロップ座標（クライアント座標）に作成済み要素を配置して位置を保存
-function positionCreatedIcon(el, clientX, clientY) {
-  if (!el) return;
-  const desktop = document.getElementById('desktop_icons');
-  const containerRect = desktop ? desktop.getBoundingClientRect() : { left: 0, top: 0 };
-  const elRect = el.getBoundingClientRect();
-  // 中心を合わせる
-  const startX = clientX - containerRect.left - (elRect.width / 2);
-  const startY = clientY - containerRect.top - (elRect.height / 2);
-  
-  // グリッドスナップと重なり回避を適用
-  const pos = findNearestEmptyPosition(el, startX, startY);
-  
-  el.style.position = 'absolute';
-  el.style.left = pos.x + 'px';
-  el.style.top = pos.y + 'px';
-
-  // 保存（widgetPositions）
-  try {
-    const saveKey = el.dataset.saveKey;
-    if (saveKey) {
-      const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
-      positions[saveKey] = { position: 'absolute', left: el.style.left, top: el.style.top };
-      localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
-    }
-  } catch (e) {
-    console.warn('Failed to save widget position', e);
-  }
-}
-
-// フォルダーにアプリを追加
-function addToFolder(folderId, icon) {
-  const folderData = folders[folderId];
-  if (!folderData) return;
-  
-  const img = icon.querySelector('img');
-  const name = icon.querySelector('p')?.textContent || '';
-  const isBuiltin = !!icon.id && icon.id.startsWith('appicon-');
-  const isLinuxApp = icon.classList.contains('linux-app');
-  const isFileShortcut = icon.classList.contains('file-shortcut');
-  const isFolderShortcut = icon.classList.contains('folder-shortcut');
-  
-  // URLを取得（ビルトインアイコンの場合はbuiltinIconUrlsから取得）
-  let url = icon._appUrl || '';
-  if (isBuiltin && icon.id && builtinIconUrls[icon.id]) {
-    url = builtinIconUrls[icon.id];
-  }
-  
-  const appData = {
-    id: icon.id || icon.dataset.saveKey,
-    name: name,
-    icon: img?.src || '',
-    url: url,
-    isBuiltin: isBuiltin
-  };
-  
-  // Linuxアプリの場合はcommandを追加
-  if (isLinuxApp && icon._appCommand) {
-    appData.command = icon._appCommand;
-    appData.runInTerminal = icon._runInTerminal || false;
-    appData.isLinuxApp = true;
-  }
-
-  // ファイル/フォルダショートカットの場合
-  if ((isFileShortcut || isFolderShortcut) && icon._filePath) {
-    appData.path = icon._filePath;
-    appData.isDirectory = isFolderShortcut;
-  }
-  
-  folderData.apps.push(appData);
-  saveFolders();
-  
-  // アイコンを非表示ではなく削除（リロード時の重複を防ぐ）
-  // ビルトインアプリは削除すると復元できないため非表示にする
-  if (isBuiltin) {
-    icon.style.display = 'none';
-  } else {
-    icon.remove();
-  }
-  
-  // フォルダーアイコンを更新
-  updateFolderIcon(folderId);
-}
-
-// フォルダーアイコンを更新
-const updateFolderIcon = window.FolderManager.updateFolderIcon.bind(window.FolderManager);
-
-// 保存されたフォルダーを読み込み
-function loadFolders() {
-  Object.keys(folders).forEach(folderId => {
-    const folderData = folders[folderId];
-    const folderEl = createFolderIcon(folderId, folderData);
-    
-    // フォルダー内のアプリを非表示
-    folderData.apps.forEach(app => {
-      if (app.isBuiltin && app.id) {
-        const el = document.getElementById(app.id);
-        if (el) el.style.display = 'none';
-      } else if (app.id) {
-        const el = document.querySelector(`[data-save-key="${app.id}"]`);
-        if (el) el.style.display = 'none';
-      }
-    });
-    
-    const desktopIcons = document.getElementById('desktop_icons');
-    if (desktopIcons) {
-      desktopIcons.appendChild(folderEl);
-    }
-  });
-}
 
 // フォルダーモーダルを閉じる
 document.getElementById('close_folder_modal').onclick = () => {
   closeFolder();
 }
+
 
 // オーバーレイクリックで閉じる
 document.getElementById('folder_modal_overlay').onclick = (e) => {
@@ -1129,8 +398,8 @@ document.getElementById('folder_modal_overlay').onclick = (e) => {
 // 位置変更モードを有効にする
 function enterPositionChangeMode() {
   closeAllModals();
-  if (isPositionChangeMode) return;
-  isPositionChangeMode = true;
+  if (window.isPositionChangeMode) return;
+  window.isPositionChangeMode = true;
   
   document.getElementById('change_widget_position_modal_overlay').style.display = 'flex';
   
@@ -1146,11 +415,11 @@ function enterPositionChangeMode() {
   });
   
   // グリッドモードのスイッチの状態を復元
-  isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
+  window.isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
   updateGridModeSwitch();
   
   // グリッド線の表示/非表示
-  if (isGridModeEnabled) {
+  if (window.isGridModeEnabled) {
     document.getElementById('change_widget_position_modal_overlay').classList.add('grid-mode');
   } else {
     document.getElementById('change_widget_position_modal_overlay').classList.remove('grid-mode');
@@ -1159,184 +428,28 @@ function enterPositionChangeMode() {
 
 // 位置変更モードを終了する（保存または閉じる時に呼ばれる）
 function exitPositionChangeMode() {
-  isPositionChangeMode = false;
+  window.isPositionChangeMode = false;
   document.getElementById('change_widget_position_modal_overlay').style.display = 'none';
   
   // z-indexを元に戻す
   document.getElementById('desktop_icons').style.zIndex = '';
 }
 
+
 document.getElementById('open_change_widget_position_modal').onclick = () => {
   enterPositionChangeMode();
 };
 
-/**
- * 指定された位置で他の要素と重なるかチェック
- */
-const isOverlappingAny = window.DragManager.isOverlappingAny.bind(window.DragManager);
-
-/**
- * 最も近い空き位置を探す
- */
-const findNearestEmptyPosition = window.DragManager.findNearestEmptyPosition.bind(window.DragManager);
-
-// アイテムにドラッグイベントを設定する関数（位置変更モード用）
-function setupDraggableItem(item) {
-  // 位置変更モード中はクリックイベントを無効化
-  item.dataset.originalOnclick = item.onclick ? 'has-onclick' : '';
-  item._savedOnclick = item.onclick;
-  item.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  
-  // 右クリックイベントも保存
-  item._savedOncontextmenu = item.oncontextmenu;
-  
-  // リンクタグのデフォルト動作も無効化
-  const links = item.querySelectorAll('a');
-  links.forEach(link => {
-    link.dataset.originalHref = link.href;
-    link.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-  });
-
-  // 画像のドラッグを無効化
-  const images = item.querySelectorAll('img');
-  images.forEach(img => {
-    img.draggable = false;
-    img.style.pointerEvents = 'none';
-  });
-
-  // ポインターダウンでキャプチャを取得
-  item.onpointerdown = function(event) {
-    event.preventDefault();
-    this.setPointerCapture(event.pointerId);
-    this._isDragging = false;
-    this._startX = event.clientX;
-    this._startY = event.clientY;
-    // 開始時の要素位置を記録
-    this._startLeft = this.offsetLeft;
-    this._startTop = this.offsetTop;
-    // 矩形情報をキャッシュ
-    cacheIconRects(this);
-  };
-  
-  item.onpointermove = function(event){
-    if (this._isResizing) return; // リサイズ中は移動処理を無視
-    if (!this.hasPointerCapture(event.pointerId)) return;
-    if(event.buttons){
-      const dx = event.clientX - this._startX;
-      const dy = event.clientY - this._startY;
-      
-      // ドラッグ開始の判定（少し動いたらドラッグ開始）
-      if (!this._isDragging) {
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-          this._isDragging = true;
-        } else {
-          return;
-        }
-      }
-      
-      // 開始位置からの相対移動で計算（より正確）
-      let newLeft = this._startLeft + dx;
-      let newTop = this._startTop + dy;
-      
-      // ドラッグ中は滑らかに移動（スナップはドロップ時に行う）
-      this.style.left = newLeft + 'px';
-      this.style.top = newTop + 'px';
-      this.style.position = 'absolute';
-      this.draggable = false;
-      
-      // ドラッグ中のアイテムを記録
-      draggedItem = this;
-      
-      // 他のアイコンとの重なりをチェック（フォルダー作成のヒント）
-      if (!this.classList.contains('widget') && this.id !== 'appicon-add') {
-        // すべてのハイライトをリセット
-        document.querySelectorAll('.appicon.drag-over').forEach(el => {
-          el.classList.remove('drag-over');
-        });
-        
-        // 重なっているアイコンをハイライト
-        const overlapping = getOverlappingIcon(this);
-        if (overlapping) {
-          overlapping.classList.add('drag-over');
-        }
-        
-        // 重なっているフォルダーをハイライト
-        const overlappingFolder = getOverlappingFolder(this);
-        if (overlappingFolder) {
-          overlappingFolder.classList.add('drag-over');
-        }
-      }
-    }
-  };
-  
-  // ドラッグ終了時の処理
-  item.onpointerup = function(event) {
-    // ポインターキャプチャを解放
-    if (event && event.pointerId !== undefined) {
-      this.releasePointerCapture(event.pointerId);
-    }
-    
-    // ドラッグしていなかった場合は何もしない
-    if (!this._isDragging) {
-      this._isDragging = false;
-      return;
-    }
-    this._isDragging = false;
-    
-    // ハイライトをリセット
-    document.querySelectorAll('.appicon.drag-over').forEach(el => {
-      el.classList.remove('drag-over');
-    });
-    
-    // フォルダー作成またはフォルダーへの追加をチェック
-    if (!this.classList.contains('widget') && this.id !== 'appicon-add' && !this.classList.contains('folder')) {
-      // フォルダーとの重なりをチェック
-      const overlappingFolder = getOverlappingFolder(this);
-      if (overlappingFolder) {
-        const folderId = overlappingFolder.dataset.folderId;
-        addToFolder(folderId, this);
-        draggedItem = null;
-        return;
-      }
-      
-      // 他のアイコンとの重なりをチェック
-      const overlapping = getOverlappingIcon(this);
-      if (overlapping && !overlapping.classList.contains('folder')) {
-        createFolder(overlapping, this);
-        draggedItem = null;
-        return;
-      }
-    }
-    
-    // 自動位置調整（重なり防止）
-    if (this.style.position === 'absolute') {
-      const newPos = findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
-      this.style.left = newPos.x + 'px';
-      this.style.top = newPos.y + 'px';
-    }
-    
-    draggedItem = null;
-    // キャッシュをクリア
-    window.cachedIconRects = null;
-    window.cachedFolderRects = null;
-  };
-}
-
 // グリッドモードスイッチの状態更新関数 (m3e-switchのプロパティを考慮)
+
 function updateGridModeSwitch() {
   const gridModeSwitch = document.getElementById('toggle_grid_mode');
   if (gridModeSwitch) {
     // m3e-switch は 'selected' プロパティを使用するが、念のため 'checked' も考慮
     if (typeof gridModeSwitch.selected !== 'undefined') {
-      gridModeSwitch.selected = isGridModeEnabled;
+      gridModeSwitch.selected = window.isGridModeEnabled;
     } else {
-      gridModeSwitch.checked = isGridModeEnabled;
+      gridModeSwitch.checked = window.isGridModeEnabled;
     }
   }
 }
@@ -1347,19 +460,19 @@ if (gridModeSwitch) {
   gridModeSwitch.addEventListener('change', (e) => {
     // m3e-switch は 'selected' プロパティで状態を公開するが、念のため 'checked' も考慮
     const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
-    isGridModeEnabled = newState;
-    localStorage.setItem(LS_KEYS.GRID_MODE_ENABLED, isGridModeEnabled);
+    window.isGridModeEnabled = newState;
+    localStorage.setItem(LS_KEYS.GRID_MODE_ENABLED, window.isGridModeEnabled);
     
     // グリッド線の表示/非表示
     const overlay = document.getElementById('change_widget_position_modal_overlay');
-    if (isGridModeEnabled) {
+    if (window.isGridModeEnabled) {
       overlay.classList.add('grid-mode');
     } else {
       overlay.classList.remove('grid-mode');
     }
     
     // グリッドモードが有効になったら、すべてのアイコンの位置をグリッドにスナップ
-    if (isGridModeEnabled) {
+    if (window.isGridModeEnabled) {
       document.querySelectorAll(".appicon,.widget").forEach(item => {
         // 現在の位置を取得（absoluteでない場合はoffsetLeftを使用）
         const currentLeft = item.offsetLeft;
@@ -1374,176 +487,10 @@ if (gridModeSwitch) {
   });
 }
 
-// 通常モードでのドラッグを設定する関数
-function setupNormalModeDrag(item) {
-  // 画像のドラッグを防止
-  const img = item.querySelector('img');
-  if (img) {
-    img.ondragstart = (e) => e.preventDefault();
-  }
-
-  // クリックイベントの制御（重複登録防止）
-  if (!item._clickListenerAttached) {
-    item.addEventListener('click', function(e) {
-      if (this._ignoreClick) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      }
-    }, true);
-    item._clickListenerAttached = true;
-  }
-
-  item.onpointerdown = function(event) {
-    // 左クリックのみ
-    if (event.button !== 0) return;
-    
-    this.setPointerCapture(event.pointerId);
-    this._isDragging = false;
-    this._startX = event.clientX;
-    this._startY = event.clientY;
-    this._startLeft = this.offsetLeft;
-    this._startTop = this.offsetTop;
-    this._normalModeDragStarted = false;
-    this._ignoreClick = false;
-    // 矩形情報をキャッシュ
-    cacheIconRects(this);
-  };
-  
-  item.onpointermove = function(event) {
-    if (this._isResizing) return; // リサイズ中は移動処理を無視
-    if (!event.buttons) return;
-    if (!this.hasPointerCapture(event.pointerId)) return;
-    
-    const dx = event.clientX - this._startX;
-    const dy = event.clientY - this._startY;
-    
-    // ドラッグ開始の判定
-    if (!this._isDragging) {
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-        this._isDragging = true;
-        this._normalModeDragStarted = true;
-        this._ignoreClick = true; // クリックを無視するフラグ
-        
-        const images = this.querySelectorAll('img');
-        images.forEach(img => {
-          img.draggable = false;
-          img.style.pointerEvents = 'none';
-        });
-      } else {
-        return;
-      }
-    }
-    
-    // 位置を更新
-    let newLeft = this._startLeft + dx;
-    let newTop = this._startTop + dy;
-    
-    // ドラッグ中は滑らかに移動（スナップはドロップ時に行う）
-    this.style.left = newLeft + 'px';
-    this.style.top = newTop + 'px';
-    this.style.position = 'absolute';
-    
-    draggedItem = this;
-    
-    // フォルダー関連のハイライト
-    if (!this.classList.contains('widget') && !this.classList.contains('folder')) {
-      document.querySelectorAll('.appicon.drag-over').forEach(el => {
-        el.classList.remove('drag-over');
-      });
-      
-      const overlapping = getOverlappingIcon(this);
-      if (overlapping) {
-        overlapping.classList.add('drag-over');
-      }
-      
-      const overlappingFolder = getOverlappingFolder(this);
-      if (overlappingFolder) {
-        overlappingFolder.classList.add('drag-over');
-      }
-    }
-  };
-  
-  item.onpointerup = function(event) {
-    if (event && event.pointerId !== undefined) {
-      this.releasePointerCapture(event.pointerId);
-    }
-    
-    // ドラッグしていなかった場合は通常のクリック処理
-    if (!this._normalModeDragStarted) {
-      this._isDragging = false;
-      this._ignoreClick = false;
-      return;
-    }
-    
-    // ハイライトをリセット
-    document.querySelectorAll('.appicon.drag-over').forEach(el => {
-      el.classList.remove('drag-over');
-    });
-    
-    // フォルダー処理
-    if (!this.classList.contains('widget') && !this.classList.contains('folder')) {
-      const overlappingFolder = getOverlappingFolder(this);
-      if (overlappingFolder) {
-        const folderId = overlappingFolder.dataset.folderId;
-        addToFolder(folderId, this);
-        draggedItem = null;
-        this._isDragging = false;
-        this._normalModeDragStarted = false;
-        setTimeout(() => { this._ignoreClick = false; }, 50);
-        return;
-      }
-      
-      const overlapping = getOverlappingIcon(this);
-      if (overlapping && !overlapping.classList.contains('folder')) {
-        createFolder(overlapping, this);
-        draggedItem = null;
-        this._isDragging = false;
-        this._normalModeDragStarted = false;
-        setTimeout(() => { this._ignoreClick = false; }, 50);
-        return;
-      }
-    }
-    
-    // 自動位置調整（重なり防止）
-    if (this.style.position === 'absolute') {
-      const newPos = findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
-      this.style.left = newPos.x + 'px';
-      this.style.top = newPos.y + 'px';
-    }
-    
-    // 位置を保存
-    const key = this.id || this.dataset.saveKey;
-    if (key) {
-      try {
-        const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
-        positions[key] = {
-          left: this.style.left,
-          top: this.style.top,
-          position: 'absolute'
-        };
-        localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
-      } catch (e) {}
-    }
-    
-    const images = this.querySelectorAll('img');
-    images.forEach(img => {
-      img.draggable = true;
-      img.style.pointerEvents = '';
-    });
-    
-    draggedItem = null;
-    this._isDragging = false;
-    this._normalModeDragStarted = false;
-    setTimeout(() => { this._ignoreClick = false; }, 50);
-    // キャッシュをクリア
-    window.cachedIconRects = null;
-    window.cachedFolderRects = null;
-  };
-}
 
 // すべてのアイコンに通常モードのドラッグを設定
 function initNormalModeDrag() {
+
   document.querySelectorAll(".appicon,.widget").forEach(item => {
     setupNormalModeDrag(item);
   });
@@ -1915,21 +862,22 @@ if (applyFolderStyleAllBtn) {
     const opacitySlider = document.getElementById('global_folder_bg_opacity');
     const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
     
-    Object.keys(folders).forEach(folderId => {
-      folders[folderId].style = { color, opacity };
+    Object.keys(window.folders).forEach(folderId => {
+      window.folders[folderId].style = { color, opacity };
     });
-    Object.keys(folders).forEach(folderId => updateFolderIcon(folderId));
+    Object.keys(window.folders).forEach(folderId => updateFolderIcon(folderId));
     saveFolders();
     
     // 開いているフォルダーがあれば更新
-    if (currentOpenFolderId) {
-      applyFolderStyle(currentOpenFolderId);
+    if (window.currentOpenFolderId) {
+      applyFolderStyle(window.currentOpenFolderId);
     }
     
     const lang = getCurrentLanguage();
     await showAlertDialog(lang === 'ja' ? 'すべてのフォルダーに適用しました' : 'Applied to all folders');
   };
 }
+
 
 // New App Modal Logic
 const newAppImageTrigger = document.getElementById('new_app_image_trigger');
@@ -1979,9 +927,8 @@ if (deleteAllDataBtn) {
   };
 }
 
-const createDesktopIcon = window.AppManager.createDesktopIcon;
-
 const saveNewAppBtn = document.getElementById('save_new_app');
+
 if (saveNewAppBtn) {
   saveNewAppBtn.onclick = async () => {
     const name = document.getElementById('new_app_name').value;
@@ -2015,30 +962,19 @@ if (saveNewAppBtn) {
   };
 }
 
-// Helper function to check if a custom app is in any folder
-function isCustomAppInFolder(app) {
-  for (const folderId in folders) {
-    const folderData = folders[folderId];
-    const found = folderData.apps.some(folderApp => 
-      folderApp.url && folderApp.url === app.url && folderApp.name === app.name
-    );
-    if (found) return true;
-  }
-  return false;
-}
-
 // Load saved apps (skip those in folders)
+
 const savedCustomApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
 savedCustomApps.forEach(app => {
-  if (!isCustomAppInFolder(app)) {
+  if (!isAppInFolder(folderApp => folderApp.url && folderApp.url === app.url && folderApp.name === app.name)) {
     createDesktopIcon(app);
   }
 });
 
 // Linuxアプリのアイコン作成
-const createLinuxAppIcon = window.AppManager.createLinuxAppIcon;
 
 // Linuxアプリモーダルの処理
+
 const linuxAppImageInput = document.getElementById('linux_app_image_file');
 const linuxAppImageTrigger = document.getElementById('linux_app_image_trigger');
 const linuxAppImagePreview = document.getElementById('linux_app_image_preview');
@@ -2113,27 +1049,14 @@ if (saveLinuxAppBtn) {
 // Load saved folders first (to know which apps are in folders)
 loadFolders();
 
-// Helper function to check if a Linux app is in any folder
-function isLinuxAppInFolder(app) {
-  for (const folderId in folders) {
-    const folderData = folders[folderId];
-    const found = folderData.apps.some(folderApp => 
-      // commandが一致するか、またはisLinuxAppフラグがあってnameが一致する場合
-      (folderApp.command && folderApp.command === app.command) ||
-      (folderApp.isLinuxApp && folderApp.name === app.name)
-    );
-    if (found) return true;
-  }
-  return false;
-}
-
 // Load saved Linux apps (skip those in folders)
 const savedLinuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
 savedLinuxApps.forEach(app => {
-  if (!isLinuxAppInFolder(app)) {
+  if (!isAppInFolder(folderApp => (folderApp.command && folderApp.command === app.command) || (folderApp.isLinuxApp && folderApp.name === app.name))) {
     createLinuxAppIcon(app);
   }
 });
+
 
 // Restore positions
 const clockWidget = document.querySelector('.clock');
@@ -2317,7 +1240,7 @@ document.getElementById('context_delete').onclick = async (e) => {
       const folderId = currentEditingIcon._folderId;
       const index = currentEditingIcon._folderIndex;
       removeFromFolder(folderId, index);
-      if (folders[folderId]) renderFolderPage(folderId);
+      if (window.folders[folderId]) renderFolderPage(folderId);
       else closeFolder();
     }
     return;
@@ -2327,12 +1250,13 @@ document.getElementById('context_delete').onclick = async (e) => {
   if (currentContextAppType === 'folder') {
     if (await showConfirmDialog(confirmMsg)) {
       const folderId = currentEditingIcon._folderId;
-      delete folders[folderId];
+      delete window.folders[folderId];
       saveFolders();
       currentEditingIcon.remove();
     }
     return;
   }
+
   
   if (await showConfirmDialog(confirmMsg)) {
     const saveKey = currentEditingIcon.dataset.saveKey;
@@ -2426,7 +1350,7 @@ document.getElementById('save_edit_webapp').onclick = async () => {
   if (currentContextAppType === 'folder-item-webapp') {
     const folderId = currentEditingIcon._folderId;
     const index = currentEditingIcon._folderIndex;
-    const folder = folders[folderId];
+    const folder = window.folders[folderId];
     
     if (folder && folder.apps[index]) {
       folder.apps[index].name = name;
@@ -2439,6 +1363,7 @@ document.getElementById('save_edit_webapp').onclick = async () => {
     document.getElementById('edit_webapp_modal_overlay').style.display = 'none';
     return;
   }
+
   
   // localStorageを更新
   const customApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
@@ -2482,10 +1407,11 @@ document.getElementById('save_edit_webapp').onclick = async () => {
 let currentSettingsFolderId = null;
 
 function openFolderSettingsModal(folderId) {
-  const folderData = folders[folderId];
+  const folderData = window.folders[folderId];
   if (!folderData) return;
   
   currentSettingsFolderId = folderId;
+
   
   // デフォルトスタイル
   if (!folderData.style) {
@@ -2505,10 +1431,11 @@ function openFolderSettingsModal(folderId) {
 // フォルダー内の設定ボタン
 document.getElementById('folder_style_btn').onclick = (e) => {
   e.stopPropagation();
-  if (currentOpenFolderId) {
-    openFolderSettingsModal(currentOpenFolderId);
+  if (window.currentOpenFolderId) {
+    openFolderSettingsModal(window.currentOpenFolderId);
   }
 };
+
 
 document.getElementById('close_folder_settings_modal').onclick = () => {
   document.getElementById('folder_settings_modal_overlay').style.display = 'none';
@@ -2521,14 +1448,14 @@ document.getElementById('close_folder_settings_modal').onclick = () => {
 };
 
 document.getElementById('save_folder_settings').onclick = () => {
-  if (!currentSettingsFolderId || !folders[currentSettingsFolderId]) return;
+  if (!currentSettingsFolderId || !window.folders[currentSettingsFolderId]) return;
   
   const name = document.getElementById('folder_settings_name').value.trim();
   const color = document.getElementById('folder_settings_color').value;
   const opacitySlider = document.getElementById('folder_settings_opacity');
   const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
   
-  const folderData = folders[currentSettingsFolderId];
+  const folderData = window.folders[currentSettingsFolderId];
   folderData.name = name || folderData.name;
   folderData.style = { color, opacity };
   
@@ -2543,7 +1470,7 @@ document.getElementById('save_folder_settings').onclick = () => {
   }
   
   // 開いているフォルダーのタイトル更新
-  if (currentOpenFolderId === currentSettingsFolderId) {
+  if (window.currentOpenFolderId === currentSettingsFolderId) {
     const title = document.getElementById('folder_title');
     if (title) title.textContent = folderData.name;
   }
@@ -2554,6 +1481,7 @@ document.getElementById('save_folder_settings').onclick = () => {
   currentSettingsFolderId = null;
 };
 
+
 // 設定モーダルでのライブプレビュー（フォルダーが開いている場合）
 function updateFolderPreview() {
   const color = document.getElementById('folder_settings_color').value;
@@ -2561,7 +1489,7 @@ function updateFolderPreview() {
   const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
   const rgb = hexToRgb(color);
 
-  if (currentSettingsFolderId && currentOpenFolderId === currentSettingsFolderId) {
+  if (currentSettingsFolderId && window.currentOpenFolderId === currentSettingsFolderId) {
     // 一時的にスタイル適用（保存はしない）
     const modal = document.getElementById('folder_modal');
     if (rgb && modal) {
@@ -2571,6 +1499,7 @@ function updateFolderPreview() {
       modal.style.setProperty('--on-surface-variant', textColor);
     }
   }
+
   
   // アイコンのプレビューも更新
   if (currentSettingsFolderId && rgb) {
@@ -2658,7 +1587,7 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
     if (currentContextAppType === 'folder-item-linuxapp') {
       const folderId = currentEditingIcon._folderId;
       const index = currentEditingIcon._folderIndex;
-      const folder = folders[folderId];
+      const folder = window.folders[folderId];
       
       if (folder && folder.apps[index]) {
         folder.apps[index].name = name;
@@ -2672,6 +1601,7 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
       document.getElementById('edit_linuxapp_modal_overlay').style.display = 'none';
       return;
     }
+
   
   // localStorageを更新
   const linuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
@@ -2722,32 +1652,12 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
 
 /**
  * ファイルまたはフォルダを開く
- * @param {string} filePath - ファイル/フォルダのパス
- * @returns {Promise<{success: boolean, error?: string}>}
  */
-async function openFileOrFolder(filePath) {
-  if (window.electronAPI && window.electronAPI.openFileOrFolder) {
-    return await window.electronAPI.openFileOrFolder(filePath);
-  }
-  return { success: false, error: 'Electron API not available' };
-}
+const openFileOrFolder = window.electronAPI.openFileOrFolder;
 
-/**
- * ファイルショートカットのアイコンを作成
- */
-const createFileShortcutIcon = window.AppManager.createFileShortcutIcon;
-
-/**
- * フォルダショートカットのアイコンを作成
- */
-const createFolderShortcutIcon = window.AppManager.createFolderShortcutIcon;
-
-/**
- * ファイルの拡張子からアイコンを取得
- */
-const getFileIcon = window.AppManager.getFileIcon;
 
 // ファイル追加ボタンのイベント
+
 document.getElementById('add_file_btn')?.addEventListener('click', async () => {
   closeAllModals();
   
@@ -2799,34 +1709,10 @@ document.getElementById('add_folder_btn')?.addEventListener('click', async () =>
   }
 });
 
-// Helper function to check if a file shortcut is in any folder
-function isFileShortcutInFolder(file) {
-  for (const folderId in folders) {
-    const folderData = folders[folderId];
-    const found = folderData.apps.some(folderApp => 
-      folderApp.path && folderApp.path === file.path
-    );
-    if (found) return true;
-  }
-  return false;
-}
-
-// Helper function to check if a folder shortcut is in any folder
-function isFolderShortcutInFolder(folder) {
-  for (const folderId in folders) {
-    const folderData = folders[folderId];
-    const found = folderData.apps.some(folderApp => 
-      folderApp.path && folderApp.path === folder.path
-    );
-    if (found) return true;
-  }
-  return false;
-}
-
 // 保存されたファイルショートカットを読み込み
 const savedFileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS) || '[]');
 savedFileShortcuts.forEach(file => {
-  if (!isFileShortcutInFolder(file)) {
+  if (!isAppInFolder(folderApp => folderApp.path && folderApp.path === file.path)) {
     createFileShortcutIcon(file);
   }
 });
@@ -2834,10 +1720,11 @@ savedFileShortcuts.forEach(file => {
 // 保存されたフォルダショートカットを読み込み
 const savedFolderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
 savedFolderShortcuts.forEach(folder => {
-  if (!isFolderShortcutInFolder(folder)) {
+  if (!isAppInFolder(folderApp => folderApp.path && folderApp.path === folder.path)) {
     createFolderShortcutIcon(folder);
   }
 });
+
 
 // ウィジェットのリサイズ機能を有効化
 function applySavedWidgetSizes() {
@@ -2900,10 +1787,11 @@ function enableWidgetResizers() {
         let newW = Math.max(minW, Math.round(startW + dx));
         let newH = Math.max(minH, Math.round(startH + dy));
         // グリッドモードが有効なら幅・高さをグリッドサイズにスナップ
-        if (isGridModeEnabled) {
+        if (window.isGridModeEnabled) {
           newW = Math.max(minW, Math.round(newW / GRID_SIZE_X) * GRID_SIZE_X);
           newH = Math.max(minH, Math.round(newH / GRID_SIZE_Y) * GRID_SIZE_Y);
         }
+
         
         // 画面外にはみ出さないように制限
         if (rect.left + newW > screenWidth) {

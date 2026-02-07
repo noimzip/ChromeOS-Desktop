@@ -5,18 +5,12 @@
 'use strict';
 
 window.DragManager = {
-  // グリッド設定（desktop.jsと同期が必要）
-  GRID_SIZE_X: 80,
-  GRID_SIZE_Y: 90,
-  GRID_OFFSET: 20,
-  OVERLAP_THRESHOLD: 800,
-
   /**
    * 値をグリッドにスナップさせる
    */
   snapToGrid(value, axis = 'x') {
-    const size = axis === 'y' ? this.GRID_SIZE_Y : this.GRID_SIZE_X;
-    return Math.round((value - this.GRID_OFFSET) / size) * size + this.GRID_OFFSET;
+    const size = axis === 'y' ? GRID_SIZE_Y : GRID_SIZE_X;
+    return Math.round((value - GRID_OFFSET) / size) * size + GRID_OFFSET;
   },
 
   /**
@@ -53,8 +47,8 @@ window.DragManager = {
     const draggedRect = draggedEl.getBoundingClientRect();
     if (window.cachedIconRects) {
       for (const item of window.cachedIconRects) {
-        const overlapArea = this.calculateOverlapArea(draggedRect, item.rect);
-        if (overlapArea > this.OVERLAP_THRESHOLD) return item.element;
+        const overlapArea = window.DragManager.calculateOverlapArea(draggedRect, item.rect);
+        if (overlapArea > OVERLAP_THRESHOLD) return item.element;
       }
     }
     return null;
@@ -67,8 +61,8 @@ window.DragManager = {
     const draggedRect = draggedEl.getBoundingClientRect();
     if (window.cachedFolderRects) {
       for (const item of window.cachedFolderRects) {
-        const overlapArea = this.calculateOverlapArea(draggedRect, item.rect);
-        if (overlapArea > this.OVERLAP_THRESHOLD) return item.element;
+        const overlapArea = window.DragManager.calculateOverlapArea(draggedRect, item.rect);
+        if (overlapArea > OVERLAP_THRESHOLD) return item.element;
       }
     }
     return null;
@@ -114,32 +108,26 @@ window.DragManager = {
     const elWidth = element.offsetWidth;
     const elHeight = element.offsetHeight;
 
-    let x = startX;
-    let y = startY;
-    
+    let x = startX, y = startY;
     x = Math.max(0, Math.min(x, screenWidth - elWidth));
     y = Math.max(0, Math.min(y, screenHeight - elHeight));
     
-    if (isGridModeEnabled) {
-      x = this.snapToGrid(x, 'x');
-      y = this.snapToGrid(y, 'y');
-      if (x + elWidth > screenWidth) x -= this.GRID_SIZE_X;
-      if (y + elHeight > screenHeight) y -= this.GRID_SIZE_Y;
+    if (window.isGridModeEnabled) {
+      x = window.DragManager.snapToGrid(x, 'x');
+      y = window.DragManager.snapToGrid(y, 'y');
+      if (x + elWidth > screenWidth) x -= GRID_SIZE_X;
+      if (y + elHeight > screenHeight) y -= GRID_SIZE_Y;
       x = Math.max(0, x); y = Math.max(0, y);
     }
     
-    if (!this.isOverlappingAny(element, x, y)) return { x, y };
+    if (!window.DragManager.isOverlappingAny(element, x, y)) return { x, y };
     
-    const stepX = isGridModeEnabled ? this.GRID_SIZE_X : 80;
-    const stepY = isGridModeEnabled ? this.GRID_SIZE_Y : 95;
+    const stepX = window.isGridModeEnabled ? GRID_SIZE_X : 80;
+    const stepY = window.isGridModeEnabled ? GRID_SIZE_Y : 95;
     
     let radius = 1;
     while (radius < 20) {
-      const check = (cx, cy) => {
-        return cx >= 0 && cy >= 0 && cx + elWidth <= screenWidth && cy + elHeight <= screenHeight && 
-               !this.isOverlappingAny(element, cx, cy);
-      };
-
+      const check = (cx, cy) => cx >= 0 && cy >= 0 && cx + elWidth <= screenWidth && cy + elHeight <= screenHeight && !window.DragManager.isOverlappingAny(element, cx, cy);
       for (let i = -radius; i <= radius; i++) {
         if (check(x + (i * stepX), y - (radius * stepY))) return { x: x + (i * stepX), y: y - (radius * stepY) };
         if (check(x + (i * stepX), y + (radius * stepY))) return { x: x + (i * stepX), y: y + (radius * stepY) };
@@ -151,5 +139,166 @@ window.DragManager = {
       radius++;
     }
     return { x, y };
+  },
+
+  /**
+   * アイテムにドラッグイベントを設定する（位置変更モード用）
+   */
+  setupDraggableItem(item) {
+    item._savedOnclick = item.onclick;
+    item.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
+    item._savedOncontextmenu = item.oncontextmenu;
+    
+    item.querySelectorAll('a').forEach(link => {
+      link.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
+    });
+
+    item.querySelectorAll('img').forEach(img => {
+      img.draggable = false;
+      img.style.pointerEvents = 'none';
+    });
+
+    item.onpointerdown = function(event) {
+      if (event.button !== 0) return;
+      this.setPointerCapture(event.pointerId);
+      this._isDragging = false;
+      this._startX = event.clientX; this._startY = event.clientY;
+      this._startLeft = this.offsetLeft; this._startTop = this.offsetTop;
+      window.DragManager.cacheIconRects(this);
+    };
+    
+    item.onpointermove = function(event){
+      if (this._isResizing || !this.hasPointerCapture(event.pointerId)) return;
+      if(event.buttons){
+        const dx = event.clientX - this._startX, dy = event.clientY - this._startY;
+        if (!this._isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) this._isDragging = true;
+        if (!this._isDragging) return;
+        
+        this.style.left = (this._startLeft + dx) + 'px';
+        this.style.top = (this._startTop + dy) + 'px';
+        this.style.position = 'absolute';
+        
+        if (!this.classList.contains('widget') && this.id !== 'appicon-add') {
+          document.querySelectorAll('.appicon.drag-over').forEach(el => el.classList.remove('drag-over'));
+          const overlapping = window.DragManager.getOverlappingIcon(this);
+          if (overlapping) overlapping.classList.add('drag-over');
+          const overlappingFolder = window.DragManager.getOverlappingFolder(this);
+          if (overlappingFolder) overlappingFolder.classList.add('drag-over');
+        }
+      }
+    };
+    
+    item.onpointerup = function(event) {
+      if (event && event.pointerId !== undefined) this.releasePointerCapture(event.pointerId);
+      if (!this._isDragging) return;
+      this._isDragging = false;
+      document.querySelectorAll('.appicon.drag-over').forEach(el => el.classList.remove('drag-over'));
+      
+      if (!this.classList.contains('widget') && this.id !== 'appicon-add' && !this.classList.contains('folder')) {
+        const overlappingFolder = window.DragManager.getOverlappingFolder(this);
+        if (overlappingFolder) {
+          window.FolderManager.addToFolder(overlappingFolder.dataset.folderId, this);
+          return;
+        }
+        const overlapping = window.DragManager.getOverlappingIcon(this);
+        if (overlapping && !overlapping.classList.contains('folder')) {
+          window.FolderManager.createFolder(overlapping, this);
+          return;
+        }
+      }
+      
+      if (this.style.position === 'absolute') {
+        const newPos = window.DragManager.findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
+        this.style.left = newPos.x + 'px'; this.style.top = newPos.y + 'px';
+      }
+    };
+  },
+
+  /**
+   * 通常モードでのドラッグを設定する
+   */
+  setupNormalModeDrag(item) {
+    const img = item.querySelector('img');
+    if (img) img.ondragstart = (e) => e.preventDefault();
+
+    if (!item._clickListenerAttached) {
+      item.addEventListener('click', function(e) {
+        if (this._ignoreClick) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+      }, true);
+      item._clickListenerAttached = true;
+    }
+
+    item.onpointerdown = function(event) {
+      if (event.button !== 0) return;
+      this.setPointerCapture(event.pointerId);
+      this._isDragging = false;
+      this._startX = event.clientX; this._startY = event.clientY;
+      this._startLeft = this.offsetLeft; this._startTop = this.offsetTop;
+      this._ignoreClick = false;
+      window.DragManager.cacheIconRects(this);
+    };
+    
+    item.onpointermove = function(event) {
+      if (this._isResizing || !event.buttons || !this.hasPointerCapture(event.pointerId)) return;
+      const dx = event.clientX - this._startX, dy = event.clientY - this._startY;
+      
+      if (!this._isDragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        this._isDragging = true; this._ignoreClick = true;
+        this.querySelectorAll('img').forEach(img => { img.draggable = false; img.style.pointerEvents = 'none'; });
+      }
+      if (!this._isDragging) return;
+      
+      this.style.left = (this._startLeft + dx) + 'px';
+      this.style.top = (this._startTop + dy) + 'px';
+      this.style.position = 'absolute';
+      
+      if (!this.classList.contains('widget') && !this.classList.contains('folder')) {
+        document.querySelectorAll('.appicon.drag-over').forEach(el => el.classList.remove('drag-over'));
+        const overlapping = window.DragManager.getOverlappingIcon(this);
+        if (overlapping) overlapping.classList.add('drag-over');
+        const overlappingFolder = window.DragManager.getOverlappingFolder(this);
+        if (overlappingFolder) overlappingFolder.classList.add('drag-over');
+      }
+    };
+    
+    item.onpointerup = function(event) {
+      if (event && event.pointerId !== undefined) this.releasePointerCapture(event.pointerId);
+      if (!this._isDragging) return;
+      this._isDragging = false;
+      document.querySelectorAll('.appicon.drag-over').forEach(el => el.classList.remove('drag-over'));
+      
+      if (!this.classList.contains('widget') && !this.classList.contains('folder')) {
+        const overlappingFolder = window.DragManager.getOverlappingFolder(this);
+        if (overlappingFolder) {
+          window.FolderManager.addToFolder(overlappingFolder.dataset.folderId, this);
+          setTimeout(() => { this._ignoreClick = false; }, 50);
+          return;
+        }
+        const overlapping = window.DragManager.getOverlappingIcon(this);
+        if (overlapping && !overlapping.classList.contains('folder')) {
+          window.FolderManager.createFolder(overlapping, this);
+          setTimeout(() => { this._ignoreClick = false; }, 50);
+          return;
+        }
+      }
+      
+      if (this.style.position === 'absolute') {
+        const newPos = window.DragManager.findNearestEmptyPosition(this, this.offsetLeft, this.offsetTop);
+        this.style.left = newPos.x + 'px'; this.style.top = newPos.y + 'px';
+      }
+      
+      // 保存
+      const key = this.id || this.dataset.saveKey;
+      if (key) {
+        try {
+          const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
+          positions[key] = { left: this.style.left, top: this.style.top, position: 'absolute' };
+          localStorage.setItem(LS_KEYS.WIDGET_POSITIONS, JSON.stringify(positions));
+        } catch (e) {}
+      }
+      
+      this.querySelectorAll('img').forEach(img => { img.draggable = true; img.style.pointerEvents = ''; });
+      setTimeout(() => { this._ignoreClick = false; }, 50);
+    };
   }
 };

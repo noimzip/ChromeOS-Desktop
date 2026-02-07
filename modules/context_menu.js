@@ -17,11 +17,11 @@ window.ContextMenuManager = {
     const menu = document.getElementById('app_context_menu');
     if (!menu) return;
 
-    this.currentEditingIcon = iconEl;
-    this.currentContextAppType = appType;
+    window.ContextMenuManager.currentEditingIcon = iconEl;
+    window.ContextMenuManager.currentContextAppType = appType;
     
     // アイコンに保存されているデータを取得
-    this.currentEditingApp = iconEl._appData || null;
+    window.ContextMenuManager.currentEditingApp = iconEl._appData || null;
 
     menu.style.display = 'block';
     
@@ -69,7 +69,7 @@ window.ContextMenuManager = {
     const menu = document.getElementById('widget_context_menu');
     if (!menu) return;
 
-    this.currentEditingWidget = widgetEl;
+    window.ContextMenuManager.currentEditingWidget = widgetEl;
 
     menu.style.display = 'block';
     
