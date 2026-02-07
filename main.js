@@ -2,6 +2,49 @@ const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { exec } = require('child_process');
 const fs = require('fs');
+const { WebSocketServer } = require('ws');
+
+// WebSocket Server for Chrome Extension
+let wsClient = null;
+const wss = new WebSocketServer({ port: 25600 });
+
+wss.on('connection', ws => {
+  wsClient = ws;
+  console.log('[Main] Chrome Extension connected!');
+
+  ws.on('message', data => {
+    // Broadcast to all windows
+    try {
+      const parsed = JSON.parse(data.toString());
+      windows.forEach(win => {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('browser-media-update', parsed);
+        }
+      });
+    } catch (e) {
+      console.error('[Main] WS Parse error:', e);
+    }
+  });
+
+  ws.on('close', () => {
+    wsClient = null;
+    console.log('[Main] Chrome Extension disconnected');
+    windows.forEach(win => {
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('browser-connection-status', false);
+        }
+    });
+  });
+});
+
+// IPC: Send data to Chrome Extension
+ipcMain.handle('send-to-browser', async (event, payload) => {
+  if (wsClient && wsClient.readyState === 1) {
+    wsClient.send(JSON.stringify(payload));
+    return { success: true };
+  }
+  return { success: false };
+});
 
 // 設定ファイルのパス
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
