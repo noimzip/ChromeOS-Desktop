@@ -650,7 +650,7 @@ window.onBrowserMediaUpdate = (info) => {
 };
 
 // 定期的にメディア情報を更新（2秒ごと）
-setInterval(updateMediaPlayer, 500);
+setInterval(updateMediaPlayer, 1000);
 // 初回更新
 setTimeout(updateMediaPlayer, 500);
 // ブラウザメディア情報をリクエスト
@@ -759,6 +759,7 @@ document.getElementById('close_menu_modal').onclick = () => {
 
 document.getElementById('open_settingsmenu_modal').onclick = () => {
   closeAllModals();
+  initDisplaySelector(); // 設定メニューを開くたびにディスプレイ情報を更新
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
@@ -860,6 +861,22 @@ function calculateOverlapArea(rect1, rect2) {
   return overlapX * overlapY;
 }
 
+// アイコンの矩形情報をキャッシュする（ドラッグ中の負荷軽減）
+function cacheIconRects(excludeEl) {
+  window.cachedIconRects = [];
+  document.querySelectorAll('.appicon:not(.folder)').forEach(el => {
+    if (el !== excludeEl && el.style.display !== 'none') {
+      window.cachedIconRects.push({ element: el, rect: el.getBoundingClientRect() });
+    }
+  });
+  window.cachedFolderRects = [];
+  document.querySelectorAll('.appicon.folder').forEach(el => {
+    if (el !== excludeEl && el.style.display !== 'none') {
+      window.cachedFolderRects.push({ element: el, rect: el.getBoundingClientRect() });
+    }
+  });
+}
+
 /**
  * 画像からドミナントカラー（主要な色）を抽出する
  * @param {string} imageSrc - 画像のソース (URL or Data URL)
@@ -928,11 +945,20 @@ function getDominantColor(imageSrc) {
  */
 function getOverlappingIcon(draggedEl) {
   const draggedRect = draggedEl.getBoundingClientRect();
-  const icons = document.querySelectorAll('.appicon:not(.folder)');
   
+  // キャッシュがあればそれを使用
+  if (window.cachedIconRects) {
+    for (const item of window.cachedIconRects) {
+      if (item.element === draggedEl) continue;
+      const overlapArea = calculateOverlapArea(draggedRect, item.rect);
+      if (overlapArea > OVERLAP_THRESHOLD) return item.element;
+    }
+    return null;
+  }
+
+  const icons = document.querySelectorAll('.appicon:not(.folder)');
   for (const icon of icons) {
     if (icon === draggedEl) continue;
-    
     const overlapArea = calculateOverlapArea(draggedRect, icon.getBoundingClientRect());
     if (overlapArea > OVERLAP_THRESHOLD) return icon;
   }
@@ -946,11 +972,20 @@ function getOverlappingIcon(draggedEl) {
  */
 function getOverlappingFolder(draggedEl) {
   const draggedRect = draggedEl.getBoundingClientRect();
-  const folderIcons = document.querySelectorAll('.appicon.folder');
   
+  // キャッシュがあればそれを使用
+  if (window.cachedFolderRects) {
+    for (const item of window.cachedFolderRects) {
+      if (item.element === draggedEl) continue;
+      const overlapArea = calculateOverlapArea(draggedRect, item.rect);
+      if (overlapArea > OVERLAP_THRESHOLD) return item.element;
+    }
+    return null;
+  }
+
+  const folderIcons = document.querySelectorAll('.appicon.folder');
   for (const folder of folderIcons) {
     if (folder === draggedEl) continue;
-    
     const overlapArea = calculateOverlapArea(draggedRect, folder.getBoundingClientRect());
     if (overlapArea > OVERLAP_THRESHOLD) return folder;
   }
@@ -2046,6 +2081,8 @@ function setupDraggableItem(item) {
     // 開始時の要素位置を記録
     this._startLeft = this.offsetLeft;
     this._startTop = this.offsetTop;
+    // 矩形情報をキャッシュ
+    cacheIconRects(this);
   };
   
   item.onpointermove = function(event){
@@ -2146,6 +2183,9 @@ function setupDraggableItem(item) {
     }
     
     draggedItem = null;
+    // キャッシュをクリア
+    window.cachedIconRects = null;
+    window.cachedFolderRects = null;
   };
 }
 
@@ -2227,6 +2267,8 @@ function setupNormalModeDrag(item) {
     this._startTop = this.offsetTop;
     this._normalModeDragStarted = false;
     this._ignoreClick = false;
+    // 矩形情報をキャッシュ
+    cacheIconRects(this);
   };
   
   item.onpointermove = function(event) {
@@ -2355,6 +2397,9 @@ function setupNormalModeDrag(item) {
     this._isDragging = false;
     this._normalModeDragStarted = false;
     setTimeout(() => { this._ignoreClick = false; }, 50);
+    // キャッシュをクリア
+    window.cachedIconRects = null;
+    window.cachedFolderRects = null;
   };
 }
 
@@ -2556,6 +2601,7 @@ const translations = {
     settings_button_label: "設定ボタン",
     show_settings_button: "表示",
     hide_settings_button: "非表示",
+    target_display: "ターゲットディスプレイ",
     select_app_type: "追加するアプリの種類を選択",
     web_app: "Webアプリ / URL",
     linux_app: "Linuxアプリ",
@@ -2662,6 +2708,7 @@ const translations = {
     settings_button_label: "Settings Button",
     show_settings_button: "Show",
     hide_settings_button: "Hide",
+    target_display: "Target Display",
     select_app_type: "Select app type to add",
     web_app: "Web App / URL",
     linux_app: "Linux App",
@@ -3108,6 +3155,36 @@ async function initWindowCountSelector() {
 
 // 初期化実行
 initWindowCountSelector();
+
+// ディスプレイセレクターの初期化
+const displaySelector = document.getElementById('display_selector');
+
+async function initDisplaySelector() {
+  if (displaySelector && window.electronAPI && window.electronAPI.getDisplays) {
+    try {
+      const displays = await window.electronAPI.getDisplays();
+      const targetId = await window.electronAPI.getTargetDisplayId();
+      
+      displaySelector.innerHTML = '';
+      displays.forEach(display => {
+        const option = document.createElement('option');
+        option.value = display.id;
+        option.textContent = display.label;
+        displaySelector.appendChild(option);
+      });
+      
+      if (targetId) {
+        displaySelector.value = targetId;
+      }
+      
+      displaySelector.onchange = async (e) => {
+        await window.electronAPI.setTargetDisplay(e.target.value);
+      };
+    } catch (e) {
+      console.error('Failed to init display selector:', e);
+    }
+  }
+}
 
 // 適用ボタンのイベント
 if (applyWindowCountBtn && windowCountSelector) {
