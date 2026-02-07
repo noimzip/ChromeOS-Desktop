@@ -41,6 +41,58 @@ ipcMain.handle('set-window-count', async (event, count) => {
   return settings.windowCount;
 });
 
+// ディスプレイ情報を取得するIPCハンドラ
+ipcMain.handle('get-displays', async () => {
+  const { screen } = require('electron');
+  return screen.getAllDisplays().map((d, index) => ({
+    id: d.id.toString(),
+    label: d.label || `Display ${index + 1}`,
+    bounds: d.bounds
+  }));
+});
+
+// ターゲットディスプレイIDを取得するIPCハンドラ
+ipcMain.handle('get-target-display-id', async () => {
+  const settings = loadSettings();
+  return settings.targetDisplayId || '';
+});
+
+// ターゲットディスプレイを設定するIPCハンドラ
+ipcMain.handle('set-target-display', async (event, displayId) => {
+  const settings = loadSettings();
+  settings.targetDisplayId = displayId;
+  saveSettings(settings);
+
+  const { screen } = require('electron');
+  const targetDisplay = screen.getAllDisplays().find(d => d.id.toString() === displayId) || screen.getPrimaryDisplay();
+  const { x, y, width, height } = targetDisplay.workArea;
+
+  for (const win of windows) {
+    if (win && !win.isDestroyed()) {
+      win.setBounds({ x, y, width, height });
+    }
+  }
+});
+
+// ウィンドウのリサイズ設定を取得
+ipcMain.handle('get-window-resizable', async () => {
+  const settings = loadSettings();
+  return settings.windowResizable !== undefined ? settings.windowResizable : true;
+});
+
+// ウィンドウのリサイズ設定を保存
+ipcMain.handle('set-window-resizable', async (event, resizable) => {
+  const settings = loadSettings();
+  settings.windowResizable = resizable;
+  saveSettings(settings);
+  
+  for (const win of windows) {
+    if (win && !win.isDestroyed()) {
+      win.setResizable(resizable);
+    }
+  }
+});
+
 // アプリを再起動するIPCハンドラ
 ipcMain.handle('restart-app', async () => {
   app.relaunch();
@@ -120,33 +172,43 @@ ipcMain.handle('launch-linux-app', async (event, command) => {
 // メディア情報取得用IPCハンドラ
 ipcMain.handle('get-media-info', async () => {
   return new Promise((resolve) => {
-    // playerctlでメディア情報を取得
-    const commands = {
-      status: 'playerctl status 2>/dev/null || echo "No player"',
-      title: 'playerctl metadata title 2>/dev/null || echo ""',
-      artist: 'playerctl metadata artist 2>/dev/null || echo ""',
-      album: 'playerctl metadata album 2>/dev/null || echo ""',
-      artUrl: 'playerctl metadata mpris:artUrl 2>/dev/null || echo ""',
-      position: 'playerctl position 2>/dev/null || echo "0"',
-      length: 'playerctl metadata mpris:length 2>/dev/null || echo "0"',
-      player: 'playerctl -l 2>/dev/null | head -1 || echo ""',
-      shuffle: 'playerctl shuffle 2>/dev/null || echo ""',
-      loop: 'playerctl loop 2>/dev/null || echo ""'
-    };
-    
-    const results = {};
-    let completed = 0;
-    const total = Object.keys(commands).length;
-    
-    for (const [key, cmd] of Object.entries(commands)) {
-      exec(cmd, (error, stdout) => {
-        results[key] = stdout.trim();
-        completed++;
-        if (completed === total) {
-          resolve(results);
-        }
-      });
-    }
+    // playerctlでメディア情報を一括取得 (軽量化)
+    const cmd = `
+      STATUS=$(playerctl status 2>/dev/null)
+      if [ -n "$STATUS" ]; then
+        echo "Status:$STATUS"
+        playerctl metadata --format 'Metadata:{{title}};;{{artist}};;{{album}};;{{mpris:artUrl}};;{{mpris:length}};;{{playerName}}' 2>/dev/null
+        POS=$(playerctl position 2>/dev/null)
+        echo "Position:$POS"
+        SHUFFLE=$(playerctl shuffle 2>/dev/null)
+        echo "Shuffle:$SHUFFLE"
+        LOOP=$(playerctl loop 2>/dev/null)
+        echo "Loop:$LOOP"
+      else
+        echo "Status:No player"
+      fi
+    `;
+
+    exec(cmd, (error, stdout) => {
+      const results = { status: 'No player', title: '', artist: '', album: '', artUrl: '', position: '0', length: '0', player: '', shuffle: '', loop: '' };
+      if (!error && stdout) {
+        const lines = stdout.trim().split('\n');
+        lines.forEach(line => {
+          if (line.startsWith('Status:')) results.status = line.substring(7).trim();
+          else if (line.startsWith('Metadata:')) {
+            const parts = line.substring(9).split(';;');
+            if (parts.length >= 6) {
+              results.title = parts[0]; results.artist = parts[1]; results.album = parts[2];
+              results.artUrl = parts[3]; results.length = parts[4]; results.player = parts[5];
+            }
+          }
+          else if (line.startsWith('Position:')) results.position = line.substring(9).trim();
+          else if (line.startsWith('Shuffle:')) results.shuffle = line.substring(8).trim();
+          else if (line.startsWith('Loop:')) results.loop = line.substring(5).trim();
+        });
+      }
+      resolve(results);
+    });
   });
 });
 
@@ -209,29 +271,38 @@ ipcMain.handle('open-google-login', async () => {
   loginWin.loadURL('https://accounts.google.com/ServiceLogin?continue=https://calendar.google.com/');
 });
 
+const windows = [];
+
 app.whenReady().then(() => {
   const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
+  
+  // 設定からターゲットディスプレイを取得
+  const settings = loadSettings();
+  let targetDisplay = primaryDisplay;
+  if (settings.targetDisplayId) {
+    const found = screen.getAllDisplays().find(d => d.id.toString() === settings.targetDisplayId);
+    if (found) targetDisplay = found;
+  }
 
-  console.log('Screen size:', width, height);
+  const { x, y, width, height } = targetDisplay.workArea;
+  console.log('Target Display:', targetDisplay.id, 'Bounds:', x, y, width, height);
 
   // 設定からウィンドウ数を取得
-  const settings = loadSettings();
   const windowCount = settings.windowCount || 1;
+  const windowResizable = settings.windowResizable !== undefined ? settings.windowResizable : true;
   
   console.log('Creating', windowCount, 'window(s)');
-
   // 複数のウィンドウを作成
-  const windows = [];
   for (let i = 0; i < windowCount; i++) {
     const win = new BrowserWindow({
-      x: 0,
-      y: 0,
+      x: x,
+      y: y,
       width: width,
       height: height,
       frame: false,
       transparent: true,
+      resizable: windowResizable,
       webPreferences: {
         preload: path.join(process.cwd(), 'preload.js'),
         sandbox: false
@@ -255,4 +326,24 @@ app.whenReady().then(() => {
     
     windows.push(win);
   }
+
+  // ディスプレイの解像度変更を監視
+  screen.on('display-metrics-changed', (event, display, changedMetrics) => {
+    const currentSettings = loadSettings();
+    let targetId = currentSettings.targetDisplayId;
+    if (!targetId) {
+      targetId = screen.getPrimaryDisplay().id.toString();
+    }
+
+    // ターゲットディスプレイの作業領域が変更された場合
+    if (display.id.toString() === targetId && (changedMetrics.includes('workArea') || changedMetrics.includes('bounds'))) {
+      console.log('Target display metrics changed. Resizing windows.');
+      const { x, y, width, height } = display.workArea;
+      for (const win of windows) {
+        if (win && !win.isDestroyed()) {
+          win.setBounds({ x, y, width, height });
+        }
+      }
+    }
+  });
 });

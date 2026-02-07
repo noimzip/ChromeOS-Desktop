@@ -32,11 +32,118 @@ const LS_KEYS = {
   SHOW_SETTINGS_FAB: 'showSettingsFab',
   BLUR_EFFECT_ENABLED: 'blurEffectEnabled',
   DARK_MODE_ENABLED: 'darkModeEnabled',
+  DARK_MODE_SETTING: 'darkModeSetting',
   GITHUB_USERNAME: 'githubUsername',
   GOOGLE_CALENDAR_URL: 'googleCalendarUrl',
   WIDGET_VISIBILITY: 'widgetVisibility',
   WIDGET_SIZE_PREFIX: 'widgetSize:',
 };
+
+// ========================================
+// ダイアログヘルパー関数
+// ========================================
+
+async function showAlertDialog(message, title = '', options = {}) {
+  const dialog = document.getElementById('global_dialog');
+  if (!dialog) {
+    return new Promise(resolve => {
+      alert(message);
+      resolve();
+    });
+  }
+  
+  const dialogTitle = document.getElementById('global_dialog_title');
+  const dialogIcon = document.getElementById('global_dialog_icon');
+  const dialogContent = document.getElementById('global_dialog_content');
+  const cancelBtn = document.getElementById('global_dialog_cancel');
+  const okBtn = document.getElementById('global_dialog_ok');
+  
+  dialogTitle.textContent = title;
+  
+  if (options.html) {
+    dialogContent.innerHTML = message;
+  } else {
+    dialogContent.textContent = message;
+  }
+
+  if (dialogIcon) {
+    dialogIcon.style.display = options.icon ? '' : 'none';
+    if (options.icon) dialogIcon.name = options.icon;
+    if (options.iconColor) dialogIcon.style.color = options.iconColor;
+  }
+
+  cancelBtn.style.display = 'none';
+  okBtn.textContent = 'OK';
+  
+  const handleOk = () => dialog.hide('ok');
+  okBtn.onclick = handleOk;
+  
+  dialog.returnValue = '';
+  dialog.open = true;
+  
+  return new Promise((resolve) => {
+    const closeHandler = () => {
+      dialog.removeEventListener('closed', closeHandler);
+      okBtn.onclick = null;
+      resolve();
+    };
+    dialog.addEventListener('closed', closeHandler);
+  });
+}
+
+async function showConfirmDialog(message, title = '', options = {}) {
+  const dialog = document.getElementById('global_dialog');
+  if (!dialog) {
+    return new Promise(resolve => {
+      resolve(confirm(message));
+    });
+  }
+  
+  const dialogTitle = document.getElementById('global_dialog_title');
+  const dialogIcon = document.getElementById('global_dialog_icon');
+  const dialogContent = document.getElementById('global_dialog_content');
+  const cancelBtn = document.getElementById('global_dialog_cancel');
+  const okBtn = document.getElementById('global_dialog_ok');
+  
+  const lang = getCurrentLanguage();
+  cancelBtn.textContent = translations[lang].cancel || 'Cancel';
+  okBtn.textContent = 'OK';
+  
+  dialogTitle.textContent = title;
+  
+  if (options.html) {
+    dialogContent.innerHTML = message;
+  } else {
+    dialogContent.textContent = message;
+  }
+
+  if (dialogIcon) {
+    dialogIcon.style.display = options.icon ? '' : 'none';
+    if (options.icon) dialogIcon.name = options.icon;
+    if (options.iconColor) dialogIcon.style.color = options.iconColor;
+  }
+
+  cancelBtn.style.display = '';
+  
+  const handleOk = () => dialog.hide('ok');
+  const handleCancel = () => dialog.hide('cancel');
+  
+  okBtn.onclick = handleOk;
+  cancelBtn.onclick = handleCancel;
+  
+  dialog.returnValue = '';
+  dialog.open = true;
+  
+  return new Promise((resolve) => {
+    const closeHandler = () => {
+      dialog.removeEventListener('closed', closeHandler);
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      resolve(dialog.returnValue === 'ok');
+    };
+    dialog.addEventListener('closed', closeHandler);
+  });
+}
 
 // ========================================
 // アイコン形状の設定
@@ -543,7 +650,7 @@ window.onBrowserMediaUpdate = (info) => {
 };
 
 // 定期的にメディア情報を更新（2秒ごと）
-setInterval(updateMediaPlayer, 500);
+setInterval(updateMediaPlayer, 1000);
 // 初回更新
 setTimeout(updateMediaPlayer, 500);
 // ブラウザメディア情報をリクエスト
@@ -652,6 +759,8 @@ document.getElementById('close_menu_modal').onclick = () => {
 
 document.getElementById('open_settingsmenu_modal').onclick = () => {
   closeAllModals();
+  initDisplaySelector(); // 設定メニューを開くたびにディスプレイ情報を更新
+  initWindowResizableSwitch();
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
@@ -753,6 +862,22 @@ function calculateOverlapArea(rect1, rect2) {
   return overlapX * overlapY;
 }
 
+// アイコンの矩形情報をキャッシュする（ドラッグ中の負荷軽減）
+function cacheIconRects(excludeEl) {
+  window.cachedIconRects = [];
+  document.querySelectorAll('.appicon:not(.folder)').forEach(el => {
+    if (el !== excludeEl && el.style.display !== 'none') {
+      window.cachedIconRects.push({ element: el, rect: el.getBoundingClientRect() });
+    }
+  });
+  window.cachedFolderRects = [];
+  document.querySelectorAll('.appicon.folder').forEach(el => {
+    if (el !== excludeEl && el.style.display !== 'none') {
+      window.cachedFolderRects.push({ element: el, rect: el.getBoundingClientRect() });
+    }
+  });
+}
+
 /**
  * 画像からドミナントカラー（主要な色）を抽出する
  * @param {string} imageSrc - 画像のソース (URL or Data URL)
@@ -821,11 +946,20 @@ function getDominantColor(imageSrc) {
  */
 function getOverlappingIcon(draggedEl) {
   const draggedRect = draggedEl.getBoundingClientRect();
-  const icons = document.querySelectorAll('.appicon:not(.folder)');
   
+  // キャッシュがあればそれを使用
+  if (window.cachedIconRects) {
+    for (const item of window.cachedIconRects) {
+      if (item.element === draggedEl) continue;
+      const overlapArea = calculateOverlapArea(draggedRect, item.rect);
+      if (overlapArea > OVERLAP_THRESHOLD) return item.element;
+    }
+    return null;
+  }
+
+  const icons = document.querySelectorAll('.appicon:not(.folder)');
   for (const icon of icons) {
     if (icon === draggedEl) continue;
-    
     const overlapArea = calculateOverlapArea(draggedRect, icon.getBoundingClientRect());
     if (overlapArea > OVERLAP_THRESHOLD) return icon;
   }
@@ -839,11 +973,20 @@ function getOverlappingIcon(draggedEl) {
  */
 function getOverlappingFolder(draggedEl) {
   const draggedRect = draggedEl.getBoundingClientRect();
-  const folderIcons = document.querySelectorAll('.appicon.folder');
   
+  // キャッシュがあればそれを使用
+  if (window.cachedFolderRects) {
+    for (const item of window.cachedFolderRects) {
+      if (item.element === draggedEl) continue;
+      const overlapArea = calculateOverlapArea(draggedRect, item.rect);
+      if (overlapArea > OVERLAP_THRESHOLD) return item.element;
+    }
+    return null;
+  }
+
+  const folderIcons = document.querySelectorAll('.appicon.folder');
   for (const folder of folderIcons) {
     if (folder === draggedEl) continue;
-    
     const overlapArea = calculateOverlapArea(draggedRect, folder.getBoundingClientRect());
     if (overlapArea > OVERLAP_THRESHOLD) return folder;
   }
@@ -1417,7 +1560,7 @@ async function handleFolderItemClick(app, modal) {
     if (!result.success) {
       const lang = getCurrentLanguage();
       const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
-      alert(errorMsg);
+      await showAlertDialog(errorMsg);
     }
     return;
   }
@@ -1427,7 +1570,7 @@ async function handleFolderItemClick(app, modal) {
     const result = await openFileOrFolder(app.path);
     if (!result.success) {
       const lang = getCurrentLanguage();
-      alert(translations[lang].open_failed + ': ' + result.error);
+      await showAlertDialog(translations[lang].open_failed + ': ' + result.error);
     }
     return;
   }
@@ -1939,6 +2082,8 @@ function setupDraggableItem(item) {
     // 開始時の要素位置を記録
     this._startLeft = this.offsetLeft;
     this._startTop = this.offsetTop;
+    // 矩形情報をキャッシュ
+    cacheIconRects(this);
   };
   
   item.onpointermove = function(event){
@@ -2039,6 +2184,9 @@ function setupDraggableItem(item) {
     }
     
     draggedItem = null;
+    // キャッシュをクリア
+    window.cachedIconRects = null;
+    window.cachedFolderRects = null;
   };
 }
 
@@ -2120,6 +2268,8 @@ function setupNormalModeDrag(item) {
     this._startTop = this.offsetTop;
     this._normalModeDragStarted = false;
     this._ignoreClick = false;
+    // 矩形情報をキャッシュ
+    cacheIconRects(this);
   };
   
   item.onpointermove = function(event) {
@@ -2248,6 +2398,9 @@ function setupNormalModeDrag(item) {
     this._isDragging = false;
     this._normalModeDragStarted = false;
     setTimeout(() => { this._ignoreClick = false; }, 50);
+    // キャッシュをクリア
+    window.cachedIconRects = null;
+    window.cachedFolderRects = null;
   };
 }
 
@@ -2323,11 +2476,13 @@ function resetWidgetPositions() {
 }
 
 document.getElementById('reset_widget_position').onclick = () => {
-  const lang = getCurrentLanguage();
-  const confirmMsg = lang === 'ja' ? 'すべてのウィジェットとアイコンの位置をリセットしますか？' : 'Reset all widget and icon positions?';
-  if (confirm(confirmMsg)) {
-    resetWidgetPositions();
-  }
+  (async () => {
+    const lang = getCurrentLanguage();
+    const confirmMsg = lang === 'ja' ? 'すべてのウィジェットとアイコンの位置をリセットしますか？' : 'Reset all widget and icon positions?';
+    if (await showConfirmDialog(confirmMsg)) {
+      resetWidgetPositions();
+    }
+  })();
 }
 
 document.getElementById('save_change_widget_position').onclick = () => {
@@ -2447,6 +2602,7 @@ const translations = {
     settings_button_label: "設定ボタン",
     show_settings_button: "表示",
     hide_settings_button: "非表示",
+    target_display: "ターゲットディスプレイ",
     select_app_type: "追加するアプリの種類を選択",
     web_app: "Webアプリ / URL",
     linux_app: "Linuxアプリ",
@@ -2515,6 +2671,7 @@ const translations = {
     reset_widget_sizes_confirm: "全ウィジェットのサイズをリセットしますか？",
     widget_sizes_reset: "ウィジェットサイズをリセットしました。",
     fetch_failed: "データの取得に失敗しました",
+    cancel: "キャンセル",
     no_activity: "No activity",
     good_job: "Good job!",
     excellent: "Excellent!",
@@ -2552,6 +2709,7 @@ const translations = {
     settings_button_label: "Settings Button",
     show_settings_button: "Show",
     hide_settings_button: "Hide",
+    target_display: "Target Display",
     select_app_type: "Select app type to add",
     web_app: "Web App / URL",
     linux_app: "Linux App",
@@ -2620,6 +2778,7 @@ const translations = {
     reset_widget_sizes_confirm: "Reset all widget sizes?",
     widget_sizes_reset: "Widget sizes reset.",
     fetch_failed: "Failed to fetch data",
+    cancel: "Cancel",
     no_activity: "No activity",
     good_job: "Good job!",
     excellent: "Excellent!",
@@ -2915,33 +3074,57 @@ if (toggleBlurEffectBtn) {
   });
 }
 
-// ダークモードの設定
-const toggleDarkModeBtn = document.getElementById('toggle_dark_mode');
+// テーマ設定
+const darkModeSelector = document.getElementById('dark_mode_selector');
+const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
 
-function updateDarkMode(isEnabled) {
-  if (isEnabled) {
+function applyTheme(mode) {
+  let isDark = false;
+  if (mode === 'system') {
+    isDark = systemDarkMode.matches;
+  } else if (mode === 'dark') {
+    isDark = true;
+  } else {
+    isDark = false;
+  }
+
+  if (isDark) {
     document.body.classList.add('dark-mode');
   } else {
     document.body.classList.remove('dark-mode');
   }
-  if (toggleDarkModeBtn) {
-    if (typeof toggleDarkModeBtn.selected !== 'undefined') {
-      toggleDarkModeBtn.selected = isEnabled;
-    } else {
-      toggleDarkModeBtn.checked = isEnabled;
-    }
-  }
-  localStorage.setItem(LS_KEYS.DARK_MODE_ENABLED, isEnabled);
+  
+  localStorage.setItem(LS_KEYS.DARK_MODE_SETTING, mode);
 }
 
-if (toggleDarkModeBtn) {
-  // 保存された設定を復元（デフォルトは無効）
-  const darkModeEnabled = localStorage.getItem(LS_KEYS.DARK_MODE_ENABLED) === 'true';
-  updateDarkMode(darkModeEnabled);
+if (darkModeSelector) {
+  // 保存された設定を読み込み
+  let savedMode = localStorage.getItem(LS_KEYS.DARK_MODE_SETTING);
   
-  toggleDarkModeBtn.addEventListener('change', (e) => {
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
-    updateDarkMode(newState);
+  // 以前の設定からの移行
+  if (!savedMode) {
+    const oldEnabled = localStorage.getItem(LS_KEYS.DARK_MODE_ENABLED);
+    if (oldEnabled !== null) {
+      savedMode = oldEnabled === 'true' ? 'dark' : 'light';
+    } else {
+      savedMode = 'system';
+    }
+  }
+  
+  // セレクターの初期値を設定
+  darkModeSelector.value = savedMode;
+  applyTheme(savedMode);
+  
+  darkModeSelector.addEventListener('change', (e) => {
+    applyTheme(e.target.value);
+  });
+  
+  // システム設定の変更監視
+  systemDarkMode.addEventListener('change', (e) => {
+    const currentMode = localStorage.getItem(LS_KEYS.DARK_MODE_SETTING) || 'system';
+    if (currentMode === 'system') {
+      applyTheme('system');
+    }
   });
 }
 
@@ -2974,13 +3157,66 @@ async function initWindowCountSelector() {
 // 初期化実行
 initWindowCountSelector();
 
+// ディスプレイセレクターの初期化
+const displaySelector = document.getElementById('display_selector');
+
+async function initDisplaySelector() {
+  if (displaySelector && window.electronAPI && window.electronAPI.getDisplays) {
+    try {
+      const displays = await window.electronAPI.getDisplays();
+      const targetId = await window.electronAPI.getTargetDisplayId();
+      
+      displaySelector.innerHTML = '';
+      displays.forEach(display => {
+        const option = document.createElement('option');
+        option.value = display.id;
+        option.textContent = display.label;
+        displaySelector.appendChild(option);
+      });
+      
+      if (targetId) {
+        displaySelector.value = targetId;
+      }
+      
+      displaySelector.onchange = async (e) => {
+        await window.electronAPI.setTargetDisplay(e.target.value);
+      };
+    } catch (e) {
+      console.error('Failed to init display selector:', e);
+    }
+  }
+}
+
+// ウィンドウリサイズ設定の初期化
+const toggleWindowResizableBtn = document.getElementById('toggle_window_resizable');
+
+async function initWindowResizableSwitch() {
+  if (toggleWindowResizableBtn && window.electronAPI && window.electronAPI.getWindowResizable) {
+    try {
+      const resizable = await window.electronAPI.getWindowResizable();
+      if (typeof toggleWindowResizableBtn.selected !== 'undefined') {
+        toggleWindowResizableBtn.selected = resizable;
+      } else {
+        toggleWindowResizableBtn.checked = resizable;
+      }
+      
+      toggleWindowResizableBtn.addEventListener('change', async (e) => {
+        const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+        await window.electronAPI.setWindowResizable(newState);
+      });
+    } catch (e) {
+      console.error('Failed to init window resizable switch:', e);
+    }
+  }
+}
+
 // 適用ボタンのイベント
 if (applyWindowCountBtn && windowCountSelector) {
   applyWindowCountBtn.onclick = async () => {
     const newCount = parseInt(windowCountSelector.value, 10);
     const lang = getCurrentLanguage();
     
-    if (confirm(translations[lang].confirm_restart)) {
+    if (await showConfirmDialog(translations[lang].confirm_restart)) {
       if (window.electronAPI && window.electronAPI.setWindowCount) {
         await window.electronAPI.setWindowCount(newCount);
       }
@@ -2994,7 +3230,7 @@ if (applyWindowCountBtn && windowCountSelector) {
 // フォルダー一括設定
 const applyFolderStyleAllBtn = document.getElementById('apply_folder_style_all');
 if (applyFolderStyleAllBtn) {
-  applyFolderStyleAllBtn.onclick = () => {
+  applyFolderStyleAllBtn.onclick = async () => {
     const color = document.getElementById('global_folder_bg_color').value;
     const opacitySlider = document.getElementById('global_folder_bg_opacity');
     const opacity = opacitySlider.querySelector('m3e-slider-thumb')?.value || 1;
@@ -3011,7 +3247,7 @@ if (applyFolderStyleAllBtn) {
     }
     
     const lang = getCurrentLanguage();
-    alert(lang === 'ja' ? 'すべてのフォルダーに適用しました' : 'Applied to all folders');
+    await showAlertDialog(lang === 'ja' ? 'すべてのフォルダーに適用しました' : 'Applied to all folders');
   };
 }
 
@@ -3048,16 +3284,16 @@ if (newAppImageTrigger && newAppFileInput) {
 // 全データ削除機能
 const deleteAllDataBtn = document.getElementById('delete_all_data_btn');
 if (deleteAllDataBtn) {
-  deleteAllDataBtn.onclick = () => {
+  deleteAllDataBtn.onclick = async () => {
     const lang = getCurrentLanguage();
     const confirmMsg = translations[lang].confirm_delete_all_data;
     
-    if (confirm(confirmMsg)) {
+    if (await showConfirmDialog(confirmMsg)) {
       // localStorageの全データを削除
       localStorage.clear();
       
       // 削除完了メッセージを表示してページをリロード
-      alert(translations[lang].data_deleted);
+      await showAlertDialog(translations[lang].data_deleted);
       location.reload();
     }
   };
@@ -3119,13 +3355,13 @@ function createDesktopIcon(appData) {
 
 const saveNewAppBtn = document.getElementById('save_new_app');
 if (saveNewAppBtn) {
-  saveNewAppBtn.onclick = () => {
+  saveNewAppBtn.onclick = async () => {
     const name = document.getElementById('new_app_name').value;
     const url = document.getElementById('new_app_url').value;
     
     if (!name || !url) {
       const lang = getCurrentLanguage();
-      alert(translations[lang].enter_name_and_url);
+      await showAlertDialog(translations[lang].enter_name_and_url);
       return;
     }
     
@@ -3210,7 +3446,7 @@ function createLinuxAppIcon(appData) {
     if (!result.success) {
       const lang = getCurrentLanguage();
       const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
-      alert(errorMsg);
+      await showAlertDialog(errorMsg);
     }
   };
   
@@ -3278,14 +3514,14 @@ document.getElementById('close_add_linuxapp_modal').onclick = () => {
 
 const saveLinuxAppBtn = document.getElementById('save_linux_app');
 if (saveLinuxAppBtn) {
-  saveLinuxAppBtn.onclick = () => {
+  saveLinuxAppBtn.onclick = async () => {
     const name = document.getElementById('linux_app_name').value;
     const command = document.getElementById('linux_app_command').value;
     const runInTerminal = document.getElementById('linux_app_run_in_terminal').checked;
     
     if (!name || !command) {
       const lang = getCurrentLanguage();
-      alert(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
+      await showAlertDialog(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
       return;
     }
     
@@ -3512,7 +3748,7 @@ function showWidgetContextMenu(e, widgetEl) {
 }
 
 // 編集ボタン
-document.getElementById('context_edit').onclick = (e) => {
+document.getElementById('context_edit').onclick = async (e) => {
   e.stopPropagation();
   hideContextMenu();
   
@@ -3526,12 +3762,11 @@ document.getElementById('context_edit').onclick = (e) => {
     // ファイル/フォルダショートカットは編集不可（パスは変更できない）
     const lang = getCurrentLanguage();
     const msg = lang === 'ja' ? 'ファイル/フォルダのショートカットは編集できません。削除して再度追加してください。' : 'File/folder shortcuts cannot be edited. Please delete and add again.';
-    alert(msg);
+    await showAlertDialog(msg);
   }
 };
 
-// 削除ボタン
-document.getElementById('context_delete').onclick = (e) => {
+document.getElementById('context_delete').onclick = async (e) => {
   e.stopPropagation();
   hideContextMenu();
   
@@ -3544,7 +3779,7 @@ document.getElementById('context_delete').onclick = (e) => {
   // フォルダー内アイテムの場合
   if (currentContextAppType && currentContextAppType.startsWith('folder-item')) {
     const folderConfirmMsg = lang === 'ja' ? `「${appName}」をフォルダーから取り出しますか？` : `Remove "${appName}" from folder?`;
-    if (confirm(folderConfirmMsg)) {
+    if (await showConfirmDialog(folderConfirmMsg)) {
       const folderId = currentEditingIcon._folderId;
       const index = currentEditingIcon._folderIndex;
       removeFromFolder(folderId, index);
@@ -3556,7 +3791,7 @@ document.getElementById('context_delete').onclick = (e) => {
   
   // フォルダーの場合
   if (currentContextAppType === 'folder') {
-    if (confirm(confirmMsg)) {
+    if (await showConfirmDialog(confirmMsg)) {
       const folderId = currentEditingIcon._folderId;
       delete folders[folderId];
       saveFolders();
@@ -3565,7 +3800,7 @@ document.getElementById('context_delete').onclick = (e) => {
     return;
   }
   
-  if (confirm(confirmMsg)) {
+  if (await showConfirmDialog(confirmMsg)) {
     const saveKey = currentEditingIcon.dataset.saveKey;
     currentEditingIcon.remove();
     
@@ -3643,13 +3878,13 @@ document.getElementById('close_edit_webapp_modal').onclick = () => {
   document.getElementById('edit_webapp_modal_overlay').style.display = 'none';
 };
 
-document.getElementById('save_edit_webapp').onclick = () => {
+document.getElementById('save_edit_webapp').onclick = async () => {
   const name = document.getElementById('edit_webapp_name').value.trim();
   const url = document.getElementById('edit_webapp_url').value.trim();
   
   if (!name || !url) {
     const lang = getCurrentLanguage();
-    alert(lang === 'ja' ? '名前とURLを入力してください' : 'Please enter name and URL');
+    await showAlertDialog(lang === 'ja' ? '名前とURLを入力してください' : 'Please enter name and URL');
     return;
   }
   
@@ -4466,14 +4701,14 @@ document.getElementById('google_login_btn')?.addEventListener('click', () => {
 // 初期化時にカレンダーウィジェットを更新
 setTimeout(updateGoogleCalendarWidget, 1000);
 
-document.getElementById('save_edit_linuxapp').onclick = () => {
+document.getElementById('save_edit_linuxapp').onclick = async () => {
   const name = document.getElementById('edit_linuxapp_name').value.trim();
   const command = document.getElementById('edit_linuxapp_command').value.trim();
   const runInTerminal = document.getElementById('edit_linuxapp_run_in_terminal').checked;
   
   if (!name || !command) {
     const lang = getCurrentLanguage();
-    alert(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
+    await showAlertDialog(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
     return;
   }
     
@@ -4531,7 +4766,7 @@ document.getElementById('save_edit_linuxapp').onclick = () => {
       if (!result.success) {
         const lang = getCurrentLanguage();
         const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
-        alert(errorMsg);
+        await showAlertDialog(errorMsg);
       }
     };
   }
@@ -4589,7 +4824,7 @@ function createFileShortcutIcon(fileData) {
     const result = await openFileOrFolder(fileData.path);
     if (!result.success) {
       const lang = getCurrentLanguage();
-      alert(translations[lang].open_failed + ': ' + result.error);
+      await showAlertDialog(translations[lang].open_failed + ': ' + result.error);
     }
   };
   
@@ -4650,7 +4885,7 @@ function createFolderShortcutIcon(folderData) {
     const result = await openFileOrFolder(folderData.path);
     if (!result.success) {
       const lang = getCurrentLanguage();
-      alert(translations[lang].open_failed + ': ' + result.error);
+      await showAlertDialog(translations[lang].open_failed + ': ' + result.error);
     }
   };
   
@@ -4912,9 +5147,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btn) {
     btn.addEventListener('click', async () => {
       const lang = getCurrentLanguage();
-      if (!confirm(translations[lang].reset_widget_sizes_confirm)) return;
+      if (!await showConfirmDialog(translations[lang].reset_widget_sizes_confirm)) return;
       resetWidgetSizes();
-      alert(translations[lang].widget_sizes_reset);
+      await showAlertDialog(translations[lang].widget_sizes_reset);
     });
   }
 

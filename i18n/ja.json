@@ -10,6 +10,7 @@
   "add_widget": "ウィジェットを追加",
   "no_music_playing": "再生中の音楽なし",
   "loading": "読み込み中...",
+  "cancel": "キャンセル",
   "contributions_label": "貢献",
   "day_streak_label": "連続日数",
   "longest_streak_label": "最長",
@@ -67,6 +68,9 @@
   "language": "言語",
   "color_scheme": "カラースキーム",
   "dark_mode": "ダークモード",
+  "light_mode": "ライトモード",
+  "system_default": "システム設定に従う",
+  "theme": "テーマ",
   "blur_effect": "ブラー効果",
 
   "icon_settings": "アイコン設定",
@@ -74,6 +78,9 @@
 
   "system_settings": "システム設定",
   "settings_button_label": "設定ボタン",
+  "target_display": "ターゲットディスプレイ",
+  "window_resizable": "ウィンドウのリサイズ",
+  "window_resizable_desc": "ウィンドウサイズの変更を許可する",
   "window_count": "ウィンドウ数",
   "apply_restart": "適用",
 

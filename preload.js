@@ -71,6 +71,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ウィンドウ数設定用API
   getWindowCount: () => ipcRenderer.invoke('get-window-count'),
   setWindowCount: (count) => ipcRenderer.invoke('set-window-count', count),
+  getDisplays: () => ipcRenderer.invoke('get-displays'),
+  getTargetDisplayId: () => ipcRenderer.invoke('get-target-display-id'),
+  setTargetDisplay: (displayId) => ipcRenderer.invoke('set-target-display', displayId),
+  getWindowResizable: () => ipcRenderer.invoke('get-window-resizable'),
+  setWindowResizable: (resizable) => ipcRenderer.invoke('set-window-resizable', resizable),
   restartApp: () => ipcRenderer.invoke('restart-app'),
   openGoogleLogin: () => ipcRenderer.invoke('open-google-login'),
   // ブラウザメディア用API
