@@ -12,110 +12,14 @@ let iconShapeSelector = null;
 // Constants are defined in constants.js
 
 // ========================================
-// ダイアログヘルパー関数
+// ダイアログヘルパー関数 (UIUtilsに移動)
 // ========================================
 
-async function showAlertDialog(message, title = '', options = {}) {
-  const dialog = document.getElementById('global_dialog');
-  if (!dialog) {
-    return new Promise(resolve => {
-      alert(message);
-      resolve();
-    });
-  }
-  
-  const dialogTitle = document.getElementById('global_dialog_title');
-  const dialogIcon = document.getElementById('global_dialog_icon');
-  const dialogContent = document.getElementById('global_dialog_content');
-  const cancelBtn = document.getElementById('global_dialog_cancel');
-  const okBtn = document.getElementById('global_dialog_ok');
-  
-  dialogTitle.textContent = title;
-  
-  if (options.html) {
-    dialogContent.innerHTML = message;
-  } else {
-    dialogContent.textContent = message;
-  }
-
-  if (dialogIcon) {
-    dialogIcon.style.display = options.icon ? '' : 'none';
-    if (options.icon) dialogIcon.name = options.icon;
-    if (options.iconColor) dialogIcon.style.color = options.iconColor;
-  }
-
-  cancelBtn.style.display = 'none';
-  okBtn.textContent = 'OK';
-  
-  const handleOk = () => dialog.hide('ok');
-  okBtn.onclick = handleOk;
-  
-  dialog.returnValue = '';
-  dialog.open = true;
-  
-  return new Promise((resolve) => {
-    const closeHandler = () => {
-      dialog.removeEventListener('closed', closeHandler);
-      okBtn.onclick = null;
-      resolve();
-    };
-    dialog.addEventListener('closed', closeHandler);
-  });
-}
-
-async function showConfirmDialog(message, title = '', options = {}) {
-  const dialog = document.getElementById('global_dialog');
-  if (!dialog) {
-    return new Promise(resolve => {
-      resolve(confirm(message));
-    });
-  }
-  
-  const dialogTitle = document.getElementById('global_dialog_title');
-  const dialogIcon = document.getElementById('global_dialog_icon');
-  const dialogContent = document.getElementById('global_dialog_content');
-  const cancelBtn = document.getElementById('global_dialog_cancel');
-  const okBtn = document.getElementById('global_dialog_ok');
-  
-  const lang = getCurrentLanguage();
-  cancelBtn.textContent = i18n.t('cancel');
-  okBtn.textContent = 'OK';
-  
-  dialogTitle.textContent = title;
-  
-  if (options.html) {
-    dialogContent.innerHTML = message;
-  } else {
-    dialogContent.textContent = message;
-  }
-
-  if (dialogIcon) {
-    dialogIcon.style.display = options.icon ? '' : 'none';
-    if (options.icon) dialogIcon.name = options.icon;
-    if (options.iconColor) dialogIcon.style.color = options.iconColor;
-  }
-
-  cancelBtn.style.display = '';
-  
-  const handleOk = () => dialog.hide('ok');
-  const handleCancel = () => dialog.hide('cancel');
-  
-  okBtn.onclick = handleOk;
-  cancelBtn.onclick = handleCancel;
-  
-  dialog.returnValue = '';
-  dialog.open = true;
-  
-  return new Promise((resolve) => {
-    const closeHandler = () => {
-      dialog.removeEventListener('closed', closeHandler);
-      okBtn.onclick = null;
-      cancelBtn.onclick = null;
-      resolve(dialog.returnValue === 'ok');
-    };
-    dialog.addEventListener('closed', closeHandler);
-  });
-}
+const showAlertDialog = window.UIUtils.showAlertDialog;
+const showConfirmDialog = window.UIUtils.showConfirmDialog;
+const resizeImage = window.UIUtils.resizeImage;
+const hexToRgb = window.UIUtils.hexToRgb;
+const getContrastColor = window.UIUtils.getContrastColor;
 
 // ========================================
 // アイコン形状の設定
@@ -212,27 +116,10 @@ function applyShapeToAll(shape) {
   }
 }
 
-function updateIconShape(shape) {
-  // 既存の shape クラスを削除
-  document.body.classList.remove('icon-shape-circle', 'icon-shape-square', 'icon-shape-custom');
-
-  if (shape === 'square' || shape === 'circle') {
-    document.body.classList.add(`icon-shape-${shape}`);
-    // アンラップまたは border-radius 適用
-    applyShapeToAll(shape);
-  } else {
-    // カスタム形状: 追加のクラスで状態を識別
-    document.body.classList.add('icon-shape-custom');
-    applyShapeToAll(shape);
-  }
-
-  localStorage.setItem(LS_KEYS.ICON_SHAPE, shape);
-
-  // セレクターの値を更新（実際の要素は後で代入される）
-  if (typeof iconShapeSelector !== 'undefined' && iconShapeSelector && iconShapeSelector.value !== undefined) {
-    iconShapeSelector.value = shape;
-  }
-}
+/**
+ * アイコン形状を更新
+ */
+const updateIconShape = window.StyleManager.updateIconShape.bind(window.StyleManager);
 
 async function launchLinuxApp(command) {
   if (window.electronAPI && window.electronAPI.launchLinuxApp) {
@@ -387,51 +274,32 @@ const DRAG_THRESHOLD = 8;
 // 最小オーバーラップ面積（ピクセル）: これを超えたら重なりと判定
 const OVERLAP_THRESHOLD = 800;
 
-// 編集機能用
-let currentEditingApp = null;
-let currentEditingIcon = null;
-let currentContextAppType = null;
+// 編集機能用 (ContextMenuManagerと同期)
+Object.defineProperty(window, 'currentEditingApp', { 
+  get: () => window.ContextMenuManager?.currentEditingApp, 
+  set: (v) => { if(window.ContextMenuManager) window.ContextMenuManager.currentEditingApp = v; } 
+});
+Object.defineProperty(window, 'currentEditingIcon', { 
+  get: () => window.ContextMenuManager?.currentEditingIcon, 
+  set: (v) => { if(window.ContextMenuManager) window.ContextMenuManager.currentEditingIcon = v; } 
+});
+Object.defineProperty(window, 'currentContextAppType', { 
+  get: () => window.ContextMenuManager?.currentContextAppType, 
+  set: (v) => { if(window.ContextMenuManager) window.ContextMenuManager.currentContextAppType = v; } 
+});
+Object.defineProperty(window, 'currentEditingWidget', { 
+  get: () => window.ContextMenuManager?.currentEditingWidget, 
+  set: (v) => { if(window.ContextMenuManager) window.ContextMenuManager.currentEditingWidget = v; } 
+});
 
 // ========================================
 // ユーティリティ関数
 // ========================================
 
 /**
- * 画像を指定されたサイズにリサイズする
- * @param {string} dataUrl - 元の画像のData URL
- * @param {number} targetWidth - ターゲットの幅
- * @param {number} targetHeight - ターゲットの高さ
- * @returns {Promise<string>} リサイズされた画像のData URL
- */
-function resizeImage(dataUrl, targetWidth, targetHeight) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-      const ctx = canvas.getContext('2d');
-      
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-      
-      resolve(canvas.toDataURL());
-    };
-    img.onerror = (err) => {
-      console.error("Image loading failed for resizing", err);
-      reject(err);
-    };
-    img.src = dataUrl;
-  });
-}
-/**
  * 値をグリッドにスナップさせる
- * @param {number} value - 元の値
- * @returns {number} スナップされた値
  */
-function snapToGrid(value, axis = 'x') {
-  const size = axis === 'y' ? GRID_SIZE_Y : GRID_SIZE_X;
-  return Math.round((value - GRID_OFFSET) / size) * size + GRID_OFFSET;
-}
+const snapToGrid = window.DragManager.snapToGrid.bind(window.DragManager);
 
 /**
  * フォルダーデータを保存
@@ -450,31 +318,11 @@ function getCurrentLanguage() {
 
 /**
  * 2つの要素の重なり面積を計算
- * @param {DOMRect} rect1 - 要素1の矩形
- * @param {DOMRect} rect2 - 要素2の矩形
- * @returns {number} 重なり面積
  */
-function calculateOverlapArea(rect1, rect2) {
-  const overlapX = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
-  const overlapY = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
-  return overlapX * overlapY;
-}
+const calculateOverlapArea = window.DragManager.calculateOverlapArea.bind(window.DragManager);
 
 // アイコンの矩形情報をキャッシュする（ドラッグ中の負荷軽減）
-function cacheIconRects(excludeEl) {
-  window.cachedIconRects = [];
-  document.querySelectorAll('.appicon:not(.folder)').forEach(el => {
-    if (el !== excludeEl && el.style.display !== 'none') {
-      window.cachedIconRects.push({ element: el, rect: el.getBoundingClientRect() });
-    }
-  });
-  window.cachedFolderRects = [];
-  document.querySelectorAll('.appicon.folder').forEach(el => {
-    if (el !== excludeEl && el.style.display !== 'none') {
-      window.cachedFolderRects.push({ element: el, rect: el.getBoundingClientRect() });
-    }
-  });
-}
+const cacheIconRects = window.DragManager.cacheIconRects.bind(window.DragManager);
 
 /**
  * 画像からドミナントカラー（主要な色）を抽出する
@@ -539,57 +387,13 @@ function getDominantColor(imageSrc) {
 
 /**
  * ドラッグ中のアイコンと重なっているアイコンを検出
- * @param {HTMLElement} draggedEl - ドラッグ中の要素
- * @returns {HTMLElement|null} 重なっているアイコン
  */
-function getOverlappingIcon(draggedEl) {
-  const draggedRect = draggedEl.getBoundingClientRect();
-  
-  // キャッシュがあればそれを使用
-  if (window.cachedIconRects) {
-    for (const item of window.cachedIconRects) {
-      if (item.element === draggedEl) continue;
-      const overlapArea = calculateOverlapArea(draggedRect, item.rect);
-      if (overlapArea > OVERLAP_THRESHOLD) return item.element;
-    }
-    return null;
-  }
-
-  const icons = document.querySelectorAll('.appicon:not(.folder)');
-  for (const icon of icons) {
-    if (icon === draggedEl) continue;
-    const overlapArea = calculateOverlapArea(draggedRect, icon.getBoundingClientRect());
-    if (overlapArea > OVERLAP_THRESHOLD) return icon;
-  }
-  return null;
-}
+const getOverlappingIcon = window.DragManager.getOverlappingIcon.bind(window.DragManager);
 
 /**
  * ドラッグ中のアイコンと重なっているフォルダーを検出
- * @param {HTMLElement} draggedEl - ドラッグ中の要素
- * @returns {HTMLElement|null} 重なっているフォルダー
  */
-function getOverlappingFolder(draggedEl) {
-  const draggedRect = draggedEl.getBoundingClientRect();
-  
-  // キャッシュがあればそれを使用
-  if (window.cachedFolderRects) {
-    for (const item of window.cachedFolderRects) {
-      if (item.element === draggedEl) continue;
-      const overlapArea = calculateOverlapArea(draggedRect, item.rect);
-      if (overlapArea > OVERLAP_THRESHOLD) return item.element;
-    }
-    return null;
-  }
-
-  const folderIcons = document.querySelectorAll('.appicon.folder');
-  for (const folder of folderIcons) {
-    if (folder === draggedEl) continue;
-    const overlapArea = calculateOverlapArea(draggedRect, folder.getBoundingClientRect());
-    if (overlapArea > OVERLAP_THRESHOLD) return folder;
-  }
-  return null;
-}
+const getOverlappingFolder = window.DragManager.getOverlappingFolder.bind(window.DragManager);
 
 // ========================================
 // フォルダー機能
@@ -640,105 +444,13 @@ function getIconData(icon) {
 
 /**
  * フォルダーを作成
- * @param {HTMLElement} icon1 - 1つ目のアイコン
- * @param {HTMLElement} icon2 - 2つ目のアイコン
- * @returns {HTMLElement} 作成されたフォルダー要素
  */
-function createFolder(icon1, icon2) {
-  const folderId = 'folder-' + Date.now();
-  const lang = getCurrentLanguage();
-  const folderName = lang === 'ja' ? '新規フォルダー' : 'New Folder';
-  
-  const icon1Data = getIconData(icon1);
-  const icon2Data = getIconData(icon2);
-  
-  // フォルダーデータを保存
-  folders[folderId] = {
-    name: folderName,
-    apps: [icon1Data, icon2Data]
-  };
-  saveFolders();
-  
-  // フォルダーアイコンを作成
-  const folderEl = createFolderIcon(folderId, folders[folderId]);
-  
-  // 位置を設定（icon1の位置）
-  folderEl.style.position = 'absolute';
-  folderEl.style.left = icon1.style.left || (icon1.offsetLeft + 'px');
-  folderEl.style.top = icon1.style.top || (icon1.offsetTop + 'px');
-  
-  // 元のアイコンを非表示
-  icon1.style.display = 'none';
-  icon2.style.display = 'none';
-  
-  // フォルダーを追加
-  const desktopIcons = document.getElementById('desktop_icons');
-  if (desktopIcons) {
-    desktopIcons.appendChild(folderEl);
-  }
-  
-  // 位置変更モード中であれば、新しいフォルダーアイコンにもドラッグイベントを設定
-  if (isPositionChangeMode && typeof setupDraggableItem === 'function') {
-    setupDraggableItem(folderEl);
-  }
-  
-  return folderEl;
-}
+const createFolder = window.FolderManager.createFolder.bind(window.FolderManager);
 
-// フォルダーアイコンを作成
-function createFolderIcon(folderId, folderData) {
-  const div = document.createElement('div');
-  div.className = 'appicon folder';
-  div.dataset.folderId = folderId;
-  div.dataset.saveKey = folderId;
-  
-  // プレビュー用のグリッドを作成
-  const previewDiv = document.createElement('div');
-  previewDiv.className = 'folder-preview';
-  
-  // スタイルを適用
-  if (folderData.style) {
-    const { color, opacity } = folderData.style;
-    const rgb = hexToRgb(color);
-    if (rgb) {
-      previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-    }
-  }
-  
-  // 最大4つのアイコンをプレビュー表示
-  folderData.apps.slice(0, 4).forEach(app => {
-    const img = document.createElement('img');
-    img.src = app.icon;
-    previewDiv.appendChild(img);
-    if (!app.path) {
-      // フォルダ内プレビュー画像に形状を適用
-      wrapImageWithShape(img, getCurrentIconShape());
-    }
-  });
-  
-  const nameP = document.createElement('p');
-  nameP.textContent = folderData.name;
-  
-  div.appendChild(previewDiv);
-  div.appendChild(nameP);
-  
-  // クリックでフォルダーを開く
-  div.onclick = () => openFolder(folderId);
-  
-  // 右クリックでコンテキストメニューを表示
-  div.oncontextmenu = (e) => {
-    e.preventDefault();
-    div._folderId = folderId;
-    showContextMenu(e, div, 'folder');
-  };
-  
-  // アイコン形状を適用してからドラッグを設定
-  wrapIconWithShape(div, getCurrentIconShape());
-  // 通常モードのドラッグを設定
-  setupNormalModeDrag(div);
-  
-  return div;
-}
+/**
+ * フォルダーアイコンを作成
+ */
+const createFolderIcon = window.FolderManager.createFolderIcon.bind(window.FolderManager);
 
 // フォルダーを閉じる（アニメーション付き）
 function closeFolder() {
@@ -846,24 +558,10 @@ function openFolder(folderId) {
   renderFolderPage(folderId);
 }
 
-// フォルダーのスタイルを適用
-function applyFolderStyle(folderId) {
-  const folderData = folders[folderId];
-  if (!folderData || !folderData.style) return;
-  
-  const modal = document.getElementById('folder_modal');
-  const { color, opacity } = folderData.style;
-  
-  const rgb = hexToRgb(color);
-  if (rgb) {
-    modal.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-    
-    // 背景色に合わせて文字色を調整
-    const textColor = getContrastColor(rgb.r, rgb.g, rgb.b);
-    modal.style.setProperty('--on-surface', textColor);
-    modal.style.setProperty('--on-surface-variant', textColor);
-  }
-}
+/**
+ * フォルダーのスタイルを適用
+ */
+const applyFolderStyle = window.FolderManager.applyFolderStyle.bind(window.FolderManager);
 
 function renderFolderPage(folderId) {
   const folderData = folders[folderId];
@@ -1390,36 +1088,7 @@ function addToFolder(folderId, icon) {
 }
 
 // フォルダーアイコンを更新
-function updateFolderIcon(folderId) {
-  const folderEl = document.querySelector(`[data-folder-id="${folderId}"]`);
-  const folderData = folders[folderId];
-  
-  if (!folderEl || !folderData) return;
-  
-  const previewDiv = folderEl.querySelector('.folder-preview');
-  if (previewDiv) {
-    // スタイルを適用
-    if (folderData.style) {
-      const { color, opacity } = folderData.style;
-      const rgb = hexToRgb(color);
-      if (rgb) {
-        previewDiv.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-      }
-    } else {
-      previewDiv.style.background = '';
-    }
-
-    previewDiv.innerHTML = '';
-    folderData.apps.slice(0, 4).forEach(app => {
-      const img = document.createElement('img');
-      img.src = app.icon;
-      previewDiv.appendChild(img);
-      if (!app.path) {
-        wrapImageWithShape(img, getCurrentIconShape());
-      }
-    });
-  }
-}
+const updateFolderIcon = window.FolderManager.updateFolderIcon.bind(window.FolderManager);
 
 // 保存されたフォルダーを読み込み
 function loadFolders() {
@@ -1503,142 +1172,13 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
 
 /**
  * 指定された位置で他の要素と重なるかチェック
- * @param {HTMLElement} element - 対象の要素
- * @param {number} x - 左位置
- * @param {number} y - 上位置
- * @returns {boolean} 重なっている場合はtrue
  */
-function isOverlappingAny(element, x, y) {
-  const width = element.offsetWidth;
-  const height = element.offsetHeight;
-  
-  // 少し余裕を持たせる（境界線での接触を許容するため）
-  const margin = 2;
-  
-  const rect1 = {
-    left: x + margin,
-    top: y + margin,
-    right: x + width - margin,
-    bottom: y + height - margin
-  };
-  
-  const allItems = document.querySelectorAll('.appicon, .widget');
-  for (const item of allItems) {
-    if (item === element || item.style.display === 'none') continue;
-    
-    // appicon-add は無視
-    if (item.id === 'appicon-add') continue;
-    
-    const itemLeft = item.offsetLeft;
-    const itemTop = item.offsetTop;
-    const itemWidth = item.offsetWidth;
-    const itemHeight = item.offsetHeight;
-    
-    const rect2 = {
-      left: itemLeft + margin,
-      top: itemTop + margin,
-      right: itemLeft + itemWidth - margin,
-      bottom: itemTop + itemHeight - margin
-    };
-    
-    if (rect1.left < rect2.right &&
-        rect1.right > rect2.left &&
-        rect1.top < rect2.bottom &&
-        rect1.bottom > rect2.top) {
-      return true;
-    }
-  }
-  return false;
-}
+const isOverlappingAny = window.DragManager.isOverlappingAny.bind(window.DragManager);
 
 /**
  * 最も近い空き位置を探す
- * @param {HTMLElement} element - 対象の要素
- * @param {number} startX - 開始X座標
- * @param {number} startY - 開始Y座標
- * @returns {{x: number, y: number}} 空き位置
  */
-function findNearestEmptyPosition(element, startX, startY) {
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-  const elWidth = element.offsetWidth;
-  const elHeight = element.offsetHeight;
-
-  let x = startX;
-  let y = startY;
-  
-  // 画面内に収まるようにクランプ
-  x = Math.max(0, Math.min(x, screenWidth - elWidth));
-  y = Math.max(0, Math.min(y, screenHeight - elHeight));
-  
-  // グリッドモードならスナップ
-  if (isGridModeEnabled) {
-    x = snapToGrid(x, 'x');
-    y = snapToGrid(y, 'y');
-    
-    // スナップ後に画面外に出た場合は調整
-    if (x + elWidth > screenWidth) x -= GRID_SIZE_X;
-    if (y + elHeight > screenHeight) y -= GRID_SIZE_Y;
-    x = Math.max(0, x);
-    y = Math.max(0, y);
-  }
-  
-  // 重なりがなければそのまま返す
-  if (!isOverlappingAny(element, x, y)) {
-    return { x, y };
-  }
-  
-  // 重なっている場合、周囲を探索
-  // 探索ステップ: グリッドサイズまたはアイコンサイズ
-  const stepX = isGridModeEnabled ? GRID_SIZE_X : 80;
-  const stepY = isGridModeEnabled ? GRID_SIZE_Y : 95;
-  
-  // 渦巻き状に探索
-  let radius = 1;
-  const maxRadius = 20; // 無限ループ防止
-  
-  while (radius < maxRadius) {
-    // 候補位置をチェックするヘルパー
-    const check = (cx, cy) => {
-      if (cx >= 0 && cy >= 0 && 
-          cx + elWidth <= screenWidth && cy + elHeight <= screenHeight && 
-          !isOverlappingAny(element, cx, cy)) {
-        return true;
-      }
-      return false;
-    };
-
-    // 上辺
-    for (let i = -radius; i <= radius; i++) {
-      const checkX = x + (i * stepX);
-      const checkY = y - (radius * stepY);
-      if (check(checkX, checkY)) return { x: checkX, y: checkY };
-    }
-    // 右辺
-    for (let i = -radius + 1; i <= radius; i++) {
-      const checkX = x + (radius * stepX);
-      const checkY = y + (i * stepY);
-      if (check(checkX, checkY)) return { x: checkX, y: checkY };
-    }
-    // 下辺
-    for (let i = radius - 1; i >= -radius; i--) {
-      const checkX = x + (i * stepX);
-      const checkY = y + (radius * stepY);
-      if (check(checkX, checkY)) return { x: checkX, y: checkY };
-    }
-    // 左辺
-    for (let i = radius - 1; i > -radius; i--) {
-      const checkX = x - (radius * stepX);
-      const checkY = y + (i * stepY);
-      if (check(checkX, checkY)) return { x: checkX, y: checkY };
-    }
-    
-    radius++;
-  }
-  
-  // 見つからない場合は元の位置（重なったまま）
-  return { x, y };
-}
+const findNearestEmptyPosition = window.DragManager.findNearestEmptyPosition.bind(window.DragManager);
 
 // アイテムにドラッグイベントを設定する関数（位置変更モード用）
 function setupDraggableItem(item) {
@@ -2175,134 +1715,12 @@ document.getElementById('refresh_page').onclick = () => {
 // カラースキーム設定
 // ========================================
 
-const colorSchemes = ['blue', 'red', 'green', 'purple', 'orange', 'teal', 'pink'];
-
-function updateColorScheme(scheme, customColor = null) {
-  // 既存のカラースキームクラスを削除
-  colorSchemes.forEach(s => {
-    document.body.classList.remove(`color-scheme-${s}`);
-  });
-  document.body.classList.remove('color-scheme-custom');
-  
-  if (scheme === 'custom' && customColor) {
-    // カスタムカラーを適用
-    document.body.classList.add('color-scheme-custom');
-    applyCustomColor(customColor);
-    localStorage.setItem(LS_KEYS.COLOR_SCHEME, 'custom');
-    localStorage.setItem(LS_KEYS.CUSTOM_COLOR, customColor);
-  } else {
-    // プリセットカラースキームを適用
-    document.body.classList.add(`color-scheme-${scheme}`);
-    localStorage.setItem(LS_KEYS.COLOR_SCHEME, scheme);
-  }
-  
-  // パレットの選択状態を更新
-  document.querySelectorAll('.color-swatch').forEach(swatch => {
-    if (scheme === 'custom') {
-      swatch.classList.toggle('selected', swatch.classList.contains('color-picker-swatch'));
-    } else {
-      swatch.classList.toggle('selected', swatch.dataset.color === scheme);
-    }
-  });
-}
-
-// カスタムカラーから派生色を生成して適用
-function applyCustomColor(hexColor) {
-  const rgb = hexToRgb(hexColor);
-  if (!rgb) return;
-  
-  // HSLに変換
-  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-  
-  // 派生色を生成
-  const primaryLight = hslToHex(hsl.h, Math.min(hsl.s + 10, 100), Math.min(hsl.l + 15, 85));
-  const primaryDark = hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 15, 15));
-  const clockPrimary = hslToHex(hsl.h, Math.min(hsl.s + 5, 100), Math.min(hsl.l + 10, 70));
-  const clockSecondary = hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 20, 20));
-  const clockAccent = hslToHex(hsl.h, Math.max(hsl.s - 30, 20), Math.min(hsl.l + 30, 90));
-  const clockBackground = hslToHex(hsl.h, Math.max(hsl.s - 20, 10), Math.max(hsl.l - 40, 10));
-  const primaryContainer = hslToHex(hsl.h, Math.max(hsl.s - 40, 20), 90);
-  
-  // 時計背景の明るさに応じて文字色を決定
-  const bgRgb = hexToRgb(clockBackground);
-  const clockTextColor = getContrastColor(bgRgb.r, bgRgb.g, bgRgb.b);
-  
-  // プライマリカラーの明るさに応じてボタン文字色を決定
-  const onPrimaryColor = getContrastColor(rgb.r, rgb.g, rgb.b);
-  
-  // プライマリコンテナの明るさに応じて文字色を決定
-  const containerRgb = hexToRgb(primaryContainer);
-  const onPrimaryContainerColor = getContrastColor(containerRgb.r, containerRgb.g, containerRgb.b);
-  
-  // CSS変数を設定
-  document.documentElement.style.setProperty('--md-sys-color-primary', hexColor);
-  document.documentElement.style.setProperty('--md-sys-color-on-primary', onPrimaryColor);
-  document.documentElement.style.setProperty('--md-sys-color-tertiary', primaryDark);
-  document.documentElement.style.setProperty('--md-sys-color-primary-container', primaryContainer);
-  document.documentElement.style.setProperty('--md-sys-color-on-primary-container', onPrimaryContainerColor);
-  document.documentElement.style.setProperty('--primary-color', hexColor);
-  document.documentElement.style.setProperty('--primary-dark', primaryDark);
-  document.documentElement.style.setProperty('--primary-light', primaryLight);
-  document.documentElement.style.setProperty('--clock-primary', clockPrimary);
-  document.documentElement.style.setProperty('--clock-secondary', clockSecondary);
-  document.documentElement.style.setProperty('--clock-accent', clockAccent);
-  document.documentElement.style.setProperty('--clock-background', clockBackground);
-  document.documentElement.style.setProperty('--clock-text-color', clockTextColor);
-  
-  // カスタムスウォッチの背景色を更新
-  const pickerSwatch = document.querySelector('.color-picker-swatch');
-  if (pickerSwatch) {
-    pickerSwatch.style.setProperty('--custom-color', hexColor);
-    pickerSwatch.style.background = hexColor;
-  }
-}
-
-// 背景色の明るさに応じてコントラスト色（黒/白）を返す
-function getContrastColor(r, g, b) {
-  // 相対輝度を計算（WCAG基準）
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#1f1f1f' : '#ffffff';
-}
-
-// 色変換ユーティリティ
-function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
-}
-
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  
-  if (max === min) {
-    h = s = 0;
-  } else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-      case g: h = ((b - r) / d + 2) / 6; break;
-      case b: h = ((r - g) / d + 4) / 6; break;
-    }
-  }
-  return { h: h * 360, s: s * 100, l: l * 100 };
-}
-
-function hslToHex(h, s, l) {
-  s /= 100; l /= 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color).toString(16).padStart(2, '0');
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-}
+const colorSchemes = window.StyleManager.colorSchemes;
+const updateColorScheme = window.StyleManager.updateColorScheme.bind(window.StyleManager);
+const applyCustomColor = window.StyleManager.applyCustomColor.bind(window.StyleManager);
+const rgbToHsl = window.StyleManager.rgbToHsl.bind(window.StyleManager);
+const hslToHex = window.StyleManager.hslToHex.bind(window.StyleManager);
+const resetCustomColorVars = window.StyleManager.resetCustomColorVars.bind(window.StyleManager);
 
 // カラーパレットの初期化
 const colorPalette = document.getElementById('color_palette');
@@ -2366,17 +1784,6 @@ if (extractColorBtn && colorSchemeImageInput) {
   };
 }
 
-// カスタムカラー変数をリセット
-function resetCustomColorVars() {
-  const vars = [
-    '--md-sys-color-primary', '--md-sys-color-on-primary', '--md-sys-color-tertiary', 
-    '--md-sys-color-primary-container', '--md-sys-color-on-primary-container',
-    '--primary-color', '--primary-dark', '--primary-light',
-    '--clock-primary', '--clock-secondary', '--clock-accent', '--clock-background', '--clock-text-color'
-  ];
-  vars.forEach(v => document.documentElement.style.removeProperty(v));
-}
-
 // 設定ボタン（FAB）の表示/非表示設定
 const settingsFab = document.getElementById('settings_fab');
 const toggleSettingsFabBtn = document.getElementById('toggle_settings_fab');
@@ -2408,22 +1815,7 @@ if (toggleSettingsFabBtn) {
 
 // ブラー効果の設定
 const toggleBlurEffectBtn = document.getElementById('toggle_blur_effect');
-
-function updateBlurEffect(isEnabled) {
-  if (isEnabled) {
-    document.body.classList.remove('no-blur');
-  } else {
-    document.body.classList.add('no-blur');
-  }
-  if (toggleBlurEffectBtn) {
-    if (typeof toggleBlurEffectBtn.selected !== 'undefined') {
-      toggleBlurEffectBtn.selected = isEnabled;
-    } else {
-      toggleBlurEffectBtn.checked = isEnabled;
-    }
-  }
-  localStorage.setItem(LS_KEYS.BLUR_EFFECT_ENABLED, isEnabled);
-}
+const updateBlurEffect = window.StyleManager.updateBlurEffect.bind(window.StyleManager);
 
 if (toggleBlurEffectBtn) {
   // 保存された設定を復元（デフォルトは有効）
@@ -2439,25 +1831,7 @@ if (toggleBlurEffectBtn) {
 // テーマ設定
 const darkModeSelector = document.getElementById('dark_mode_selector');
 const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
-
-function applyTheme(mode) {
-  let isDark = false;
-  if (mode === 'system') {
-    isDark = systemDarkMode.matches;
-  } else if (mode === 'dark') {
-    isDark = true;
-  } else {
-    isDark = false;
-  }
-
-  if (isDark) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
-  
-  localStorage.setItem(LS_KEYS.DARK_MODE_SETTING, mode);
-}
+const applyTheme = window.StyleManager.applyTheme.bind(window.StyleManager);
 
 if (darkModeSelector) {
   // 保存された設定を読み込み
@@ -2505,72 +1879,16 @@ const windowCountSelector = document.getElementById('window_count_selector');
 const applyWindowCountBtn = document.getElementById('apply_window_count');
 
 // ウィンドウ数セレクターの初期化
-async function initWindowCountSelector() {
-  if (windowCountSelector && window.electronAPI && window.electronAPI.getWindowCount) {
-    try {
-      const currentCount = await window.electronAPI.getWindowCount();
-      windowCountSelector.value = currentCount.toString();
-    } catch (e) {
-      console.error('Failed to get window count:', e);
-    }
-  }
-}
+const initWindowCountSelector = window.SystemSettingsManager.initWindowCountSelector.bind(window.SystemSettingsManager);
 
 // 初期化実行
 initWindowCountSelector();
 
 // ディスプレイセレクターの初期化
-const displaySelector = document.getElementById('display_selector');
-
-async function initDisplaySelector() {
-  if (displaySelector && window.electronAPI && window.electronAPI.getDisplays) {
-    try {
-      const displays = await window.electronAPI.getDisplays();
-      const targetId = await window.electronAPI.getTargetDisplayId();
-      
-      displaySelector.innerHTML = '';
-      displays.forEach(display => {
-        const option = document.createElement('option');
-        option.value = display.id;
-        option.textContent = display.label;
-        displaySelector.appendChild(option);
-      });
-      
-      if (targetId) {
-        displaySelector.value = targetId;
-      }
-      
-      displaySelector.onchange = async (e) => {
-        await window.electronAPI.setTargetDisplay(e.target.value);
-      };
-    } catch (e) {
-      console.error('Failed to init display selector:', e);
-    }
-  }
-}
+const initDisplaySelector = window.SystemSettingsManager.initDisplaySelector.bind(window.SystemSettingsManager);
 
 // ウィンドウリサイズ設定の初期化
-const toggleWindowResizableBtn = document.getElementById('toggle_window_resizable');
-
-async function initWindowResizableSwitch() {
-  if (toggleWindowResizableBtn && window.electronAPI && window.electronAPI.getWindowResizable) {
-    try {
-      const resizable = await window.electronAPI.getWindowResizable();
-      if (typeof toggleWindowResizableBtn.selected !== 'undefined') {
-        toggleWindowResizableBtn.selected = resizable;
-      } else {
-        toggleWindowResizableBtn.checked = resizable;
-      }
-      
-      toggleWindowResizableBtn.addEventListener('change', async (e) => {
-        const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
-        await window.electronAPI.setWindowResizable(newState);
-      });
-    } catch (e) {
-      console.error('Failed to init window resizable switch:', e);
-    }
-  }
-}
+const initWindowResizableSwitch = window.SystemSettingsManager.initWindowResizableSwitch.bind(window.SystemSettingsManager);
 
 // 適用ボタンのイベント
 if (applyWindowCountBtn && windowCountSelector) {
@@ -2661,59 +1979,7 @@ if (deleteAllDataBtn) {
   };
 }
 
-function createDesktopIcon(appData) {
-  const div = document.createElement('div');
-  div.className = 'appicon custom-app';
-  // saveKeyが既にある場合はそれを使用、ない場合は新規作成
-  const saveKey = appData.saveKey || ('custom-app-' + appData.name.replace(/\s+/g, '-') + '-' + Date.now());
-  div.dataset.saveKey = saveKey;
-  div._appUrl = appData.url; // フォルダー機能用にURLを保存
-  div._appData = { ...appData, saveKey }; // saveKeyも含めて保存
-  
-  // saveKeyがなかった場合はlocalStorageを更新
-  if (!appData.saveKey) {
-    const customApps = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS) || '[]');
-    const index = customApps.findIndex(a => a.name === appData.name && a.url === appData.url);
-    if (index !== -1) {
-      customApps[index].saveKey = saveKey;
-      localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(customApps));
-    }
-  }
-  
-  div.innerHTML = `
-    <img src="${appData.icon}" />
-    <p>${appData.name}</p>
-  `;
-  div.onclick = () => {
-    if (appData.url.startsWith('chrome://')) {
-      if (typeof openURL === 'function') openURL(appData.url);
-    } else {
-      window.open(appData.url);
-    }
-  };
-
-  div.oncontextmenu = (e) => {
-    e.preventDefault();
-    showContextMenu(e, div, 'webapp');
-  };
-  
-  const desktopIcons = document.getElementById('desktop_icons');
-  if (desktopIcons) {
-    desktopIcons.appendChild(div);
-  }
-  
-  // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
-  if (positions[saveKey]) {
-    div.style.position = positions[saveKey].position;
-    div.style.left = positions[saveKey].left;
-    div.style.top = positions[saveKey].top;
-  }
-  
-  // 通常モードのドラッグを設定
-  setupNormalModeDrag(div);
-  return div;
-}
+const createDesktopIcon = window.AppManager.createDesktopIcon;
 
 const saveNewAppBtn = document.getElementById('save_new_app');
 if (saveNewAppBtn) {
@@ -2770,74 +2036,7 @@ savedCustomApps.forEach(app => {
 });
 
 // Linuxアプリのアイコン作成
-function createLinuxAppIcon(appData) {
-  const div = document.createElement('div');
-  div.className = 'appicon linux-app';
-  // saveKeyが既にある場合はそれを使用、ない場合は新規作成
-  const saveKey = appData.saveKey || ('linux-app-' + appData.name.replace(/\s+/g, '-') + '-' + Date.now());
-  div.dataset.saveKey = saveKey;
-  div._appCommand = appData.command;
-  div._runInTerminal = appData.runInTerminal || false;
-  div._appData = { ...appData, saveKey }; // saveKeyも含めて保存
-  
-  // saveKeyがなかった場合はlocalStorageを更新
-  if (!appData.saveKey) {
-    const linuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
-    const index = linuxApps.findIndex(a => a.name === appData.name && a.command === appData.command);
-    if (index !== -1) {
-      linuxApps[index].saveKey = saveKey;
-      localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(linuxApps));
-    }
-  }
-  
-  div.innerHTML = `
-    <img src="${appData.icon || './assets/settings.webp'}" />
-    <p>${appData.name}</p>
-  `;
-  
-  div.onclick = async () => {
-    let command = appData.command;
-    
-    // ターミナルで実行する場合
-    if (appData.runInTerminal) {
-      // xterm を使用
-      command = `xterm -hold -e "${appData.command}"`;
-    }
-    
-    const result = await launchLinuxApp(command);
-    if (!result.success) {
-      const lang = getCurrentLanguage();
-      const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
-      await showAlertDialog(errorMsg);
-    }
-  };
-  
-  div.oncontextmenu = (e) => {
-    e.preventDefault();
-    showContextMenu(e, div, 'linuxapp');
-  };
-  
-  const desktopIcons = document.getElementById('desktop_icons');
-  if (desktopIcons) {
-    desktopIcons.appendChild(div);
-  }
-  
-  // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
-  if (positions[saveKey]) {
-    div.style.position = positions[saveKey].position;
-    div.style.left = positions[saveKey].left;
-    div.style.top = positions[saveKey].top;
-  }
-  
-  // アイコン形状を適用
-  wrapIconWithShape(div, getCurrentIconShape());
-  
-  // 通常モードのドラッグを設定
-  setupNormalModeDrag(div);
-  
-  return div;
-}
+const createLinuxAppIcon = window.AppManager.createLinuxAppIcon;
 
 // Linuxアプリモーダルの処理
 const linuxAppImageInput = document.getElementById('linux_app_image_file');
@@ -2973,35 +2172,15 @@ try {
 // コンテキストメニューと編集機能
 // ========================================
 
-const contextMenu = document.getElementById('app_context_menu');
+/**
+ * コンテキストメニューを表示
+ */
+const showContextMenu = window.ContextMenuManager.showContextMenu.bind(window.ContextMenuManager);
 
-// コンテキストメニューを表示
-function showContextMenu(e, iconEl, appType) {
-  hideContextMenu();
-  currentEditingIcon = iconEl;
-  currentEditingApp = iconEl._appData;
-  currentContextAppType = appType;
-  
-  contextMenu.style.display = 'block';
-  contextMenu.style.left = e.clientX + 'px';
-  contextMenu.style.top = e.clientY + 'px';
-  
-  // 画面外にはみ出ないように調整
-  const rect = contextMenu.getBoundingClientRect();
-  if (rect.right > window.innerWidth) {
-    contextMenu.style.left = (e.clientX - rect.width) + 'px';
-  }
-  if (rect.bottom > window.innerHeight) {
-    contextMenu.style.top = (e.clientY - rect.height) + 'px';
-  }
-}
-
-// コンテキストメニューを非表示
-function hideContextMenu() {
-  document.querySelectorAll('.context-menu').forEach(menu => {
-    menu.style.display = 'none';
-  });
-}
+/**
+ * メニューを非表示にする
+ */
+const hideContextMenu = window.ContextMenuManager.hideContextMenu.bind(window.ContextMenuManager);
 
 // 画面クリックでコンテキストメニューを閉じる
 document.addEventListener('click', hideContextMenu);
@@ -3096,18 +2275,11 @@ if (closeAddWidgetModalBtn) {
 // ウィジェットのコンテキストメニュー
 // ========================================
 const widgetContextMenu = document.getElementById('widget_context_menu');
-let currentEditingWidget = null;
 
-function showWidgetContextMenu(e, widgetEl) {
-  e.preventDefault();
-  e.stopPropagation();
-  hideContextMenu(); // 他のメニューを隠す
-  currentEditingWidget = widgetEl;
-
-  widgetContextMenu.style.display = 'block';
-  widgetContextMenu.style.left = e.clientX + 'px';
-  widgetContextMenu.style.top = e.clientY + 'px';
-}
+/**
+ * ウィジェット用コンテキストメニューを表示
+ */
+const showWidgetContextMenu = window.ContextMenuManager.showWidgetContextMenu.bind(window.ContextMenuManager);
 
 // 編集ボタン
 document.getElementById('context_edit').onclick = async (e) => {
@@ -3562,140 +2734,18 @@ async function openFileOrFolder(filePath) {
 
 /**
  * ファイルショートカットのアイコンを作成
- * @param {Object} fileData - ファイルデータ
  */
-function createFileShortcutIcon(fileData) {
-  const div = document.createElement('div');
-  div.className = 'appicon file-shortcut';
-  const saveKey = fileData.saveKey || ('file-shortcut-' + fileData.name.replace(/\s+/g, '-') + '-' + Date.now());
-  div.dataset.saveKey = saveKey;
-  div._filePath = fileData.path;
-  div._fileData = { ...fileData, saveKey };
-  
-  // saveKeyがなかった場合はlocalStorageを更新
-  if (!fileData.saveKey) {
-    const fileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS) || '[]');
-    const index = fileShortcuts.findIndex(f => f.path === fileData.path);
-    if (index !== -1) {
-      fileShortcuts[index].saveKey = saveKey;
-      localStorage.setItem(LS_KEYS.FILE_SHORTCUTS, JSON.stringify(fileShortcuts));
-    }
-  }
-  
-  // ファイルタイプに応じたアイコンを設定
-  const iconSrc = fileData.icon || getFileIcon(fileData.path, fileData.isDirectory);
-  
-  div.innerHTML = `
-    <img src="${iconSrc}" />
-    <p>${fileData.name}</p>
-  `;
-  
-  div.onclick = async () => {
-    const result = await openFileOrFolder(fileData.path);
-    if (!result.success) {
-      const lang = getCurrentLanguage();
-      await showAlertDialog(i18n.t('open_failed') + ': ' + result.error);
-    }
-  };
-  
-  div.oncontextmenu = (e) => {
-    e.preventDefault();
-    showContextMenu(e, div, 'file');
-  };
-  
-  const desktopIcons = document.getElementById('desktop_icons');
-  if (desktopIcons) {
-    desktopIcons.appendChild(div);
-  }
-  
-  // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
-  if (positions[saveKey]) {
-    div.style.position = positions[saveKey].position;
-    div.style.left = positions[saveKey].left;
-    div.style.top = positions[saveKey].top;
-  }
-  
-  // 通常モードのドラッグを設定
-  setupNormalModeDrag(div);
-  return div;
-}
+const createFileShortcutIcon = window.AppManager.createFileShortcutIcon;
 
 /**
  * フォルダショートカットのアイコンを作成
- * @param {Object} folderData - フォルダデータ
  */
-function createFolderShortcutIcon(folderData) {
-  const div = document.createElement('div');
-  div.className = 'appicon folder-shortcut';
-  const saveKey = folderData.saveKey || ('folder-shortcut-' + folderData.name.replace(/\s+/g, '-') + '-' + Date.now());
-  div.dataset.saveKey = saveKey;
-  div._filePath = folderData.path;
-  div._fileData = { ...folderData, saveKey };
-  
-  // saveKeyがなかった場合はlocalStorageを更新
-  if (!folderData.saveKey) {
-    const folderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
-    const index = folderShortcuts.findIndex(f => f.path === folderData.path);
-    if (index !== -1) {
-      folderShortcuts[index].saveKey = saveKey;
-      localStorage.setItem(LS_KEYS.FOLDER_SHORTCUTS, JSON.stringify(folderShortcuts));
-    }
-  }
-  
-  // フォルダアイコン
-  const iconSrc = folderData.icon || './assets/folder.svg';
-  
-  div.innerHTML = `
-    <img src="${iconSrc}" />
-    <p>${folderData.name}</p>
-  `;
-  
-  div.onclick = async () => {
-    const result = await openFileOrFolder(folderData.path);
-    if (!result.success) {
-      const lang = getCurrentLanguage();
-      await showAlertDialog(i18n.t('open_failed') + ': ' + result.error);
-    }
-  };
-  
-  div.oncontextmenu = (e) => {
-    e.preventDefault();
-    showContextMenu(e, div, 'folder-shortcut');
-  };
-  
-  const desktopIcons = document.getElementById('desktop_icons');
-  if (desktopIcons) {
-    desktopIcons.appendChild(div);
-  }
-  
-  // 保存された位置を復元
-  const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
-  if (positions[saveKey]) {
-    div.style.position = positions[saveKey].position;
-    div.style.left = positions[saveKey].left;
-    div.style.top = positions[saveKey].top;
-  }
-  
-  // 通常モードのドラッグを設定
-  setupNormalModeDrag(div);
-  return div;
-}
+const createFolderShortcutIcon = window.AppManager.createFolderShortcutIcon;
 
 /**
  * ファイルの拡張子からアイコンを取得
- * @param {string} filePath - ファイルパス
- * @param {boolean} isDirectory - ディレクトリかどうか
- * @returns {string} アイコンのパス
  */
-function getFileIcon(filePath, isDirectory) {
-  if (isDirectory) {
-    return './assets/folder.svg';
-  }
-  
-  // デフォルトはファイルアイコン
-  return './assets/file.svg';
-}
+const getFileIcon = window.AppManager.getFileIcon;
 
 // ファイル追加ボタンのイベント
 document.getElementById('add_file_btn')?.addEventListener('click', async () => {
