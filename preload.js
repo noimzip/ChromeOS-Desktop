@@ -51,6 +51,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       });
   },
 
+  onLinuxMediaUpdate: (callback) => {
+      ipcRenderer.on('linux-media-update', (event, info) => {
+          callback(info);
+      });
+  },
+
   browserMediaControl: (action, value) => {
     // Send to Main -> WS
     return ipcRenderer.invoke('send-to-browser', { request: 'mediaControl', action: action, value: value });

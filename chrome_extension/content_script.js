@@ -458,18 +458,9 @@ function sendMediaInfoUpdate() {
     }
   }
 
-  // 適応的ポーリング: 状態に応じて次回の同期間隔を調整
-  // 再生中かつ表示中: 1秒
-  // 再生中かつ非表示: 2秒
-  // 停止中かつ表示中: 3秒
-  // 停止中かつ非表示: 10秒
+  // 再生状況を常に1秒ごとにチェックして応答性を確保
   let nextDelay = 1000;
-  if (isPlaying) {
-    nextDelay = isHidden ? 2000 : 1000;
-  } else {
-    nextDelay = isHidden ? 10000 : 3000;
-  }
-
+  
   updateTimeout = setTimeout(sendMediaInfoUpdate, nextDelay);
 }
 

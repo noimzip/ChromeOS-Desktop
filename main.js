@@ -219,6 +219,7 @@ ipcMain.handle('launch-linux-app', async (event, command) => {
 
 // メディア情報取得用IPCハンドラ (キャッシュ済みデータを返す)
 let cachedMediaInfo = { status: 'No player', title: '', artist: '', album: '', artUrl: '', position: '0', length: '0', player: '', shuffle: '', loop: '' };
+let lastSentMediaJson = '';
 
 function updateMediaInfo() {
   // playerctlでメディア情報を一括取得 (軽量化)
@@ -256,7 +257,19 @@ function updateMediaInfo() {
         else if (line.startsWith('Loop:')) results.loop = line.substring(5).trim();
       });
     }
+    
     cachedMediaInfo = results;
+
+    // 変化があった場合のみ通知 (Push型)
+    const currentJson = JSON.stringify(results);
+    if (currentJson !== lastSentMediaJson) {
+      lastSentMediaJson = currentJson;
+      windows.forEach(win => {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('linux-media-update', results);
+        }
+      });
+    }
   });
 }
 
@@ -266,6 +279,11 @@ setInterval(updateMediaInfo, 1000);
 ipcMain.handle('get-media-info', async () => {
   return cachedMediaInfo;
 });
+
+// パフォーマンス向上のためのスイッチ
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=128'); // ウィジェットなのでメモリ制限
+
 
 // メディア制御用IPCハンドラ
 ipcMain.handle('media-control', async (event, action, value) => {
@@ -358,10 +376,17 @@ app.whenReady().then(() => {
       frame: false,
       transparent: true,
       resizable: windowResizable,
+      show: false, // 準備ができるまで表示しない
       webPreferences: {
         preload: path.join(process.cwd(), 'preload.js'),
-        sandbox: false
+        sandbox: true,
+        contextIsolation: true,
+        backgroundThrottling: false // ウィジェットが非表示でも止まらないようにする
       }
+    });
+
+    win.once('ready-to-show', () => {
+      win.show();
     });
 
     win.webContents.setWindowOpenHandler(({ url }) => {

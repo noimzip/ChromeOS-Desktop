@@ -629,8 +629,16 @@ if (window.electronAPI && window.electronAPI.onBrowserMediaUpdate) {
   });
 }
 
-// 定期的にメディア情報を更新（2秒ごと）
+// Linuxからのメディア更新を受信 (Push型)
+if (window.electronAPI && window.electronAPI.onLinuxMediaUpdate) {
+  window.electronAPI.onLinuxMediaUpdate(() => {
+    updateMediaPlayer();
+  });
+}
+
+// 操作性を考慮し、1秒ごとにUIを更新（シークバーの同期など）
 setInterval(updateMediaPlayer, 1000);
+
 // 初回更新
 setTimeout(updateMediaPlayer, 500);
 // ブラウザメディア情報をリクエスト
