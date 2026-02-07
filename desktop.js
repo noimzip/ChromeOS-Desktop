@@ -367,12 +367,19 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+let lastMediaJson = '';
+
 /**
  * メディアプレイヤーUIを更新
  */
 async function updateMediaPlayer() {
   const info = await getMediaInfo();
   if (!info) return;
+  
+  // 変更がない場合はスキップ
+  const currentJson = JSON.stringify(info);
+  if (currentJson === lastMediaJson && !isSeeking) return;
+  lastMediaJson = currentJson;
   
   const hasPlayer = info.status !== 'No player' && info.source !== 'none';
   
@@ -383,7 +390,6 @@ async function updateMediaPlayer() {
   }
   
   if (!hasPlayer) {
-    const lang = getCurrentLanguage();
     if (mediaTitle) mediaTitle.textContent = i18n.t('no_music_playing');
     if (mediaArtist) mediaArtist.textContent = '';
     if (mediaArt) mediaArt.style.display = 'none';
@@ -397,14 +403,14 @@ async function updateMediaPlayer() {
     mediaTitle.textContent = info.title || 'Unknown Title';
   }
   if (mediaArtist) {
-    // ソース情報を表示（オプション）
-    const sourceLabel = info.source === 'browser' ? '' : '';
-    mediaArtist.textContent = (info.artist || '') + sourceLabel;
+    mediaArtist.textContent = info.artist || '';
   }
   
   // アルバムアートを更新
   if (mediaArt && info.artUrl) {
-    mediaArt.src = info.artUrl;
+    if (mediaArt.src !== info.artUrl) {
+      mediaArt.src = info.artUrl;
+    }
     mediaArt.style.display = 'block';
     mediaArt.onerror = () => {
       mediaArt.style.display = 'none';

@@ -48,21 +48,26 @@ ipcMain.handle('send-to-browser', async (event, payload) => {
 
 // 設定ファイルのパス
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+let cachedSettings = null;
 
 // 設定を読み込む
 function loadSettings() {
+  if (cachedSettings) return cachedSettings;
   try {
     if (fs.existsSync(settingsPath)) {
-      return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      cachedSettings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      return cachedSettings;
     }
   } catch (e) {
     console.error('Failed to load settings:', e);
   }
-  return { windowCount: 1 };
+  cachedSettings = { windowCount: 1 };
+  return cachedSettings;
 }
 
 // 設定を保存
 function saveSettings(settings) {
+  cachedSettings = settings;
   try {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
   } catch (e) {
@@ -212,47 +217,54 @@ ipcMain.handle('launch-linux-app', async (event, command) => {
   });
 });
 
-// メディア情報取得用IPCハンドラ
-ipcMain.handle('get-media-info', async () => {
-  return new Promise((resolve) => {
-    // playerctlでメディア情報を一括取得 (軽量化)
-    const cmd = `
-      STATUS=$(playerctl status 2>/dev/null)
-      if [ -n "$STATUS" ]; then
-        echo "Status:$STATUS"
-        playerctl metadata --format 'Metadata:{{title}};;{{artist}};;{{album}};;{{mpris:artUrl}};;{{mpris:length}};;{{playerName}}' 2>/dev/null
-        POS=$(playerctl position 2>/dev/null)
-        echo "Position:$POS"
-        SHUFFLE=$(playerctl shuffle 2>/dev/null)
-        echo "Shuffle:$SHUFFLE"
-        LOOP=$(playerctl loop 2>/dev/null)
-        echo "Loop:$LOOP"
-      else
-        echo "Status:No player"
-      fi
-    `;
+// メディア情報取得用IPCハンドラ (キャッシュ済みデータを返す)
+let cachedMediaInfo = { status: 'No player', title: '', artist: '', album: '', artUrl: '', position: '0', length: '0', player: '', shuffle: '', loop: '' };
 
-    exec(cmd, (error, stdout) => {
-      const results = { status: 'No player', title: '', artist: '', album: '', artUrl: '', position: '0', length: '0', player: '', shuffle: '', loop: '' };
-      if (!error && stdout) {
-        const lines = stdout.trim().split('\n');
-        lines.forEach(line => {
-          if (line.startsWith('Status:')) results.status = line.substring(7).trim();
-          else if (line.startsWith('Metadata:')) {
-            const parts = line.substring(9).split(';;');
-            if (parts.length >= 6) {
-              results.title = parts[0]; results.artist = parts[1]; results.album = parts[2];
-              results.artUrl = parts[3]; results.length = parts[4]; results.player = parts[5];
-            }
+function updateMediaInfo() {
+  // playerctlでメディア情報を一括取得 (軽量化)
+  const cmd = `
+    STATUS=$(playerctl status 2>/dev/null)
+    if [ -n "$STATUS" ]; then
+      echo "Status:$STATUS"
+      playerctl metadata --format 'Metadata:{{title}};;{{artist}};;{{album}};;{{mpris:artUrl}};;{{mpris:length}};;{{playerName}}' 2>/dev/null
+      POS=$(playerctl position 2>/dev/null)
+      echo "Position:$POS"
+      SHUFFLE=$(playerctl shuffle 2>/dev/null)
+      echo "Shuffle:$SHUFFLE"
+      LOOP=$(playerctl loop 2>/dev/null)
+      echo "Loop:$LOOP"
+    else
+      echo "Status:No player"
+    fi
+  `;
+
+  exec(cmd, (error, stdout) => {
+    const results = { status: 'No player', title: '', artist: '', album: '', artUrl: '', position: '0', length: '0', player: '', shuffle: '', loop: '' };
+    if (!error && stdout) {
+      const lines = stdout.trim().split('\n');
+      lines.forEach(line => {
+        if (line.startsWith('Status:')) results.status = line.substring(7).trim();
+        else if (line.startsWith('Metadata:')) {
+          const parts = line.substring(9).split(';;');
+          if (parts.length >= 6) {
+            results.title = parts[0]; results.artist = parts[1]; results.album = parts[2];
+            results.artUrl = parts[3]; results.length = parts[4]; results.player = parts[5];
           }
-          else if (line.startsWith('Position:')) results.position = line.substring(9).trim();
-          else if (line.startsWith('Shuffle:')) results.shuffle = line.substring(8).trim();
-          else if (line.startsWith('Loop:')) results.loop = line.substring(5).trim();
-        });
-      }
-      resolve(results);
-    });
+        }
+        else if (line.startsWith('Position:')) results.position = line.substring(9).trim();
+        else if (line.startsWith('Shuffle:')) results.shuffle = line.substring(8).trim();
+        else if (line.startsWith('Loop:')) results.loop = line.substring(5).trim();
+      });
+    }
+    cachedMediaInfo = results;
   });
+}
+
+// 1秒ごとにメディア情報を更新
+setInterval(updateMediaInfo, 1000);
+
+ipcMain.handle('get-media-info', async () => {
+  return cachedMediaInfo;
 });
 
 // メディア制御用IPCハンドラ
