@@ -1,2 +1,2 @@
-npm start
-npm update
+nohup npm start > /dev/null 2>&1 &
+exit
