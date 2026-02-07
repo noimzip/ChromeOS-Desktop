@@ -21,9 +21,21 @@ fi
 
 # すでに実行中かチェック（二重起動防止）
 # package.json で定義されている起動コマンドを検索
-if pgrep -f "electron . --ozone-platform-hint=wayland" > /dev/null; then
-    echo "Soul Widgets Manager is already running."
-    exit 0
+EXISTING_PID=$(pgrep -f "electron . --ozone-platform-hint=wayland")
+if [ -n "$EXISTING_PID" ]; then
+    echo "Soul Widgets Manager is already running (PID: $EXISTING_PID)."
+    echo -n "Would you like to kill the existing process and restart? (y/n): "
+    
+    # 5秒以内に回答がない場合は再起動せずに終了
+    read -t 5 -r restart_choice
+    if [[ "$restart_choice" =~ ^[yY]$ ]]; then
+        echo "Killing existing process..."
+        pkill -f "electron . --ozone-platform-hint=wayland"
+        sleep 1
+    else
+        echo "Restart canceled or timed out."
+        exit 0
+    fi
 fi
 
 echo "Starting Soul Widgets Manager..."
