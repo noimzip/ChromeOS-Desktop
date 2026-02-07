@@ -77,7 +77,12 @@
   "icon_shape": "アイコンの形",
 
   "widget_settings": "ウィジェット設定",
+  "clock_settings": "時計設定",
+  "media_player_settings": "メディアプレーヤー設定",
   "clock_shape": "時計の形",
+  "show_seekbar": "シークバーを表示",
+  "show_shuffle": "シャッフルボタンを表示",
+  "show_repeat": "リピートボタンを表示",
 
   "system_settings": "システム設定",
   "settings_button_label": "設定ボタン",

@@ -1887,6 +1887,33 @@ document.addEventListener('DOMContentLoaded', () => {
     window.StyleManager.updateClockShape(s);
   });
 
+  // メディアプレーヤーの設定トグル
+  function initMediaPlayerToggles() {
+    const configs = [
+      { id: 'toggle_media_seekbar', key: LS_KEYS.MEDIA_PLAYER_SHOW_SEEKBAR, part: 'seekbar' },
+      { id: 'toggle_media_shuffle', key: LS_KEYS.MEDIA_PLAYER_SHOW_SHUFFLE, part: 'shuffle' },
+      { id: 'toggle_media_repeat', key: LS_KEYS.MEDIA_PLAYER_SHOW_REPEAT, part: 'repeat' }
+    ];
+
+    configs.forEach(config => {
+      const toggle = document.getElementById(config.id);
+      if (toggle) {
+        const isVisible = localStorage.getItem(config.key) !== 'false';
+        if (typeof toggle.selected !== 'undefined') toggle.selected = isVisible;
+        else toggle.checked = isVisible;
+
+        // 初期状態適用
+        window.StyleManager.updateMediaPlayerVisibility(config.part, isVisible);
+
+        toggle.addEventListener('change', (e) => {
+          const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+          window.StyleManager.updateMediaPlayerVisibility(config.part, newState);
+        });
+      }
+    });
+  }
+  initMediaPlayerToggles();
+
   // ウィジェットのコンテキストメニューを設定
   Object.values(availableWidgets).forEach(widgetInfo => {
     if (widgetInfo.element) {
@@ -1904,6 +1931,43 @@ document.addEventListener('DOMContentLoaded', () => {
         setWidgetVisibility(widgetId, false);
       }
     }
+  };
+
+  // ウィジェット設定ボタンの処理
+  document.getElementById('widget_context_settings').onclick = (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    if (currentEditingWidget) {
+      openWidgetSettingsModal(currentEditingWidget);
+    }
+  };
+
+  function openWidgetSettingsModal(widgetEl) {
+    const clockContent = document.getElementById('clock_settings_content');
+    const mediaContent = document.getElementById('media_player_settings_content');
+    const title = document.getElementById('widget_settings_title');
+    
+    // 全て非表示にリセット
+    clockContent.style.display = 'none';
+    mediaContent.style.display = 'none';
+    
+    const widgetId = widgetEl.id;
+    if (widgetId === 'widget-clock') {
+      clockContent.style.display = 'block';
+      title.textContent = i18n.t('clock_settings') || '時計設定';
+    } else if (widgetId === 'media_player_widget') {
+      mediaContent.style.display = 'block';
+      title.textContent = i18n.t('media_player_settings') || 'メディアプレーヤー設定';
+    } else {
+      // 他のウィジェットにはまだ設定がない場合
+      title.textContent = i18n.t('widget_settings');
+    }
+    
+    document.getElementById('widget_settings_modal_overlay').style.display = 'flex';
+  }
+
+  document.getElementById('close_widget_settings_modal').onclick = () => {
+    document.getElementById('widget_settings_modal_overlay').style.display = 'none';
   };
 
   loadWidgetVisibility();

@@ -31,6 +31,9 @@ const LS_KEYS = {
   DARK_MODE_SETTING: 'darkModeSetting',
   GITHUB_USERNAME: 'githubUsername',
   GOOGLE_CALENDAR_URL: 'googleCalendarUrl',
+  MEDIA_PLAYER_SHOW_SEEKBAR: 'mediaPlayerShowSeekbar',
+  MEDIA_PLAYER_SHOW_SHUFFLE: 'mediaPlayerShowShuffle',
+  MEDIA_PLAYER_SHOW_REPEAT: 'mediaPlayerShowRepeat',
   WIDGET_VISIBILITY: 'widgetVisibility',
   WIDGET_SIZE_PREFIX: 'widgetSize:',
 };

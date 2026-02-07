@@ -1199,6 +1199,10 @@ body.no-blur .modal_overlay {
    Edit App Modals
    ======================================== */
 
+#widget_settings_modal {
+  width: 500px;
+}
+
 #edit_webapp_modal_overlay,
 #edit_linuxapp_modal_overlay {
   background-color: rgba(0, 0, 0, 0.5);

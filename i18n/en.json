@@ -77,7 +77,12 @@
   "icon_shape": "Icon Shape",
 
   "widget_settings": "Widget Settings",
+  "clock_settings": "Clock Settings",
+  "media_player_settings": "Media Player Settings",
   "clock_shape": "Clock Shape",
+  "show_seekbar": "Show Seekbar",
+  "show_shuffle": "Show Shuffle Button",
+  "show_repeat": "Show Repeat Button",
 
   "system_settings": "System",
   "settings_button_label": "Settings Button",
