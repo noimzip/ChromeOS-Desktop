@@ -607,6 +607,15 @@ if (developerUserAgent) {
   developerUserAgent.textContent = window.navigator.userAgent.toLowerCase();
 }
 
+const openDevToolsBtn = document.getElementById('open_devtools_btn');
+if (openDevToolsBtn) {
+  openDevToolsBtn.onclick = () => {
+    if (window.electronAPI && window.electronAPI.openDevTools) {
+      window.electronAPI.openDevTools();
+    }
+  };
+}
+
 document.getElementById('refresh_page').onclick = () => {
   location.reload();
 }

@@ -147,6 +147,14 @@ ipcMain.handle('restart-app', async () => {
   app.exit(0);
 });
 
+// 開発者ツールを開くIPCハンドラ
+ipcMain.handle('open-devtools', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    win.webContents.openDevTools();
+  }
+});
+
 // ファイル/フォルダを開くIPCハンドラ
 ipcMain.handle('open-file-or-folder', async (event, filePath) => {
   return new Promise((resolve) => {
