@@ -161,6 +161,8 @@ window.AppManager = {
 
         onclick,
 
+        contextMenuType: 'linuxapp',
+
         dataProps: { 
 
           _appCommand: appData.command,
@@ -353,7 +355,7 @@ window.AppManager = {
       shape: icon.dataset.shape || ''
     };
     
-    if (isLinuxApp && icon._appCommand) {
+    if (icon._appCommand) {
       data.command = icon._appCommand;
       data.runInTerminal = icon._runInTerminal || false;
       data.isLinuxApp = true;

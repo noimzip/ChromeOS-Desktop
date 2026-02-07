@@ -343,7 +343,7 @@ window.FolderManager = {
       div.oncontextmenu = (e) => {
         e.preventDefault();
         let type = 'folder-item';
-        if (app.isLinuxApp || app.command) type = 'folder-item-linuxapp';
+        if (app.command) type = 'folder-item-linuxapp';
         else if (app.url) type = 'folder-item-webapp';
         div._appData = app; div._folderId = folderId; div._folderIndex = index;
         if (app.shape) div.dataset.shape = app.shape;
