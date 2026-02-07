@@ -32,10 +32,7 @@ let currentMediaInfo = {
 
 // Content Scriptからのメッセージを受信
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[Soul Widgets BG] Received message:', message.type, message);
-  
   if (message.type === 'MEDIA_INFO_UPDATE') {
-    console.log('[Soul Widgets BG] Media info update from tab:', sender.tab?.id, message.data);
     currentMediaInfo = {
       ...message.data,
       tabId: sender.tab?.id,
@@ -50,7 +47,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleMediaControl(message.action, message.value);
     sendResponse({ success: true });
   } else if (message === 'Communication for Service Worker Maintenance') {
-    // Keep-alive message
     sendResponse({ success: true });
   }
   return true;
@@ -58,7 +54,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // メディア制御を実行
 async function handleMediaControl(action, value) {
-  console.log('[Soul Widgets BG] Handling media control:', action, 'value:', value, 'tabId:', currentMediaInfo.tabId);
   if (!currentMediaInfo.tabId) return;
   
   try {
@@ -68,19 +63,18 @@ async function handleMediaControl(action, value) {
       value: value
     });
   } catch (e) {
-    console.error('[Soul Widgets BG] Media control error:', e);
+    // タブが閉じられている等のエラー
   }
 }
 
 // WebSocket経由でメディア情報をブロードキャスト
 function broadcastMediaInfo() {
-  console.log('[Soul Widgets BG] Broadcasting media info:', currentMediaInfo);
   // offscreen document経由でWebSocketに送信
   chrome.runtime.sendMessage({
     type: 'BROADCAST_MEDIA_INFO',
     data: currentMediaInfo
   }).catch((e) => {
-    console.log('[Soul Widgets BG] Broadcast error:', e);
+    // Offscreen document is likely not ready
   });
 }
 

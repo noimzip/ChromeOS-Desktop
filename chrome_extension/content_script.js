@@ -399,13 +399,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // 定期的にメディア情報を送信
 let lastInfoStr = '';
-let updateInterval = null;
+let updateTimeout = null;
 let isContextValid = true;
 
 // コンテキストが有効かチェックする関数
 function checkContextValid() {
   try {
-    // chrome.runtime.id にアクセスしてエラーが出ないか確認
     return !!(chrome.runtime && chrome.runtime.id);
   } catch (e) {
     return false;
@@ -414,18 +413,15 @@ function checkContextValid() {
 
 function stopUpdates() {
   isContextValid = false;
-  if (updateInterval) {
-    clearInterval(updateInterval);
-    updateInterval = null;
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+    updateTimeout = null;
   }
-  console.log('[Soul Widgets] Updates stopped');
 }
 
 function sendMediaInfoUpdate() {
-  // すでに無効とわかっている場合は即座に終了
   if (!isContextValid) return;
   
-  // 拡張機能のコンテキストが有効かチェック
   if (!checkContextValid()) {
     stopUpdates();
     return;
@@ -435,35 +431,40 @@ function sendMediaInfoUpdate() {
   try {
     info = getMediaInfo();
   } catch (e) {
+    // コンテキスト無効化の可能性が高い
+    stopUpdates();
     return;
   }
-  if (!info) return;
   
-  // 変更があった場合のみ送信
-  const infoStr = JSON.stringify(info);
-  if (infoStr !== lastInfoStr) {
-    lastInfoStr = infoStr;
-    
-    try {
-      chrome.runtime.sendMessage({
-        type: 'MEDIA_INFO_UPDATE',
-        data: info
-      }).then(response => {
-        // 成功
-      }).catch(err => {
-        // 拡張機能が無効になった場合は更新を停止
+  const isPlaying = info && info.status === 'Playing';
+  const isHidden = document.hidden;
+  
+  if (info) {
+    // 変更があった場合のみ送信
+    const infoStr = JSON.stringify(info);
+    if (infoStr !== lastInfoStr) {
+      lastInfoStr = infoStr;
+      
+      try {
+        chrome.runtime.sendMessage({
+          type: 'MEDIA_INFO_UPDATE',
+          data: info
+        }).catch(err => {
+          stopUpdates();
+        });
+      } catch (err) {
         stopUpdates();
-      });
-    } catch (err) {
-      stopUpdates();
+      }
     }
   }
+
+  // 再生状況を常に1秒ごとにチェックして応答性を確保
+  let nextDelay = 1000;
+  
+  updateTimeout = setTimeout(sendMediaInfoUpdate, nextDelay);
 }
 
-// 1秒ごとにメディア情報をチェック
-updateInterval = setInterval(sendMediaInfoUpdate, 1000);
+// 初回実行
+updateTimeout = setTimeout(sendMediaInfoUpdate, 500);
 
-// 初回送信
-setTimeout(sendMediaInfoUpdate, 500);
-
-console.log('[Soul Widgets] Content script initialized');
+console.log('[Soul Widgets] Content script initialized with adaptive polling');

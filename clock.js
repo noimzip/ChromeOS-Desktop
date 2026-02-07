@@ -5,12 +5,14 @@ for (var i = 0; i < 360; i += 30) {
   spike.style.transform = `rotate(${i}deg) translateY(-100px)`;
   clock.appendChild(spike);
 }
+
+const secondsPoint = document.querySelector(".seconds");
+const minutesPoint = document.querySelector(".minutes");
+const hoursPoint = document.querySelector(".hours");
+const datePoint = document.querySelector(".date");
+
 const interval = setInterval(() => {
   var date = new Date();
-  let secondsPoint = document.querySelector(".seconds");
-  let minutesPoint = document.querySelector(".minutes");
-  let hoursPoint = document.querySelector(".hours");
-  let datePoint = document.querySelector(".date");
 
   let secPosition = date.getSeconds() * 6;
   let minPosition = date.getMinutes() * 6;
