@@ -24,6 +24,7 @@
     
     <script type="module" src="./node_modules/@m3e/button/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/switch/dist/index.min.js"></script>
+    <script type="module" src="./node_modules/@m3e/dialog/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/nav-menu/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/icon/dist/index.min.js"></script>
     <script type="module" src="./node_modules/@m3e/divider/dist/index.min.js"></script>
@@ -440,6 +441,19 @@
         <m3e-button variant="filled" id="reset_widget_position" data-i18n="reset_position">位置をリセット</m3e-button>
       </div>
     </div>
+
+    <!-- グローバルダイアログ -->
+    <m3e-dialog id="global_dialog">
+      <div slot="header" class="dialog-header-wrapper">
+        <m3e-icon id="global_dialog_icon" style="display: none;"></m3e-icon>
+        <div id="global_dialog_title"></div>
+      </div>
+      <div id="global_dialog_content"></div>
+      <div slot="actions">
+        <m3e-button variant="text" id="global_dialog_cancel" data-i18n="cancel">キャンセル</m3e-button>
+        <m3e-button variant="filled" id="global_dialog_ok">OK</m3e-button>
+      </div>
+    </m3e-dialog>
 
     <div id="spotlight_overlay">
 

@@ -1277,6 +1277,35 @@ body.dark-mode .github-contribution-footer {
 }
 
 /* ========================================
+   Dialog Customization
+   ======================================== */
+
+m3e-dialog {
+  --m3e-dialog-container-color: var(--surface-color);
+  --m3e-dialog-color: var(--on-surface);
+  --m3e-dialog-header-color: var(--on-surface);
+  --m3e-dialog-content-color: var(--on-surface-variant);
+  --m3e-dialog-shape: var(--radius-xl);
+  --m3e-dialog-min-width: 320px;
+  --m3e-dialog-scrim-color: #000;
+  --m3e-dialog-scrim-opacity: 0.5;
+}
+
+.dialog-header-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: center;
+}
+
+#global_dialog_icon {
+  font-size: 24px;
+  color: var(--primary-color);
+}
+
+/* ========================================
    Modal Overlay
    ======================================== */
 
