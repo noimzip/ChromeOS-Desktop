@@ -37,6 +37,8 @@ const LS_KEYS = {
   MEDIA_PLAYER_SHOW_REPEAT: 'mediaPlayerShowRepeat',
   WIDGET_VISIBILITY: 'widgetVisibility',
   WIDGET_SIZE_PREFIX: 'widgetSize:',
+  GRID_SIZE_X: 'gridSizeX',
+  GRID_SIZE_Y: 'gridSizeY',
 };
 
 const SHAPES = [
@@ -46,7 +48,7 @@ const SHAPES = [
 ];
 
 // グリッド設定
-const GRID_SIZE_X = 80;
-const GRID_SIZE_Y = 90;
+let GRID_SIZE_X = parseInt(localStorage.getItem(LS_KEYS.GRID_SIZE_X)) || 80;
+let GRID_SIZE_Y = parseInt(localStorage.getItem(LS_KEYS.GRID_SIZE_Y)) || 90;
 const GRID_OFFSET = 20;
 const OVERLAP_THRESHOLD = 800;

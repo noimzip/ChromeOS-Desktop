@@ -53,6 +53,8 @@
   "reset_position": "位置をリセット",
   "refresh_dev": "リフレッシュ(開発者向け)",
   "grid_mode": "グリッドモード",
+  "grid_size_x": "グリッド幅 (X)",
+  "grid_size_y": "グリッド高さ (Y)",
   "save_change_position": "位置を保存",
   "reset_positions_confirm": "すべてのウィジェットとアイコンの位置をリセットしますか？",
 
