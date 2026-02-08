@@ -159,7 +159,7 @@ window.DragManager = {
     });
 
     item.onpointerdown = function(event) {
-      if (event.button !== 0) return;
+      if (event.button !== 0 || window.isMovementLocked) return;
       this.setPointerCapture(event.pointerId);
       this._isDragging = false;
       this._startX = event.clientX; this._startY = event.clientY;
@@ -229,7 +229,7 @@ window.DragManager = {
     }
 
     item.onpointerdown = function(event) {
-      if (event.button !== 0) return;
+      if (event.button !== 0 || window.isMovementLocked) return;
       this.setPointerCapture(event.pointerId);
       this._isDragging = false;
       this._startX = event.clientX; this._startY = event.clientY;

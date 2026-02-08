@@ -53,8 +53,10 @@
   "reset_position": "位置をリセット",
   "refresh_dev": "リフレッシュ(開発者向け)",
   "grid_mode": "グリッドモード",
-  "save_change_position": "位置を保存",
-  "reset_positions_confirm": "すべてのウィジェットとアイコンの位置をリセットしますか？",
+  "grid_size_x": "グリッド幅 (X)",
+      "grid_size_y": "グリッド高さ (Y)",
+      "icon_size": "アイコンのサイズ",
+      "save_change_position": "位置を保存",  "reset_positions_confirm": "すべてのウィジェットとアイコンの位置をリセットしますか？",
 
   "general": "一般",
   "keyboard_shortcuts": "キーボードショートカット",
@@ -66,6 +68,7 @@
   "about": "バージョン情報",
 
   "language": "言語",
+  "lock_movement": "移動をロック",
   "color_scheme": "カラースキーム",
   "dark_mode": "ダークモード",
   "light_mode": "ライトモード",

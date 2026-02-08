@@ -434,8 +434,8 @@ body {
 .appicon {
   text-align: center;
   cursor: pointer;
-  height: 90px;
-  width: 80px;
+  height: var(--icon-size-y, 90px);
+  width: var(--icon-size-x, 80px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -448,6 +448,14 @@ body {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.appicon > img,
+.appicon > m3e-shape,
+.appicon > .custom-shape-wrapper {
+  width: var(--icon-img-size, 48px);
+  height: var(--icon-img-size, 48px);
+  object-fit: contain;
 }
 
 /* ドラッグ中のスタイル */
@@ -482,7 +490,7 @@ body.no-blur .appicon:hover {
   color: white;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3);
   text-align: center;
-  font-size: 0.8rem;
+  font-size: var(--icon-font-size, 0.8rem);
   font-weight: 500;
   margin-top: 6px;
   line-height: 1.2;
@@ -495,8 +503,6 @@ body.no-blur .appicon:hover {
 }
 
 .appicon > img {
-  height: 48px;
-  width: 48px;
   object-fit: contain;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
   transition: transform var(--transition-fast), border-radius var(--transition-normal);
@@ -505,8 +511,6 @@ body.no-blur .appicon:hover {
 
 /* Support for m3e-shape wrapper element (slotted img) */
 .appicon > m3e-shape {
-  height: 48px;
-  width: 48px;
   display: inline-block;
 }
 
@@ -784,6 +788,7 @@ body.no-blur .modal_overlay {
   gap: var(--space-lg);
   align-items: center;
   width: 380px;
+  pointer-events: auto;
 }
 
 .modal h3 {
@@ -885,6 +890,7 @@ body.no-blur .modal_overlay {
   justify-content: space-between;
   gap: 16px;
   min-height: 48px;
+  pointer-events: auto;
 }
 
 .settings-item-column {
@@ -951,8 +957,14 @@ body.no-blur .modal_overlay {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 80px 90px;
-  background-position: 20px 20px;
+  background-size: var(--grid-size-x, 80px) var(--grid-size-y, 90px);
+  background-position: var(--grid-offset, 20px) var(--grid-offset, 20px);
+}
+
+/* 位置変更モード中にオーバーレイがポインターイベントを受け取るようにした場合でも、
+   アイコンやウィジェットが操作できるように設定 */
+.appicon, .widget {
+  pointer-events: auto;
 }
 
 #change_widget_position_modal {
@@ -1503,11 +1515,6 @@ body.no-blur .folder-drag-clone {
 .add-shape-button:hover {
   background: var(--md-sys-color-surface-container-highest);
   border-style: solid;
-}
-
-.appicon > .custom-shape-wrapper {
-  width: 100%;
-  height: 100%;
 }
 
 .appicon > .custom-shape-wrapper img {

@@ -397,11 +397,36 @@ document.getElementById('close_settingsmenu_modal').onclick = () => {
 // ========================================
 
 window.isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
+window.isMovementLocked = localStorage.getItem(LS_KEYS.LOCK_MOVEMENT) === 'true';
 window.isPositionChangeMode = false;
 window.draggedItem = null;
 window.folders = JSON.parse(localStorage.getItem(LS_KEYS.APP_FOLDERS) || '{}');
 window.currentOpenFolderId = null;
 window.currentFolderPage = 0;
+
+function updateLockMovementUI() {
+  const toggle = document.getElementById('toggle_lock_movement_position_modal');
+  if (toggle) {
+    if (typeof toggle.selected !== 'undefined') {
+      toggle.selected = window.isMovementLocked;
+    } else {
+      toggle.checked = window.isMovementLocked;
+    }
+  }
+}
+
+// 初期化時にUIを更新
+updateLockMovementUI();
+
+// トグルイベントの設定
+const lockMovementToggle = document.getElementById('toggle_lock_movement_position_modal');
+if (lockMovementToggle) {
+  lockMovementToggle.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    window.isMovementLocked = newState;
+    localStorage.setItem(LS_KEYS.LOCK_MOVEMENT, newState);
+  });
+}
 
 // ドラッグ開始判定に使う閾値（ピクセル）
 const DRAG_THRESHOLD = 8;
@@ -529,6 +554,7 @@ function enterPositionChangeMode() {
   // グリッドモードのスイッチの状態を復元
   window.isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
   updateGridModeSwitch();
+  updateGridSizeUI();
   
   // グリッド線の表示/非表示
   if (window.isGridModeEnabled) {
@@ -537,6 +563,99 @@ function enterPositionChangeMode() {
     document.getElementById('change_widget_position_modal_overlay').classList.remove('grid-mode');
   }
 }
+
+/**
+ * グリッド設定のUIとCSS変数を更新
+ */
+function updateGridSizeUI() {
+  const xSlider = document.getElementById('grid_size_x_slider');
+  const ySlider = document.getElementById('grid_size_y_slider');
+  const iconSlider = document.getElementById('icon_size_slider');
+  const xValue = document.getElementById('grid_size_x_value');
+  const yValue = document.getElementById('grid_size_y_value');
+  const iconValue = document.getElementById('icon_size_value');
+  const overlay = document.getElementById('change_widget_position_modal_overlay');
+
+  if (xSlider && xValue) {
+    const thumb = xSlider.querySelector('m3e-slider-thumb');
+    if (thumb) thumb.value = GRID_SIZE_X;
+    xValue.textContent = GRID_SIZE_X;
+  }
+  if (ySlider && yValue) {
+    const thumb = ySlider.querySelector('m3e-slider-thumb');
+    if (thumb) thumb.value = GRID_SIZE_Y;
+    yValue.textContent = GRID_SIZE_Y;
+  }
+  if (iconSlider && iconValue) {
+    const thumb = iconSlider.querySelector('m3e-slider-thumb');
+    if (thumb) thumb.value = ICON_SIZE;
+    iconValue.textContent = ICON_SIZE;
+  }
+
+  if (overlay) {
+    overlay.style.setProperty('--grid-size-x', GRID_SIZE_X + 'px');
+    overlay.style.setProperty('--grid-size-y', GRID_SIZE_Y + 'px');
+    overlay.style.setProperty('--grid-offset', GRID_OFFSET + 'px');
+  }
+  
+  // アイコンサイズを適用
+  document.documentElement.style.setProperty('--icon-size-x', ICON_SIZE + 'px');
+  document.documentElement.style.setProperty('--icon-size-y', (ICON_SIZE + 10) + 'px'); // 少し高めに設定
+  document.documentElement.style.setProperty('--icon-img-size', (ICON_SIZE * 0.6) + 'px');
+  document.documentElement.style.setProperty('--icon-font-size', Math.max(0.6, Math.min(1.2, ICON_SIZE / 80 * 0.8)) + 'rem');
+}
+
+// アイコンサイズスライダーのイベント
+document.getElementById('icon_size_slider')?.addEventListener('input', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 80);
+  ICON_SIZE = newValue;
+  document.getElementById('icon_size_value').textContent = newValue;
+  updateGridSizeUI();
+});
+
+document.getElementById('icon_size_slider')?.addEventListener('change', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 80);
+  localStorage.setItem(LS_KEYS.ICON_SIZE, newValue);
+});
+
+/**
+ * すべてのアイテムを現在のグリッドにスナップさせる
+ */
+function reSnapAllToGrid() {
+  if (!window.isGridModeEnabled) return;
+  document.querySelectorAll(".appicon,.widget").forEach(item => {
+    const currentLeft = item.offsetLeft;
+    const currentTop = item.offsetTop;
+    item.style.position = 'absolute';
+    item.style.left = snapToGrid(currentLeft, 'x') + 'px';
+    item.style.top = snapToGrid(currentTop, 'y') + 'px';
+  });
+}
+
+// グリッドサイズスライダーのイベント
+document.getElementById('grid_size_x_slider')?.addEventListener('input', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 80);
+  GRID_SIZE_X = newValue;
+  document.getElementById('grid_size_x_value').textContent = newValue;
+  updateGridSizeUI();
+});
+
+document.getElementById('grid_size_x_slider')?.addEventListener('change', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 80);
+  localStorage.setItem(LS_KEYS.GRID_SIZE_X, newValue);
+});
+
+document.getElementById('grid_size_y_slider')?.addEventListener('input', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 90);
+  GRID_SIZE_Y = newValue;
+  document.getElementById('grid_size_y_value').textContent = newValue;
+  updateGridSizeUI();
+});
+
+document.getElementById('grid_size_y_slider')?.addEventListener('change', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 90);
+  localStorage.setItem(LS_KEYS.GRID_SIZE_Y, newValue);
+});
 
 // 位置変更モードを終了する（保存または閉じる時に呼ばれる）
 function exitPositionChangeMode() {
@@ -637,19 +756,7 @@ if (gridModeSwitch) {
       overlay.classList.remove('grid-mode');
     }
     
-    // グリッドモードが有効になったら、すべてのアイコンの位置をグリッドにスナップ
-    if (window.isGridModeEnabled) {
-      document.querySelectorAll(".appicon,.widget").forEach(item => {
-        // 現在の位置を取得（absoluteでない場合はoffsetLeftを使用）
-        const currentLeft = item.offsetLeft;
-        const currentTop = item.offsetTop;
-        
-        // グリッドにスナップ
-        item.style.position = 'absolute';
-        item.style.left = snapToGrid(currentLeft, 'x') + 'px';
-        item.style.top = snapToGrid(currentTop, 'y') + 'px';
-      });
-    }
+    // 自動スナップは行わない（ユーザーの操作を尊重）
   });
 }
 
@@ -916,6 +1023,7 @@ const initWindowCountSelector = window.SystemSettingsManager.initWindowCountSele
 
 // 初期化実行
 initWindowCountSelector();
+updateGridSizeUI();
 
 // ディスプレイセレクターの初期化
 const initDisplaySelector = window.SystemSettingsManager.initDisplaySelector.bind(window.SystemSettingsManager);
