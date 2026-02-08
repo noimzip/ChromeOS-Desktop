@@ -54,9 +54,9 @@
   "refresh_dev": "Refresh (dev)",
   "grid_mode": "Grid Mode",
   "grid_size_x": "Grid Width (X)",
-  "grid_size_y": "Grid Height (Y)",
-  "save_change_position": "Save Positions",
-  "reset_positions_confirm": "Reset all widget and icon positions?",
+      "grid_size_y": "Grid Height (Y)",
+      "icon_size": "Icon Size",
+      "save_change_position": "Save Positions",  "reset_positions_confirm": "Reset all widget and icon positions?",
 
   "general": "General",
   "keyboard_shortcuts": "Keyboard Shortcuts",

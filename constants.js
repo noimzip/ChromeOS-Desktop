@@ -40,6 +40,7 @@ const LS_KEYS = {
   GRID_SIZE_X: 'gridSizeX',
   GRID_SIZE_Y: 'gridSizeY',
   LOCK_MOVEMENT: 'lockMovement',
+  ICON_SIZE: 'iconSize',
 };
 
 const SHAPES = [
@@ -51,5 +52,6 @@ const SHAPES = [
 // グリッド設定
 let GRID_SIZE_X = parseInt(localStorage.getItem(LS_KEYS.GRID_SIZE_X)) || 80;
 let GRID_SIZE_Y = parseInt(localStorage.getItem(LS_KEYS.GRID_SIZE_Y)) || 90;
+let ICON_SIZE = parseInt(localStorage.getItem(LS_KEYS.ICON_SIZE)) || 80;
 const GRID_OFFSET = 20;
 const OVERLAP_THRESHOLD = 800;

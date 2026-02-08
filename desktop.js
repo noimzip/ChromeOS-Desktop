@@ -570,8 +570,10 @@ function enterPositionChangeMode() {
 function updateGridSizeUI() {
   const xSlider = document.getElementById('grid_size_x_slider');
   const ySlider = document.getElementById('grid_size_y_slider');
+  const iconSlider = document.getElementById('icon_size_slider');
   const xValue = document.getElementById('grid_size_x_value');
   const yValue = document.getElementById('grid_size_y_value');
+  const iconValue = document.getElementById('icon_size_value');
   const overlay = document.getElementById('change_widget_position_modal_overlay');
 
   if (xSlider && xValue) {
@@ -584,13 +586,37 @@ function updateGridSizeUI() {
     if (thumb) thumb.value = GRID_SIZE_Y;
     yValue.textContent = GRID_SIZE_Y;
   }
+  if (iconSlider && iconValue) {
+    const thumb = iconSlider.querySelector('m3e-slider-thumb');
+    if (thumb) thumb.value = ICON_SIZE;
+    iconValue.textContent = ICON_SIZE;
+  }
 
   if (overlay) {
     overlay.style.setProperty('--grid-size-x', GRID_SIZE_X + 'px');
     overlay.style.setProperty('--grid-size-y', GRID_SIZE_Y + 'px');
     overlay.style.setProperty('--grid-offset', GRID_OFFSET + 'px');
   }
+  
+  // アイコンサイズを適用
+  document.documentElement.style.setProperty('--icon-size-x', ICON_SIZE + 'px');
+  document.documentElement.style.setProperty('--icon-size-y', (ICON_SIZE + 10) + 'px'); // 少し高めに設定
+  document.documentElement.style.setProperty('--icon-img-size', (ICON_SIZE * 0.6) + 'px');
+  document.documentElement.style.setProperty('--icon-font-size', Math.max(0.6, Math.min(1.2, ICON_SIZE / 80 * 0.8)) + 'rem');
 }
+
+// アイコンサイズスライダーのイベント
+document.getElementById('icon_size_slider')?.addEventListener('input', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 80);
+  ICON_SIZE = newValue;
+  document.getElementById('icon_size_value').textContent = newValue;
+  updateGridSizeUI();
+});
+
+document.getElementById('icon_size_slider')?.addEventListener('change', (e) => {
+  const newValue = parseInt(e.target.value || e.target.querySelector('m3e-slider-thumb')?.value || 80);
+  localStorage.setItem(LS_KEYS.ICON_SIZE, newValue);
+});
 
 /**
  * すべてのアイテムを現在のグリッドにスナップさせる
