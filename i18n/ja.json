@@ -68,6 +68,7 @@
   "about": "バージョン情報",
 
   "language": "言語",
+  "lock_movement": "移動をロック",
   "color_scheme": "カラースキーム",
   "dark_mode": "ダークモード",
   "light_mode": "ライトモード",

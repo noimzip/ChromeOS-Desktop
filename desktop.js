@@ -397,11 +397,36 @@ document.getElementById('close_settingsmenu_modal').onclick = () => {
 // ========================================
 
 window.isGridModeEnabled = localStorage.getItem(LS_KEYS.GRID_MODE_ENABLED) === 'true';
+window.isMovementLocked = localStorage.getItem(LS_KEYS.LOCK_MOVEMENT) === 'true';
 window.isPositionChangeMode = false;
 window.draggedItem = null;
 window.folders = JSON.parse(localStorage.getItem(LS_KEYS.APP_FOLDERS) || '{}');
 window.currentOpenFolderId = null;
 window.currentFolderPage = 0;
+
+function updateLockMovementUI() {
+  const toggle = document.getElementById('toggle_lock_movement_position_modal');
+  if (toggle) {
+    if (typeof toggle.selected !== 'undefined') {
+      toggle.selected = window.isMovementLocked;
+    } else {
+      toggle.checked = window.isMovementLocked;
+    }
+  }
+}
+
+// 初期化時にUIを更新
+updateLockMovementUI();
+
+// トグルイベントの設定
+const lockMovementToggle = document.getElementById('toggle_lock_movement_position_modal');
+if (lockMovementToggle) {
+  lockMovementToggle.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    window.isMovementLocked = newState;
+    localStorage.setItem(LS_KEYS.LOCK_MOVEMENT, newState);
+  });
+}
 
 // ドラッグ開始判定に使う閾値（ピクセル）
 const DRAG_THRESHOLD = 8;

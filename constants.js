@@ -39,6 +39,7 @@ const LS_KEYS = {
   WIDGET_SIZE_PREFIX: 'widgetSize:',
   GRID_SIZE_X: 'gridSizeX',
   GRID_SIZE_Y: 'gridSizeY',
+  LOCK_MOVEMENT: 'lockMovement',
 };
 
 const SHAPES = [
