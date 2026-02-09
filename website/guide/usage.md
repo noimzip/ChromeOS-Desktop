@@ -33,3 +33,13 @@ If you use Virtual Desktops on ChromeOS:
 2.  Increase the **Window Count**.
 3.  New overlay windows will appear.
 4.  Enter "Overview Mode" (three-finger swipe up) and drag the new windows to your other virtual desktops.
+
+## Security Mode
+
+Open **Settings → Security & Privacy** to select a security mode:
+
+- **Strict:** Only allowlisted Linux commands can be executed. External requests are limited to an allowlist.
+- **Standard:** Blocks known-bad domains and sanitizes HTML-heavy input.
+- **None:** No restrictions (for trusted environments only).
+
+When you add or edit a Linux app, its command is automatically added to the allowlist so apps still run in Strict mode.

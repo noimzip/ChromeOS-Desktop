@@ -1128,12 +1128,20 @@ const saveNewAppBtn = document.getElementById('save_new_app');
 
 if (saveNewAppBtn) {
   saveNewAppBtn.onclick = async () => {
-    const name = document.getElementById('new_app_name').value;
-    const url = document.getElementById('new_app_url').value;
+    let name = document.getElementById('new_app_name').value;
+    let url = document.getElementById('new_app_url').value;
+    if (window.SecurityManager) {
+      name = window.SecurityManager.sanitizeInput(name);
+      url = window.SecurityManager.sanitizeUrlInput(url);
+    }
     
     if (!name || !url) {
       const lang = getCurrentLanguage();
       await showAlertDialog(i18n.t('enter_name_and_url'));
+      return;
+    }
+    if (!url.startsWith('chrome://') && window.SecurityManager && !window.SecurityManager.isUrlAllowed(url)) {
+      await showAlertDialog(i18n.t('blocked_url'));
       return;
     }
     
@@ -1149,6 +1157,9 @@ if (saveNewAppBtn) {
     localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(customApps));
     
     createDesktopIcon(newApp);
+    if (window.SecurityManager && typeof window.SecurityManager.ensureAllowedDomain === 'function') {
+      window.SecurityManager.ensureAllowedDomain(url);
+    }
     
     // Close modal and reset
     document.getElementById('add_newapp_modal_overlay').style.display = 'none';
@@ -1209,8 +1220,12 @@ document.getElementById('close_add_linuxapp_modal').onclick = () => {
 const saveLinuxAppBtn = document.getElementById('save_linux_app');
 if (saveLinuxAppBtn) {
   saveLinuxAppBtn.onclick = async () => {
-    const name = document.getElementById('linux_app_name').value;
-    const command = document.getElementById('linux_app_command').value;
+    let name = document.getElementById('linux_app_name').value;
+    let command = document.getElementById('linux_app_command').value;
+    if (window.SecurityManager) {
+      name = window.SecurityManager.sanitizeInput(name);
+      command = window.SecurityManager.sanitizeCommandInput(command);
+    }
     const runInTerminal = document.getElementById('linux_app_run_in_terminal').checked;
     
     if (!name || !command) {
@@ -1232,6 +1247,9 @@ if (saveLinuxAppBtn) {
     localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(linuxApps));
     
     createLinuxAppIcon(newApp);
+    if (window.SecurityManager && typeof window.SecurityManager.ensureAllowedForCommand === 'function') {
+      window.SecurityManager.ensureAllowedForCommand(command);
+    }
     
     // Close modal and reset
     document.getElementById('add_linuxapp_modal_overlay').style.display = 'none';
@@ -1653,12 +1671,20 @@ document.getElementById('close_edit_webapp_modal').onclick = () => {
 };
 
 document.getElementById('save_edit_webapp').onclick = async () => {
-  const name = document.getElementById('edit_webapp_name').value.trim();
-  const url = document.getElementById('edit_webapp_url').value.trim();
+  let name = document.getElementById('edit_webapp_name').value.trim();
+  let url = document.getElementById('edit_webapp_url').value.trim();
+  if (window.SecurityManager) {
+    name = window.SecurityManager.sanitizeInput(name);
+    url = window.SecurityManager.sanitizeUrlInput(url);
+  }
   
   if (!name || !url) {
     const lang = getCurrentLanguage();
     await showAlertDialog(lang === 'ja' ? '名前とURLを入力してください' : 'Please enter name and URL');
+    return;
+  }
+  if (!url.startsWith('chrome://') && window.SecurityManager && !window.SecurityManager.isUrlAllowed(url)) {
+    await showAlertDialog(i18n.t('blocked_url'));
     return;
   }
   
@@ -1695,6 +1721,9 @@ document.getElementById('save_edit_webapp').onclick = async () => {
     customApps[index] = updatedApp;
   }
   localStorage.setItem(LS_KEYS.CUSTOM_APPS, JSON.stringify(customApps));
+  if (window.SecurityManager && typeof window.SecurityManager.ensureAllowedDomain === 'function') {
+    window.SecurityManager.ensureAllowedDomain(url);
+  }
   
   // アイコンを更新
   if (currentEditingIcon) {
@@ -1707,6 +1736,8 @@ document.getElementById('save_edit_webapp').onclick = async () => {
     currentEditingIcon.onclick = () => {
       if (url.startsWith('chrome://')) {
         if (typeof openURL === 'function') openURL(url);
+      } else if (window.AppManager && typeof window.AppManager._openUrl === 'function') {
+        window.AppManager._openUrl(url);
       } else {
         window.open(url);
       }
@@ -1889,8 +1920,12 @@ document.getElementById('close_edit_linuxapp_modal').onclick = () => {
 // Moved to widgets/google_calendar.js
 
 document.getElementById('save_edit_linuxapp').onclick = async () => {
-  const name = document.getElementById('edit_linuxapp_name').value.trim();
-  const command = document.getElementById('edit_linuxapp_command').value.trim();
+  let name = document.getElementById('edit_linuxapp_name').value.trim();
+  let command = document.getElementById('edit_linuxapp_command').value.trim();
+  if (window.SecurityManager) {
+    name = window.SecurityManager.sanitizeInput(name);
+    command = window.SecurityManager.sanitizeCommandInput(command);
+  }
   const runInTerminal = document.getElementById('edit_linuxapp_run_in_terminal').checked;
   
   if (!name || !command) {
@@ -1914,6 +1949,9 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
         updateFolderIcon(folderId);
         renderFolderPage(folderId);
       }
+      if (window.SecurityManager && typeof window.SecurityManager.ensureAllowedForCommand === 'function') {
+        window.SecurityManager.ensureAllowedForCommand(command);
+      }
       document.getElementById('edit_linuxapp_modal_overlay').style.display = 'none';
       return;
     }
@@ -1934,6 +1972,9 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
     linuxApps[index] = updatedApp;
   }
   localStorage.setItem(LS_KEYS.LINUX_APPS, JSON.stringify(linuxApps));
+  if (window.SecurityManager && typeof window.SecurityManager.ensureAllowedForCommand === 'function') {
+    window.SecurityManager.ensureAllowedForCommand(command);
+  }
   
   // アイコンを更新
   if (currentEditingIcon) {

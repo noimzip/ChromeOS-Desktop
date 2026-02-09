@@ -41,6 +41,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
   restartApp: () => ipcRenderer.invoke('restart-app'),
   openDevTools: () => ipcRenderer.invoke('open-devtools'),
   openGoogleLogin: () => ipcRenderer.invoke('open-google-login'),
+  getSecurityMode: () => ipcRenderer.invoke('get-security-mode'),
+  setSecurityMode: (mode) => ipcRenderer.invoke('set-security-mode', mode),
+  getAllowedBinaries: () => ipcRenderer.invoke('get-allowed-binaries'),
+  setAllowedBinaries: (list) => ipcRenderer.invoke('set-allowed-binaries', list),
+  getAllowedDomains: async () => {
+    try {
+      return await ipcRenderer.invoke('get-allowed-domains');
+    } catch (e) {
+      console.warn('get-allowed-domains not available:', e);
+      return [];
+    }
+  },
+  setAllowedDomains: async (list) => {
+    try {
+      return await ipcRenderer.invoke('set-allowed-domains', list);
+    } catch (e) {
+      console.warn('set-allowed-domains not available:', e);
+      return [];
+    }
+  },
   
   // ブラウザメディア用API
   getBrowserMediaInfo: () => browserMediaInfo,
