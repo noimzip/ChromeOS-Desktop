@@ -6,6 +6,29 @@
 
 'use strict';
 
+// =============================
+// テスト用: 要素取得チェック関数
+// =============================
+window.__test_checkElementExists = function(id) {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Element with id '${id}' not found`);
+  return true;
+};
+
+// テスト用: localStorageデータ検証
+window.__test_checkFoldersData = function() {
+  try {
+    const folders = JSON.parse(localStorage.getItem(LS_KEYS.APP_FOLDERS) || '{}');
+    if (typeof folders !== 'object' || Array.isArray(folders)) throw new Error('folders is not an object');
+    Object.keys(folders).forEach(fid => {
+      if (!folders[fid].apps || !Array.isArray(folders[fid].apps)) throw new Error(`folder ${fid} has invalid apps`);
+    });
+    return true;
+  } catch (e) {
+    throw new Error('Invalid folders data: ' + e.message);
+  }
+};
+
 // DOM 要素参照は後で初期化するためのプレースホルダ
 let iconShapeSelector = null;
 
