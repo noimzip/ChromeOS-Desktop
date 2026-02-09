@@ -253,10 +253,12 @@ window.FolderManager = {
       const div = document.createElement('div');
       div.className = 'appicon folder-item';
       div.dataset.folderItemIndex = index;
-      div.innerHTML = `
-        <img src="${app.icon}" />
-        <p>${app.name}</p>
-      `;
+      const imgEl = document.createElement('img');
+      imgEl.src = window.AppManager?._safeIconUrl ? window.AppManager._safeIconUrl(app.icon) : (app.icon || './assets/settings.webp');
+      const labelEl = document.createElement('p');
+      labelEl.textContent = app.name || '';
+      div.appendChild(imgEl);
+      div.appendChild(labelEl);
       
       const img = div.querySelector('img');
       if (img) img.ondragstart = (e) => e.preventDefault();
@@ -480,11 +482,13 @@ window.FolderManager = {
     }
     if (app.url) {
       if (app.url.startsWith('chrome://')) { if (typeof window.openURL === 'function') window.openURL(app.url); }
+      else if (window.AppManager && typeof window.AppManager._openUrl === 'function') window.AppManager._openUrl(app.url);
       else window.open(app.url);
     } else if (app.isBuiltin && app.id) {
       const builtinUrl = builtinIconUrls[app.id];
       if (builtinUrl) {
         if (builtinUrl.startsWith('chrome://')) { if (typeof window.openURL === 'function') window.openURL(builtinUrl); }
+        else if (window.AppManager && typeof window.AppManager._openUrl === 'function') window.AppManager._openUrl(builtinUrl);
         else window.open(builtinUrl);
       }
     }

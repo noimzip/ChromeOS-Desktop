@@ -5,6 +5,18 @@
 'use strict';
 
 window.AppManager = {
+  _safeIconUrl(url) {
+    if (!url) return './assets/settings.webp';
+    try {
+      const parsed = new URL(url, window.location.href);
+      const allowed = ['http:', 'https:', 'data:', 'file:', 'blob:'];
+      if (!allowed.includes(parsed.protocol)) return './assets/settings.webp';
+      return parsed.href;
+    } catch {
+      return './assets/settings.webp';
+    }
+  },
+
   /**
    * 基本的なアイコン要素を作成する共通ヘルパー (内部用)
    */
@@ -15,10 +27,12 @@ window.AppManager = {
     const saveKey = data.saveKey || (`${type}-${data.name.replace(/\s+/g, '-')}-${Date.now()}`);
     div.dataset.saveKey = saveKey;
     
-    div.innerHTML = `
-      <img src="${data.icon || './assets/settings.webp'}" />
-      <p>${data.name}</p>
-    `;
+    const img = document.createElement('img');
+    img.src = window.AppManager._safeIconUrl(data.icon);
+    const label = document.createElement('p');
+    label.textContent = data.name || '';
+    div.appendChild(img);
+    div.appendChild(label);
 
     // データの紐付け
     if (options.dataProps) {
@@ -65,6 +79,16 @@ window.AppManager = {
     return div;
   },
 
+  _openUrl(url) {
+    if (window.SecurityManager && !window.SecurityManager.isUrlAllowed(url)) {
+      if (window.UIUtils) {
+        window.UIUtils.showAlertDialog(i18n.t('blocked_url'));
+      }
+      return;
+    }
+    window.open(url);
+  },
+
     /**
 
      * Webアプリ（URL）ショートカットを作成
@@ -81,7 +105,7 @@ window.AppManager = {
 
         } else {
 
-          window.open(appData.url);
+          window.AppManager._openUrl(appData.url);
 
         }
 
@@ -369,5 +393,3 @@ window.AppManager = {
     return data;
   }
 };
-
-

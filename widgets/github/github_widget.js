@@ -37,7 +37,14 @@ async function fetchGitHubContributions(username) {
   try {
     // GitHub GraphQL API または スクレイピング用のプロキシサービスを使用
     // ここでは github-contributions-api を使用
-    const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${username}`);
+    const url = `https://github-contributions-api.jogruber.de/v4/${username}`;
+    if (window.SecurityManager && !window.SecurityManager.isUrlAllowed(url)) {
+      if (window.UIUtils) {
+        window.UIUtils.showAlertDialog(i18n.t('blocked_url'));
+      }
+      return null;
+    }
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error('Failed to fetch GitHub data');
     }
@@ -126,7 +133,16 @@ function showGitHubTooltip(targetEl, dateStr, count) {
   
   const countText = count === 0 ? 'No contributions' : `${count} contribution${count !== 1 ? 's' : ''}`;
   
-  tooltip.innerHTML = `<div style="font-weight: 600; margin-bottom: 2px;">${countText}</div><div style="color: #ccc;">${formattedDate}</div>`;
+  tooltip.innerHTML = '';
+  const countEl = document.createElement('div');
+  countEl.style.fontWeight = '600';
+  countEl.style.marginBottom = '2px';
+  countEl.textContent = countText;
+  const dateEl = document.createElement('div');
+  dateEl.style.color = '#ccc';
+  dateEl.textContent = formattedDate;
+  tooltip.appendChild(countEl);
+  tooltip.appendChild(dateEl);
   tooltip.style.display = 'block';
   
   const rect = targetEl.getBoundingClientRect();
@@ -458,7 +474,10 @@ document.getElementById('close_github_settings_modal')?.addEventListener('click'
 });
 
 document.getElementById('save_github_settings')?.addEventListener('click', async () => {
-  const username = githubUsernameInput?.value?.trim();
+  let username = githubUsernameInput?.value?.trim();
+  if (window.SecurityManager) {
+    username = window.SecurityManager.sanitizeInput(username);
+  }
   if (username) {
     localStorage.setItem(LS_KEYS.GITHUB_USERNAME, username);
   } else {
@@ -482,7 +501,13 @@ openGitHubActivityBtn?.addEventListener('click', () => {
     const username = localStorage.getItem(LS_KEYS.GITHUB_USERNAME);
     if (username) {
       const url = `https://github.com/${username}?tab=overview&from=${currentDetailDate}&to=${currentDetailDate}`;
-      window.open(url, '_blank');
+      if (window.SecurityManager && !window.SecurityManager.isUrlAllowed(url)) {
+        if (window.UIUtils) {
+          window.UIUtils.showAlertDialog(i18n.t('blocked_url'));
+        }
+      } else {
+        window.open(url, '_blank');
+      }
     }
   }
   if (githubDetailsModal) githubDetailsModal.style.display = 'none';

@@ -97,6 +97,15 @@ Settings can be changed via the GUI (Right-click > Settings), but are stored in 
 | `targetDisplayId` | String | ID of the display to show the overlay on | `primary` |
 | `windowResizable` | Boolean | Allow window resizing | `true` |
 | `autoOpenDevTools` | Boolean | Automatically open DevTools on startup | `false` |
+| `securityMode` | String | Security mode: `strict`, `standard`, `none` | `standard` |
+| `allowedBinaries` | String[] | Allowlist for Linux app execution | `[]` |
+
+### Security Mode
+- **Strict:** Highest safety. Only allowlisted Linux commands are executable. Input is sanitized aggressively and external requests are limited to an allowlist.
+- **Standard:** Balanced. HTML-heavy input is sanitized and known-bad domains are blocked.
+- **None:** No restrictions. Intended for trusted environments only.
+
+The allowlist is maintained in the Settings UI under **Security & Privacy**. When you add or edit a Linux app, its command is automatically added to the allowlist so that apps can still run in Strict mode.
 
 ### Environment Variables
 - **Electron Flags:** `startup.sh` sets `--ozone-platform-hint=wayland`. This is mandatory for displaying transparent windows correctly on ChromeOS.

@@ -2,9 +2,11 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
     <link rel="stylesheet" href="./desktop.css">
     <script src="./constants.js" defer></script>
     <script src="./modules/ui_utils.js" defer></script>
+    <script src="./modules/security_manager.js" defer></script>
     <script src="./widgets/loader.js" defer></script>
     <script src="./modules/app_manager.js" defer></script>
     <script src="./modules/folder_manager.js" defer></script>
@@ -721,6 +723,32 @@
                   <option value="8">8</option>
                 </select>
                 <m3e-button variant="outlined" id="apply_window_count" data-i18n="apply_restart">適用</m3e-button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4 class="settings-section-title" data-i18n="security_privacy">セキュリティとプライバシー</h4>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="security_mode">セキュリティモード</span>
+                <small data-i18n="security_mode_desc">入力・通信・セッションの保護レベルを設定</small>
+              </div>
+              <div class="settings-item-control">
+                <select id="security_mode_selector">
+                  <option value="strict" data-i18n="security_mode_strict">厳格</option>
+                  <option value="standard" data-i18n="security_mode_standard">標準</option>
+                  <option value="none" data-i18n="security_mode_none">保護なし</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-item settings-item-column">
+              <div class="settings-item-label">
+                <span data-i18n="allowed_commands">許可コマンド</span>
+                <small data-i18n="allowed_commands_desc">1行1コマンドで実行許可するコマンド名（例: firefox）</small>
+              </div>
+              <div class="settings-item-control" style="width: 100%;">
+                <textarea id="allowed_command_list" style="width: 100%; min-height: 120px;"></textarea>
               </div>
             </div>
           </div>

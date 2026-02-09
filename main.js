@@ -1,12 +1,56 @@
 const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec, execFile, spawn } = require('child_process');
 const fs = require('fs');
 const { WebSocketServer } = require('ws');
 
+function splitCommandLine(input) {
+  const parts = [];
+  let current = '';
+  let inSingle = false;
+  let inDouble = false;
+  let escaping = false;
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (escaping) {
+      current += ch;
+      escaping = false;
+      continue;
+    }
+    if (ch === '\\') {
+      escaping = true;
+      continue;
+    }
+    if (ch === '"' && !inSingle) {
+      inDouble = !inDouble;
+      continue;
+    }
+    if (ch === "'" && !inDouble) {
+      inSingle = !inSingle;
+      continue;
+    }
+    if (!inSingle && !inDouble && /\s/.test(ch)) {
+      if (current.length > 0) {
+        parts.push(current);
+        current = '';
+      }
+      continue;
+    }
+    current += ch;
+  }
+
+  if (current.length > 0) parts.push(current);
+  return parts;
+}
+
 // WebSocket Server for Chrome Extension
 let wsClient = null;
-const wss = new WebSocketServer({ port: 25600 });
+const wss = new WebSocketServer({
+  port: 25600,
+  host: '127.0.0.1',
+  maxPayload: 64 * 1024
+});
 
 wss.on('connection', ws => {
   wsClient = ws;
@@ -55,13 +99,15 @@ function loadSettings() {
   if (cachedSettings) return cachedSettings;
   try {
     if (fs.existsSync(settingsPath)) {
-      cachedSettings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      const parsed = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      const defaults = { windowCount: 1, securityMode: 'standard', allowedBinaries: [], allowedDomains: [] };
+      cachedSettings = { ...defaults, ...parsed };
       return cachedSettings;
     }
   } catch (e) {
     console.error('Failed to load settings:', e);
   }
-  cachedSettings = { windowCount: 1 };
+  cachedSettings = { windowCount: 1, securityMode: 'standard', allowedBinaries: [], allowedDomains: [] };
   return cachedSettings;
 }
 
@@ -79,6 +125,51 @@ function saveSettings(settings) {
 ipcMain.handle('get-window-count', async () => {
   const settings = loadSettings();
   return settings.windowCount || 1;
+});
+
+ipcMain.handle('get-security-mode', async () => {
+  const settings = loadSettings();
+  return settings.securityMode || 'standard';
+});
+
+ipcMain.handle('set-security-mode', async (event, mode) => {
+  const settings = loadSettings();
+  const allowed = new Set(['strict', 'standard', 'none']);
+  settings.securityMode = allowed.has(mode) ? mode : 'standard';
+  saveSettings(settings);
+  return settings.securityMode;
+});
+
+ipcMain.handle('get-allowed-binaries', async () => {
+  const settings = loadSettings();
+  return Array.isArray(settings.allowedBinaries) ? settings.allowedBinaries : [];
+});
+
+ipcMain.handle('set-allowed-binaries', async (event, list) => {
+  const settings = loadSettings();
+  if (Array.isArray(list)) {
+    settings.allowedBinaries = list.filter(v => typeof v === 'string' && v.trim().length > 0);
+  } else {
+    settings.allowedBinaries = [];
+  }
+  saveSettings(settings);
+  return settings.allowedBinaries;
+});
+
+ipcMain.handle('get-allowed-domains', async () => {
+  const settings = loadSettings();
+  return Array.isArray(settings.allowedDomains) ? settings.allowedDomains : [];
+});
+
+ipcMain.handle('set-allowed-domains', async (event, list) => {
+  const settings = loadSettings();
+  if (Array.isArray(list)) {
+    settings.allowedDomains = list.filter(v => typeof v === 'string' && v.trim().length > 0);
+  } else {
+    settings.allowedDomains = [];
+  }
+  saveSettings(settings);
+  return settings.allowedDomains;
 });
 
 // ウィンドウ数を設定するIPCハンドラ
@@ -170,17 +261,12 @@ ipcMain.handle('open-devtools', async (event) => {
 
 // ファイル/フォルダを開くIPCハンドラ
 ipcMain.handle('open-file-or-folder', async (event, filePath) => {
-  return new Promise((resolve) => {
-    // xdg-openを使ってデフォルトアプリケーションで開く
-    exec(`xdg-open "${filePath}"`, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Open error:', error.message);
-        resolve({ success: false, error: error.message });
-      } else {
-        resolve({ success: true });
-      }
-    });
-  });
+  const result = await shell.openPath(filePath);
+  if (result) {
+    console.error('Open error:', result);
+    return { success: false, error: result };
+  }
+  return { success: true };
 });
 
 // ファイル選択ダイアログ
@@ -227,13 +313,61 @@ ipcMain.handle('select-folder', async (event) => {
 // Linuxアプリ起動用IPCハンドラ
 ipcMain.handle('launch-linux-app', async (event, command) => {
   return new Promise((resolve) => {
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Launch error:', error.message);
-        resolve({ success: false, error: error.message });
-      } else {
-        resolve({ success: true, stdout, stderr });
+    if (typeof command !== 'string' || command.trim().length === 0) {
+      resolve({ success: false, error: 'Invalid command' });
+      return;
+    }
+
+    const parts = splitCommandLine(command);
+    if (parts.length === 0) {
+      resolve({ success: false, error: 'Empty command' });
+      return;
+    }
+
+    const bin = parts[0];
+    const args = parts.slice(1);
+    const settings = loadSettings();
+    const mode = settings.securityMode || 'standard';
+    const allowedBinaries = Array.isArray(settings.allowedBinaries) ? settings.allowedBinaries : [];
+
+    if (mode !== 'none') {
+      if (/[|&;><`$\n\r]/.test(command)) {
+        resolve({ success: false, error: 'Command contains forbidden characters' });
+        return;
       }
+      if (allowedBinaries.length === 0) {
+        resolve({ success: false, error: 'Allowlist is empty' });
+        return;
+      }
+      let isAllowed = allowedBinaries.includes(bin);
+      if (bin === 'xterm') {
+        isAllowed = false;
+        const execIndex = args.indexOf('-e');
+        if (execIndex !== -1 && args[execIndex + 1]) {
+          const nestedParts = splitCommandLine(args[execIndex + 1]);
+          const nestedBin = nestedParts[0];
+          if (nestedBin && allowedBinaries.includes(nestedBin)) {
+            isAllowed = true;
+          }
+        }
+      }
+      if (!isAllowed) {
+        resolve({ success: false, error: 'Command not in allowlist' });
+        return;
+      }
+    }
+
+    const child = spawn(bin, args, { shell: false });
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (chunk) => { stdout += chunk.toString(); });
+    child.stderr?.on('data', (chunk) => { stderr += chunk.toString(); });
+    child.on('error', (error) => {
+      console.error('Launch error:', error.message);
+      resolve({ success: false, error: error.message });
+    });
+    child.on('close', (code) => {
+      resolve({ success: code === 0, stdout, stderr });
     });
   });
 });
@@ -311,7 +445,12 @@ ipcMain.handle('media-control', async (event, action, value) => {
   return new Promise((resolve) => {
     // シーク操作の場合
     if (action === 'seek' && value !== undefined) {
-      exec(`playerctl position ${value}`, (error) => {
+      const position = Number(value);
+      if (!Number.isFinite(position) || position < 0) {
+        resolve({ success: false, error: 'Invalid position' });
+        return;
+      }
+      execFile('playerctl', ['position', String(position)], (error) => {
         resolve({ success: !error, error: error?.message });
       });
       return;
@@ -319,24 +458,26 @@ ipcMain.handle('media-control', async (event, action, value) => {
     
     // シャッフル・リピート操作
     if (action === 'shuffle' && value !== undefined) {
-      exec(`playerctl shuffle ${value}`, (error) => {
+      const shuffle = String(value);
+      execFile('playerctl', ['shuffle', shuffle], (error) => {
         resolve({ success: !error, error: error?.message });
       });
       return;
     }
     if (action === 'loop' && value !== undefined) {
-      exec(`playerctl loop ${value}`, (error) => {
+      const loop = String(value);
+      execFile('playerctl', ['loop', loop], (error) => {
         resolve({ success: !error, error: error?.message });
       });
       return;
     }
     
     const commands = {
-      'play-pause': 'playerctl play-pause',
-      'play': 'playerctl play',
-      'pause': 'playerctl pause',
-      'next': 'playerctl next',
-      'previous': 'playerctl previous'
+      'play-pause': ['playerctl', 'play-pause'],
+      'play': ['playerctl', 'play'],
+      'pause': ['playerctl', 'pause'],
+      'next': ['playerctl', 'next'],
+      'previous': ['playerctl', 'previous']
     };
     
     const cmd = commands[action];
@@ -345,7 +486,7 @@ ipcMain.handle('media-control', async (event, action, value) => {
       return;
     }
     
-    exec(cmd, (error) => {
+    execFile(cmd[0], cmd.slice(1), (error) => {
       resolve({ success: !error, error: error?.message });
     });
   });

@@ -41,6 +41,7 @@ const LS_KEYS = {
   GRID_SIZE_Y: 'gridSizeY',
   LOCK_MOVEMENT: 'lockMovement',
   ICON_SIZE: 'iconSize',
+  SECURITY_MODE: 'securityMode',
 };
 
 const SHAPES = [

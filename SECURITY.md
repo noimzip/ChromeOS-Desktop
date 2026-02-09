@@ -18,6 +18,16 @@ Soul Widgets Manager follows Electron security best practices to minimize the at
 - **Node Integration:** Disabled in renderer processes.
 - **Navigation Restrictions:** The application prevents unexpected navigation to external URLs within the app window. External links are forced to open in the system's default browser via `shell.openExternal`.
 
+## Security Modes
+
+Soul Widgets Manager provides three security modes (Strict / Standard / None). These affect input sanitization, network restrictions, and session persistence.
+
+- **Strict:** Allowlisted external domains only. Linux commands must be on an allowlist.
+- **Standard:** Known-bad domains are blocked. HTML-heavy input is sanitized.
+- **None:** No restrictions (developer/trusted environment only).
+
+Settings are configurable from the Settings dialog under **Security & Privacy**.
+
 ## Local Communication (WebSockets)
 
 - The application opens a WebSocket server on **port 25600**.
@@ -28,7 +38,8 @@ Soul Widgets Manager follows Electron security best practices to minimize the at
 
 - This application allows users to create shortcuts that execute Linux commands.
 - **Warning:** Never add commands or URLs from untrusted sources. Executing malicious commands can compromise your Linux container (Crostini) and potentially your files.
-- We use `xdg-open` for opening files and folders, which relies on system-defined default handlers.
+- Linux command execution is gated by an allowlist in **Strict** and **Standard** modes.
+- File and folder opening uses Electron's `shell.openPath` (no shell interpolation).
 
 ## Chrome Extension
 

@@ -20,6 +20,12 @@ function updateGoogleCalendarWidget() {
   const calendarUrl = localStorage.getItem(LS_KEYS.GOOGLE_CALENDAR_URL);
 
   if (calendarUrl) {
+    if (window.SecurityManager && !window.SecurityManager.isUrlAllowed(calendarUrl)) {
+      if (googleCalendarSetupPrompt) googleCalendarSetupPrompt.style.display = 'flex';
+      if (googleCalendarIframe) googleCalendarIframe.style.display = 'none';
+      if (googleCalendarIframe) googleCalendarIframe.src = 'about:blank';
+      return;
+    }
     if (googleCalendarIframe && googleCalendarIframe.src !== calendarUrl) {
       googleCalendarIframe.src = calendarUrl;
     }
@@ -74,6 +80,9 @@ document.getElementById('close_google_calendar_settings_modal')?.addEventListene
 
 document.getElementById('save_google_calendar_settings')?.addEventListener('click', () => {
   let url = googleCalendarUrlInput?.value?.trim() || '';
+  if (window.SecurityManager) {
+    url = window.SecurityManager.sanitizeUrlInput(url);
+  }
   
   // ユーザーが<iframe...>全体を貼り付けた場合、srcを抽出する
   if (url.startsWith('<iframe')) {
@@ -82,6 +91,12 @@ document.getElementById('save_google_calendar_settings')?.addEventListener('clic
   }
 
   if (url) {
+    if (window.SecurityManager && !window.SecurityManager.isUrlAllowed(url)) {
+      if (window.UIUtils) {
+        window.UIUtils.showAlertDialog(i18n.t('blocked_url'));
+      }
+      return;
+    }
     // 表示モードをURLに適用
     const mode = googleCalendarModeSelect ? googleCalendarModeSelect.value : 'MONTH';
     // 既存のmodeパラメータを削除

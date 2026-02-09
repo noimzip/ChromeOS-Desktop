@@ -5,6 +5,46 @@
 'use strict';
 
 window.UIUtils = {
+  sanitizeHtml(input) {
+    if (typeof input !== 'string') return '';
+    const template = document.createElement('template');
+    template.innerHTML = input;
+
+    const allowedTags = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'P', 'SPAN', 'DIV', 'A', 'UL', 'OL', 'LI']);
+    const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_ELEMENT, null);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(node => {
+      if (!allowedTags.has(node.tagName)) {
+        node.replaceWith(document.createTextNode(node.textContent || ''));
+        return;
+      }
+      [...node.attributes].forEach(attr => {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith('on')) {
+          node.removeAttribute(attr.name);
+          return;
+        }
+        if (node.tagName === 'A' && name === 'href') {
+          try {
+            const url = new URL(attr.value, window.location.href);
+            if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) {
+              node.removeAttribute(attr.name);
+            }
+          } catch {
+            node.removeAttribute(attr.name);
+          }
+          return;
+        }
+        if (name !== 'href' && name !== 'class') {
+          node.removeAttribute(attr.name);
+        }
+      });
+    });
+
+    return template.innerHTML;
+  },
   /**
    * アラートダイアログを表示
    */
@@ -26,7 +66,7 @@ window.UIUtils = {
     dialogTitle.textContent = title;
     
     if (options.html) {
-      dialogContent.innerHTML = message;
+      dialogContent.innerHTML = window.UIUtils.sanitizeHtml(message);
     } else {
       dialogContent.textContent = message;
     }
@@ -79,7 +119,7 @@ window.UIUtils = {
     dialogTitle.textContent = title;
     
     if (options.html) {
-      dialogContent.innerHTML = message;
+      dialogContent.innerHTML = window.UIUtils.sanitizeHtml(message);
     } else {
       dialogContent.textContent = message;
     }
@@ -197,4 +237,3 @@ window.UIUtils = {
     });
   }
 };
-
