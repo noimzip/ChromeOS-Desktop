@@ -4,6 +4,8 @@
 
 'use strict';
 
+const sanitizeHtml = require('sanitize-html');
+
 window.SecurityManager = (() => {
   const MODES = Object.freeze({
     STRICT: 'strict',
@@ -128,11 +130,10 @@ window.SecurityManager = (() => {
 
   function sanitizeInputStandard(input) {
     if (typeof input !== 'string') return '';
-    return input
-      .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '')
-      .replace(/<\s*style[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, '')
-      .replace(/<\s*iframe[^>]*>[\s\S]*?<\s*\/\s*iframe\s*>/gi, '')
-      .replace(/<\s*(img|object|embed|link|meta)[^>]*>/gi, '');
+    // Use a well-tested HTML sanitizer to remove unsafe elements such as
+    // <script>, <style>, <iframe>, <img>, <object>, <embed>, <link>, <meta>, etc.
+    // By default, sanitize-html removes these tags and dangerous attributes.
+    return sanitizeHtml(input);
   }
 
   function sanitizeInput(input) {
