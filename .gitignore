@@ -4,3 +4,6 @@ startup.log
 
 chrome_extension.crx
 chrome_extension.pem
+
+website/.vitepress/dist
+website/.vitepress/cache
