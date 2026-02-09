@@ -4,13 +4,17 @@
   "description": "Place your shortcuts and widgets on the desktop",
   "main": "main.js",
   "scripts": {
-    "start": "electron . --ozone-platform-hint=wayland"
+    "start": "electron . --ozone-platform-hint=wayland",
+    "docs:dev": "vitepress dev website",
+    "docs:build": "vitepress build website",
+    "docs:preview": "vitepress preview website"
   },
   "author": "SupeChicken666 & Noimzip",
   "license": "GPL3",
   "dependencies": {
     "@m3e/all": "^1.1.11",
     "electron": "^40.2.1",
+    "vitepress": "^1.6.4",
     "ws": "^8.19.0"
   }
 }
