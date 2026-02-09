@@ -130,27 +130,12 @@ npm start
 ---
 
 ## 🤝 貢献
-
-### 手順
-1. このリポジトリをフォークします。
-2. 新しいブランチを作成します (`git checkout -b feature/amazing-feature`)。
-3. 変更をコミットします (`git commit -m 'Add some amazing feature'`)。
-4. ブランチをプッシュします (`git push origin feature/amazing-feature`)。
-5. プルリクエストを作成します。
-
-### ガイドライン
-- バグ報告や機能リクエストは [Issues](https://github.com/noimzip/Soul-Widgets-Manager/issues) ページを使用してください。
-- PR を送る際は、変更内容と目的を明確に記述してください。
+貢献、バグ報告、機能リクエストをお待ちしております！詳細は [CONTRIBUTING_JA.md](CONTRIBUTING_JA.md) を参照してください。
 
 ---
 
 ## 📜 ライセンス
-
-### 種類
-GNU General Public License v3.0 (GPL-3.0)
-
-### リンク
-詳細については [LICENSE](LICENSE) ファイルを参照してください。
+このプロジェクトは **GPL-3.0 ライセンス** の下で公開されています。詳細は [LICENSE](../LICENSE) ファイルを参照してください。セキュリティに関する特記事項については [SECURITY_JA.md](SECURITY_JA.md) を参照してください。
 
 ---
 
