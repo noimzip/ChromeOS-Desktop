@@ -126,6 +126,19 @@ window.SecurityManager = (() => {
     return input.replace(/[^\p{L}\p{N}\s]/gu, '');
   }
 
+  /**
+   * Very small, local HTML escape helper used only as a fallback when the
+   * main sanitizeHTML IPC call is not available. It neutralizes characters
+   * needed to form HTML tags so that potentially dangerous markup cannot be
+   * interpreted by the browser.
+   */
+  function basicEscapeHtml(input) {
+    return String(input)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   async function sanitizeInputStandard(input) {
     if (typeof input !== 'string') return '';
     // Use a well-tested HTML sanitizer via Main process to remove unsafe elements such as
@@ -137,8 +150,8 @@ window.SecurityManager = (() => {
         console.error('Sanitization failed:', e);
       }
     }
-    // Fallback: very basic tag removal if IPC fails
-    return input.replace(/<[^>]*>?/gm, '');
+    // Fallback: escape HTML special characters if IPC fails to prevent HTML injection
+    return basicEscapeHtml(input);
   }
 
   async function sanitizeInput(input) {
