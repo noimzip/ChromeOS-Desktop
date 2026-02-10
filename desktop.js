@@ -2229,6 +2229,127 @@ function resetWidgetSizes() {
   setTimeout(() => { applySavedWidgetSizes(); }, 50);
 }
 
+// アイコン形状選択UIの生成
+function setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc = './assets/settings.webp') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  let selectedBtn = null;
+  function markSelected(btn) {
+    if (selectedBtn) selectedBtn.classList.remove('selected');
+    selectedBtn = btn;
+    if (selectedBtn) selectedBtn.classList.add('selected');
+  }
+
+  const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
+  const allShapes = [...SHAPES, ...Object.keys(customShapes)];
+
+  allShapes.forEach(s => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'shape-button';
+    btn.title = s;
+    
+    if (customShapes[s]) {
+      // カスタムシェイプのプレビュー
+      const preview = document.createElement('div');
+      preview.className = 'custom-shape-wrapper';
+      preview.style.clipPath = customShapes[s];
+      preview.style.width = '32px';
+      preview.style.height = '32px';
+      
+      const img = document.createElement('img');
+      img.src = previewImgSrc;
+      img.alt = s;
+      preview.appendChild(img);
+      btn.appendChild(preview);
+      
+      // 右クリックで削除
+      btn.oncontextmenu = (e) => {
+        e.preventDefault();
+        if (confirm(`Delete custom shape "${s}"?`)) {
+          delete customShapes[s];
+          localStorage.setItem(LS_KEYS.CUSTOM_SHAPES, JSON.stringify(customShapes));
+          setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc);
+        }
+      };
+    } else {
+      // ビルトインシェイプ
+      const preview = document.createElement('m3e-shape');
+      preview.setAttribute('name', s);
+      const img = document.createElement('img');
+      img.src = previewImgSrc;
+      img.alt = s;
+      preview.appendChild(img);
+      btn.appendChild(preview);
+    }
+
+    btn.addEventListener('click', () => {
+      onSelect(s);
+      markSelected(btn);
+    });
+
+    if (s === currentShape) {
+      markSelected(btn);
+    }
+    container.appendChild(btn);
+  });
+
+  // 追加ボタン
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'add-shape-button';
+  addBtn.innerHTML = '<m3e-icon name="add"></m3e-icon>';
+  addBtn.title = 'Add Custom Shape';
+  addBtn.onclick = () => openAddCustomShapeModal(() => {
+      // 全てのシェイプボタンを更新
+      const iconShapes = document.getElementById('icon_shape_buttons');
+      if (iconShapes) setupShapeButtons('icon_shape_buttons', window.getCurrentIconShape(), (s) => window.StyleManager.updateIconShape(s));
+      
+      const clockShapes = document.getElementById('clock_shape_buttons');
+      if (clockShapes) setupShapeButtons('clock_shape_buttons', window.getCurrentClockShape(), (s) => window.StyleManager.updateClockShape(s));
+      
+      const individualShapes = document.getElementById('icon_individual_shape_buttons');
+      if (individualShapes && currentEditingIcon) {
+          setupShapeButtons('icon_individual_shape_buttons', currentEditingIcon.dataset.shape || '', (s) => updateIndividualIconShape(currentEditingIcon, s), currentEditingIcon.querySelector('img')?.src);
+      }
+  });
+  container.appendChild(addBtn);
+}
+
+function openAddCustomShapeModal(onSaved) {
+  const modal = document.getElementById('add_custom_shape_modal_overlay');
+  const nameInput = document.getElementById('custom_shape_name');
+  const pathInput = document.getElementById('custom_shape_path');
+  const saveBtn = document.getElementById('save_custom_shape');
+  const closeBtn = document.getElementById('close_add_custom_shape_modal');
+
+  nameInput.value = '';
+  pathInput.value = '';
+  modal.style.display = 'flex';
+
+  closeBtn.onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  saveBtn.onclick = () => {
+    const name = nameInput.value.trim();
+    const path = pathInput.value.trim();
+    if (!name || !path) {
+      alert('Please enter both name and path.');
+      return;
+    }
+    
+    const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
+    customShapes[name] = path;
+    localStorage.setItem(LS_KEYS.CUSTOM_SHAPES, JSON.stringify(customShapes));
+    
+    modal.style.display = 'none';
+    if (onSaved) onSaved();
+  };
+}
+
 // 設定画面のリセットボタンにハンドラを追加
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('reset_widget_sizes_btn');
@@ -2239,95 +2360,6 @@ document.addEventListener('DOMContentLoaded', () => {
       resetWidgetSizes();
       await showAlertDialog(i18n.t('widget_sizes_reset'));
     });
-  }
-
-  // アイコン形状選択UIの生成
-  function setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc = './assets/settings.webp') {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = '';
-
-    let selectedBtn = null;
-    function markSelected(btn) {
-      if (selectedBtn) selectedBtn.classList.remove('selected');
-      selectedBtn = btn;
-      if (selectedBtn) selectedBtn.classList.add('selected');
-    }
-
-    const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
-    const allShapes = [...SHAPES, ...Object.keys(customShapes)];
-
-    allShapes.forEach(s => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'shape-button';
-      btn.title = s;
-      
-      if (customShapes[s]) {
-        // カスタムシェイプのプレビュー
-        const preview = document.createElement('div');
-        preview.className = 'custom-shape-wrapper';
-        preview.style.clipPath = customShapes[s];
-        preview.style.width = '32px';
-        preview.style.height = '32px';
-        
-        const img = document.createElement('img');
-        img.src = previewImgSrc;
-        img.alt = s;
-        preview.appendChild(img);
-        btn.appendChild(preview);
-        
-        // 右クリックで削除
-        btn.oncontextmenu = (e) => {
-          e.preventDefault();
-          if (confirm(`Delete custom shape "${s}"?`)) {
-            delete customShapes[s];
-            localStorage.setItem(LS_KEYS.CUSTOM_SHAPES, JSON.stringify(customShapes));
-            setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc);
-          }
-        };
-      } else {
-        // ビルトインシェイプ
-        const preview = document.createElement('m3e-shape');
-        preview.setAttribute('name', s);
-        const img = document.createElement('img');
-        img.src = previewImgSrc;
-        img.alt = s;
-        preview.appendChild(img);
-        btn.appendChild(preview);
-      }
-
-      btn.addEventListener('click', () => {
-        onSelect(s);
-        markSelected(btn);
-      });
-
-      if (s === currentShape) {
-        markSelected(btn);
-      }
-      container.appendChild(btn);
-    });
-
-    // 追加ボタン
-    const addBtn = document.createElement('button');
-    addBtn.type = 'button';
-    addBtn.className = 'add-shape-button';
-    addBtn.innerHTML = '<m3e-icon name="add"></m3e-icon>';
-    addBtn.title = 'Add Custom Shape';
-    addBtn.onclick = () => openAddCustomShapeModal(() => {
-        // 全てのシェイプボタンを更新
-        const iconShapes = document.getElementById('icon_shape_buttons');
-        if (iconShapes) setupShapeButtons('icon_shape_buttons', window.getCurrentIconShape(), (s) => window.StyleManager.updateIconShape(s));
-        
-        const clockShapes = document.getElementById('clock_shape_buttons');
-        if (clockShapes) setupShapeButtons('clock_shape_buttons', window.getCurrentClockShape(), (s) => window.StyleManager.updateClockShape(s));
-        
-        const individualShapes = document.getElementById('icon_individual_shape_buttons');
-        if (individualShapes && currentEditingIcon) {
-            setupShapeButtons('icon_individual_shape_buttons', currentEditingIcon.dataset.shape || '', (s) => updateIndividualIconShape(currentEditingIcon, s), currentEditingIcon.querySelector('img')?.src);
-        }
-    });
-    container.appendChild(addBtn);
   }
 
   setupShapeButtons('icon_shape_buttons', getCurrentIconShape(), (s) => {
@@ -2420,38 +2452,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('close_widget_settings_modal').onclick = () => {
     document.getElementById('widget_settings_modal_overlay').style.display = 'none';
   };
-
-  function openAddCustomShapeModal(onSaved) {
-    const modal = document.getElementById('add_custom_shape_modal_overlay');
-    const nameInput = document.getElementById('custom_shape_name');
-    const pathInput = document.getElementById('custom_shape_path');
-    const saveBtn = document.getElementById('save_custom_shape');
-    const closeBtn = document.getElementById('close_add_custom_shape_modal');
-
-    nameInput.value = '';
-    pathInput.value = '';
-    modal.style.display = 'flex';
-
-    closeBtn.onclick = () => {
-      modal.style.display = 'none';
-    };
-
-    saveBtn.onclick = () => {
-      const name = nameInput.value.trim();
-      const path = pathInput.value.trim();
-      if (!name || !path) {
-        alert('Please enter both name and path.');
-        return;
-      }
-      
-      const customShapes = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_SHAPES) || '{}');
-      customShapes[name] = path;
-      localStorage.setItem(LS_KEYS.CUSTOM_SHAPES, JSON.stringify(customShapes));
-      
-      modal.style.display = 'none';
-      if (onSaved) onSaved();
-    };
-  }
 
   loadWidgetVisibility();
   applyWidgetVisibility();
