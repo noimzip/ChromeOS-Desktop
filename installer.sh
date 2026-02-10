@@ -58,7 +58,7 @@ if [[ "$install_choice" =~ ^[yY]$ ]]; then
     # Install Node.js dependencies
     echo -e "${BLUE}Installing Node.js packages...${NC}"
     if [ -f "package.json" ]; then
-        npm install
+        npm install --production
         echo -e "${GREEN}Node.js dependencies installed successfully.${NC}"
     else
         echo -e "${RED}Error: package.json not found!${NC}"

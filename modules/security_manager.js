@@ -4,8 +4,6 @@
 
 'use strict';
 
-const sanitizeHtml = require('sanitize-html');
-
 window.SecurityManager = (() => {
   const MODES = Object.freeze({
     STRICT: 'strict',
@@ -128,17 +126,37 @@ window.SecurityManager = (() => {
     return input.replace(/[^\p{L}\p{N}\s]/gu, '');
   }
 
-  function sanitizeInputStandard(input) {
-    if (typeof input !== 'string') return '';
-    // Use a well-tested HTML sanitizer to remove unsafe elements such as
-    // <script>, <style>, <iframe>, <img>, <object>, <embed>, <link>, <meta>, etc.
-    // By default, sanitize-html removes these tags and dangerous attributes.
-    return sanitizeHtml(input);
+  /**
+   * Very small, local HTML escape helper used only as a fallback when the
+   * main sanitizeHTML IPC call is not available. It neutralizes characters
+   * needed to form HTML tags so that potentially dangerous markup cannot be
+   * interpreted by the browser.
+   */
+  function basicEscapeHtml(input) {
+    return String(input)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
-  function sanitizeInput(input) {
+  async function sanitizeInputStandard(input) {
+    if (typeof input !== 'string') return '';
+    // Use a well-tested HTML sanitizer via Main process to remove unsafe elements such as
+    // <script>, <style>, <iframe>, <img>, <object>, <embed>, <link>, <meta>, etc.
+    if (window.electronAPI && window.electronAPI.sanitizeHTML) {
+      try {
+        return await window.electronAPI.sanitizeHTML(input);
+      } catch (e) {
+        console.error('Sanitization failed:', e);
+      }
+    }
+    // Fallback: escape HTML special characters if IPC fails to prevent HTML injection
+    return basicEscapeHtml(input);
+  }
+
+  async function sanitizeInput(input) {
     if (currentMode === MODES.STRICT) return sanitizeInputStrict(input);
-    if (currentMode === MODES.STANDARD) return sanitizeInputStandard(input);
+    if (currentMode === MODES.STANDARD) return await sanitizeInputStandard(input);
     return input;
   }
 

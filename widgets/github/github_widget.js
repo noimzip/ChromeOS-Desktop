@@ -476,7 +476,7 @@ document.getElementById('close_github_settings_modal')?.addEventListener('click'
 document.getElementById('save_github_settings')?.addEventListener('click', async () => {
   let username = githubUsernameInput?.value?.trim();
   if (window.SecurityManager) {
-    username = window.SecurityManager.sanitizeInput(username);
+    username = await window.SecurityManager.sanitizeInput(username);
   }
   if (username) {
     localStorage.setItem(LS_KEYS.GITHUB_USERNAME, username);
