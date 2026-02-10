@@ -4,8 +4,6 @@
 
 'use strict';
 
-const sanitizeHtml = require('sanitize-html');
-
 window.SecurityManager = (() => {
   const MODES = Object.freeze({
     STRICT: 'strict',
@@ -128,17 +126,24 @@ window.SecurityManager = (() => {
     return input.replace(/[^\p{L}\p{N}\s]/gu, '');
   }
 
-  function sanitizeInputStandard(input) {
+  async function sanitizeInputStandard(input) {
     if (typeof input !== 'string') return '';
-    // Use a well-tested HTML sanitizer to remove unsafe elements such as
+    // Use a well-tested HTML sanitizer via Main process to remove unsafe elements such as
     // <script>, <style>, <iframe>, <img>, <object>, <embed>, <link>, <meta>, etc.
-    // By default, sanitize-html removes these tags and dangerous attributes.
-    return sanitizeHtml(input);
+    if (window.electronAPI && window.electronAPI.sanitizeHTML) {
+      try {
+        return await window.electronAPI.sanitizeHTML(input);
+      } catch (e) {
+        console.error('Sanitization failed:', e);
+      }
+    }
+    // Fallback: very basic tag removal if IPC fails
+    return input.replace(/<[^>]*>?/gm, '');
   }
 
-  function sanitizeInput(input) {
+  async function sanitizeInput(input) {
     if (currentMode === MODES.STRICT) return sanitizeInputStrict(input);
-    if (currentMode === MODES.STANDARD) return sanitizeInputStandard(input);
+    if (currentMode === MODES.STANDARD) return await sanitizeInputStandard(input);
     return input;
   }
 

@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setSecurityMode: (mode) => ipcRenderer.invoke('set-security-mode', mode),
   getAllowedBinaries: () => ipcRenderer.invoke('get-allowed-binaries'),
   setAllowedBinaries: (list) => ipcRenderer.invoke('set-allowed-binaries', list),
+  sanitizeHTML: (text) => ipcRenderer.invoke('sanitize-html', text),
   getAllowedDomains: async () => {
     try {
       return await ipcRenderer.invoke('get-allowed-domains');

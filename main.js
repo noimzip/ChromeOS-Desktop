@@ -3,6 +3,7 @@ const path = require('path');
 const { exec, execFile, spawn } = require('child_process');
 const fs = require('fs');
 const { WebSocketServer } = require('ws');
+const sanitizeHtml = require('sanitize-html');
 
 function splitCommandLine(input) {
   const parts = [];
@@ -170,6 +171,10 @@ ipcMain.handle('set-allowed-domains', async (event, list) => {
   }
   saveSettings(settings);
   return settings.allowedDomains;
+});
+
+ipcMain.handle('sanitize-html', (event, text) => {
+  return sanitizeHtml(text);
 });
 
 // ウィンドウ数を設定するIPCハンドラ

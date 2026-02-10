@@ -1154,7 +1154,7 @@ if (saveNewAppBtn) {
     let name = document.getElementById('new_app_name').value;
     let url = document.getElementById('new_app_url').value;
     if (window.SecurityManager) {
-      name = window.SecurityManager.sanitizeInput(name);
+      name = await window.SecurityManager.sanitizeInput(name);
       url = window.SecurityManager.sanitizeUrlInput(url);
     }
     
@@ -1246,7 +1246,7 @@ if (saveLinuxAppBtn) {
     let name = document.getElementById('linux_app_name').value;
     let command = document.getElementById('linux_app_command').value;
     if (window.SecurityManager) {
-      name = window.SecurityManager.sanitizeInput(name);
+      name = await window.SecurityManager.sanitizeInput(name);
       command = window.SecurityManager.sanitizeCommandInput(command);
     }
     const runInTerminal = document.getElementById('linux_app_run_in_terminal').checked;
@@ -1697,7 +1697,7 @@ document.getElementById('save_edit_webapp').onclick = async () => {
   let name = document.getElementById('edit_webapp_name').value.trim();
   let url = document.getElementById('edit_webapp_url').value.trim();
   if (window.SecurityManager) {
-    name = window.SecurityManager.sanitizeInput(name);
+    name = await window.SecurityManager.sanitizeInput(name);
     url = window.SecurityManager.sanitizeUrlInput(url);
   }
   
@@ -1946,7 +1946,7 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
   let name = document.getElementById('edit_linuxapp_name').value.trim();
   let command = document.getElementById('edit_linuxapp_command').value.trim();
   if (window.SecurityManager) {
-    name = window.SecurityManager.sanitizeInput(name);
+    name = await window.SecurityManager.sanitizeInput(name);
     command = window.SecurityManager.sanitizeCommandInput(command);
   }
   const runInTerminal = document.getElementById('edit_linuxapp_run_in_terminal').checked;
