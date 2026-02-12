@@ -8,7 +8,7 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["offscreen", "tabs", "scripting", "activeTab"],
+  "permissions": ["offscreen", "tabs", "scripting", "activeTab", "geolocation"],
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://music.youtube.com/*",

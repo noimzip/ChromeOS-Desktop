@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.open-meteo.com ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
     <link rel="stylesheet" href="./desktop.css">
     <script src="./constants.js" defer></script>
     <script src="./modules/ui_utils.js" defer></script>
@@ -405,6 +405,61 @@
               <m3e-switch id="toggle_media_repeat"></m3e-switch>
             </div>
           </div>
+        </div>
+
+        <!-- 天気設定 -->
+          <div id="weather_widget_settings_content" class="widget-settings-content" style="display: none; width: 100%;">
+          <div class="settings-item settings-item-column">
+            <div class="settings-item-label">
+              <span data-i18n="weather_shape">ウィジェットの形</span>
+            </div>
+            <div class="settings-item-control">
+              <div id="weather_shape_buttons"></div>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="location_mode">位置情報モード</span>
+            </div>
+            <div class="settings-item-control">
+              <select id="weather_location_mode_select">
+                <option value="auto" data-i18n="auto_location">自動 (位置情報)</option>
+                <option value="manual" data-i18n="manual_location">手動 (緯度・経度)</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="latitude">緯度</span>
+            </div>
+            <div class="settings-item-control">
+              <input type="number" id="weather_lat_input" step="0.0001" style="width: 100px;">
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="longitude">経度</span>
+            </div>
+            <div class="settings-item-control">
+              <input type="number" id="weather_lon_input" step="0.0001" style="width: 100px;">
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="location_update_interval">位置情報の更新間隔</span>
+            </div>
+            <div class="settings-item-control">
+              <select id="weather_location_interval_select">
+                <option value="0" data-i18n="manual">手動のみ</option>
+                <option value="15" data-i18n="15_min">15分</option>
+                <option value="30" data-i18n="30_min">30分</option>
+                <option value="60" data-i18n="1_hour">1時間</option>
+                <option value="180" data-i18n="3_hours">3時間</option>
+                <option value="360" data-i18n="6_hours">6時間</option>
+              </select>
+            </div>
+          </div>
+          <m3e-button variant="filled" id="save_weather_settings" style="width: 100%; margin-top: 16px;" data-i18n="save">保存</m3e-button>
         </div>
 
         <div class="modal-buttons">

@@ -64,9 +64,9 @@
 
 /* Dark mode adjustments */
 body.dark-mode .weather-surface {
-  background-color: #f1f3f4;
+  background-color: #3c4043;
 }
 
 body.dark-mode .weather-temp {
-  color: #202124;
+  color: #f1f3f4;
 }

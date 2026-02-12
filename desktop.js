@@ -2429,11 +2429,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function openWidgetSettingsModal(widgetEl) {
     const clockContent = document.getElementById('clock_settings_content');
     const mediaContent = document.getElementById('media_player_settings_content');
+    const weatherContent = document.getElementById('weather_widget_settings_content');
     const title = document.getElementById('widget_settings_title');
     
     // 全て非表示にリセット
     clockContent.style.display = 'none';
     mediaContent.style.display = 'none';
+    if (weatherContent) weatherContent.style.display = 'none';
     
     const widgetId = widgetEl.id;
     if (widgetId === 'widget-clock') {
@@ -2442,6 +2444,74 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (widgetId === 'media_player_widget') {
       mediaContent.style.display = 'block';
       title.textContent = i18n.t('media_player_settings') || 'メディアプレーヤー設定';
+    } else if (widgetId === 'weather_widget') {
+      if (weatherContent) {
+        weatherContent.style.display = 'block';
+        title.textContent = i18n.t('weather_settings') || '天気設定';
+        
+        // 保存された設定を表示
+        const latInput = document.getElementById('weather_lat_input');
+        const lonInput = document.getElementById('weather_lon_input');
+        const intervalSelect = document.getElementById('weather_location_interval_select');
+        const modeSelect = document.getElementById('weather_location_mode_select');
+        
+        const mode = localStorage.getItem('weather_location_mode') || 'auto';
+        if (modeSelect) modeSelect.value = mode;
+        
+        if (latInput) {
+          latInput.value = mode === 'auto' 
+            ? (localStorage.getItem('weather_lat') || '35.6895')
+            : (localStorage.getItem('weather_lat_manual') || '35.6895');
+        }
+        if (lonInput) {
+          lonInput.value = mode === 'auto' 
+            ? (localStorage.getItem('weather_lon') || '139.6917')
+            : (localStorage.getItem('weather_lon_manual') || '139.6917');
+        }
+        
+        if (intervalSelect) intervalSelect.value = localStorage.getItem('weather_location_interval') || '60';
+        
+        // モード変更時の入力可否切り替え
+        const updateInputState = () => {
+          const isManual = modeSelect.value === 'manual';
+          latInput.readOnly = !isManual;
+          lonInput.readOnly = !isManual;
+          latInput.style.opacity = isManual ? '1' : '0.5';
+          lonInput.style.opacity = isManual ? '1' : '0.5';
+        };
+        if (modeSelect) modeSelect.onchange = updateInputState;
+        updateInputState();
+        
+        // 形状選択ボタンの初期化
+        const currentShape = localStorage.getItem('weather_shape') || 'pill';
+        setupShapeButtons('weather_shape_buttons', currentShape, (s) => {
+          localStorage.setItem('weather_shape', s);
+          if (window.applyWeatherShape) window.applyWeatherShape(s);
+        });
+        
+        // 保存ボタンのイベント
+        const saveBtn = document.getElementById('save_weather_settings');
+        if (saveBtn) {
+          saveBtn.onclick = () => {
+            const lat = document.getElementById('weather_lat_input').value;
+            const lon = document.getElementById('weather_lon_input').value;
+            const interval = document.getElementById('weather_location_interval_select').value;
+            const mode = document.getElementById('weather_location_mode_select').value;
+            
+            localStorage.setItem('weather_location_mode', mode);
+            if (mode === 'manual') {
+              localStorage.setItem('weather_lat_manual', lat);
+              localStorage.setItem('weather_lon_manual', lon);
+            }
+            localStorage.setItem('weather_location_interval', interval);
+            
+            if (window.setupWeatherLocationTimer) window.setupWeatherLocationTimer();
+            if (window.updateWeather) window.updateWeather();
+            
+            document.getElementById('widget_settings_modal_overlay').style.display = 'none';
+          };
+        }
+      }
     } else {
       // 他のウィジェットにはまだ設定がない場合
       title.textContent = i18n.t('widget_settings');

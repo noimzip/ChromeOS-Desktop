@@ -1523,6 +1523,7 @@ body.no-blur .folder-drag-clone {
 
 #icon_shape_buttons,
 #clock_shape_buttons,
+#weather_shape_buttons,
 .shape-buttons-grid {
   display: flex;
   flex-wrap: wrap;
@@ -1540,6 +1541,7 @@ body.no-blur .folder-drag-clone {
 
 #icon_shape_buttons button,
 #clock_shape_buttons button,
+#weather_shape_buttons button,
 .shape-buttons-grid button {
   width: 44px;
   height: 44px;
@@ -1556,6 +1558,7 @@ body.no-blur .folder-drag-clone {
 
 #icon_shape_buttons button:hover,
 #clock_shape_buttons button:hover,
+#weather_shape_buttons button:hover,
 .shape-buttons-grid button:hover {
   border-color: var(--primary-color);
   background: var(--md-sys-color-primary-container);
@@ -1563,6 +1566,7 @@ body.no-blur .folder-drag-clone {
 
 #icon_shape_buttons button.selected,
 #clock_shape_buttons button.selected,
+#weather_shape_buttons button.selected,
 .shape-buttons-grid button.selected {
   border-color: var(--primary-color);
   background: var(--md-sys-color-primary-container);
@@ -1571,6 +1575,7 @@ body.no-blur .folder-drag-clone {
 
 #icon_shape_buttons m3e-shape,
 #clock_shape_buttons m3e-shape,
+#weather_shape_buttons m3e-shape,
 .shape-buttons-grid m3e-shape {
   width: 28px;
   height: 28px;
@@ -1579,6 +1584,7 @@ body.no-blur .folder-drag-clone {
 
 #icon_shape_buttons m3e-shape img,
 #clock_shape_buttons m3e-shape img,
+#weather_shape_buttons m3e-shape img,
 .shape-buttons-grid m3e-shape img {
   width: 100%;
   height: 100%;

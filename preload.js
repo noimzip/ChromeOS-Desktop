@@ -89,6 +89,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   requestBrowserMediaInfo: () => {
     // Send to Main -> WS
     ipcRenderer.invoke('send-to-browser', { request: 'getMediaInfo' });
+  },
+
+  // Location API
+  getLocation: () => {
+    ipcRenderer.invoke('send-to-browser', { request: 'getLocation' });
+  },
+  onLocationUpdate: (callback) => {
+    ipcRenderer.on('browser-media-update', (event, parsed) => {
+      if (parsed.type === 'location' && parsed.data) {
+        callback(parsed.data);
+      }
+    });
   }
 });
 

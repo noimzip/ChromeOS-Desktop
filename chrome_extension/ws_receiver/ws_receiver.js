@@ -41,6 +41,18 @@ let wsConnection = null;
         } else if (parsed.request === 'mediaControl') {
           chrome.runtime.sendMessage({ type: 'MEDIA_CONTROL', action: parsed.action, value: parsed.value });
           return;
+        } else if (parsed.request === 'getLocation') {
+          navigator.geolocation.getCurrentPosition(pos => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ 
+                type: 'location', 
+                data: { latitude: pos.coords.latitude, longitude: pos.coords.longitude } 
+              }));
+            }
+          }, err => {
+            console.error('Geolocation error:', err);
+          });
+          return;
         }
       } catch (err) {}
       
