@@ -88,7 +88,7 @@ window.ContextMenuManager = {
     // 設定項目があるウィジェットのみ「ウィジェット設定」を表示
     const settingsItem = document.getElementById('widget_context_settings');
     if (settingsItem) {
-      const hasSettings = ['widget-clock', 'media_player_widget'].includes(widgetEl.id);
+      const hasSettings = ['widget-clock', 'media_player_widget', 'weather_widget'].includes(widgetEl.id);
       settingsItem.style.display = hasSettings ? 'flex' : 'none';
     }
 

@@ -23,6 +23,10 @@ window.WidgetLoader = {
     'google_calendar_widget': {
       js: './widgets/google_calendar/google_calendar.js',
       css: './widgets/google_calendar/google_calendar.css'
+    },
+    'weather_widget': {
+      js: './widgets/weather/weather.js',
+      css: './widgets/weather/weather.css'
     }
   },
 
