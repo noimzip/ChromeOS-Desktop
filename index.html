@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.open-meteo.com ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.open-meteo.com https://api.weather.gov ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
     <link rel="stylesheet" href="./desktop.css">
     <script src="./constants.js" defer></script>
     <script src="./modules/ui_utils.js" defer></script>
@@ -415,6 +415,17 @@
             </div>
             <div class="settings-item-control">
               <div id="weather_shape_buttons"></div>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="weather_provider">天気情報の提供元</span>
+            </div>
+            <div class="settings-item-control">
+              <select id="weather_provider_select">
+                <option value="open-meteo" data-i18n="open_meteo">Open-Meteo (Global)</option>
+                <option value="nws" data-i18n="nws">National Weather Service (US Only)</option>
+              </select>
             </div>
           </div>
           <div class="settings-item">

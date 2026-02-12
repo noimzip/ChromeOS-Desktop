@@ -138,6 +138,7 @@
   async function updateWeather() {
     try {
       const mode = localStorage.getItem('weather_location_mode') || 'auto';
+      const provider = localStorage.getItem('weather_provider') || 'open-meteo';
       let lat, lon;
 
       if (mode === 'auto') {
@@ -148,14 +149,52 @@
         lon = localStorage.getItem('weather_lon_manual') || 139.6917;
       }
       
-      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-      if (!response.ok) throw new Error('Weather data fetch failed');
+      if (provider === 'open-meteo') {
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        if (!response.ok) throw new Error('Open-Meteo fetch failed');
+        lastWeatherData = await response.json();
+      } else if (provider === 'nws') {
+        // NWS requires two steps: get grid point then get forecast
+        const pointsRes = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+        if (!pointsRes.ok) throw new Error('NWS points fetch failed');
+        const pointsData = await pointsRes.json();
+        
+        const forecastRes = await fetch(pointsData.properties.forecastHourly);
+        if (!forecastRes.ok) throw new Error('NWS forecast fetch failed');
+        const forecastData = await forecastRes.json();
+        
+        const current = forecastData.properties.periods[0];
+        // Open-Meteo形式に変換して共通のrefreshDisplayを使えるようにする
+        lastWeatherData = {
+          current_weather: {
+            temperature: current.temperature,
+            weathercode: mapNWSToWMO(current.shortForecast, current.isDaytime),
+            is_day: current.isDaytime ? 1 : 0
+          }
+        };
+      }
       
-      lastWeatherData = await response.json();
       refreshDisplay();
     } catch (error) {
       console.error('Failed to update weather:', error);
     }
+  }
+
+  /**
+   * NWSのテキスト予報をWMOコードに簡易マッピング
+   */
+  function mapNWSToWMO(forecast, isDay) {
+    const f = forecast.toLowerCase();
+    if (f.includes('sunny') || f.includes('clear')) return 0;
+    if (f.includes('mostly sunny') || f.includes('mostly clear')) return 1;
+    if (f.includes('partly')) return 2;
+    if (f.includes('cloudy') || f.includes('overcast')) return 3;
+    if (f.includes('fog')) return 45;
+    if (f.includes('drizzle')) return 51;
+    if (f.includes('rain')) return 63;
+    if (f.includes('snow')) return 73;
+    if (f.includes('thunderstorm')) return 95;
+    return 3; // Default to cloudy
   }
 
   // テーマ変更を監視して表示を更新
