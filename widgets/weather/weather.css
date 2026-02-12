@@ -1,0 +1,72 @@
+.weather-widget {
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+.weather-background {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.weather-surface {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.weather-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.weather-temp {
+  font-family: 'Google Sans Flex', 'Google Sans', sans-serif;
+  font-size: 72px;
+  font-weight: 500;
+  color: #3c4043;
+  line-height: 1;
+  margin-top: -20px;
+  margin-left: 20px;
+}
+
+.weather-icon-container {
+  position: absolute;
+  bottom: 25px;
+  left: 25px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weather-icon-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Dark mode adjustments */
+body.dark-mode .weather-surface {
+  background-color: #f1f3f4;
+}
+
+body.dark-mode .weather-temp {
+  color: #202124;
+}

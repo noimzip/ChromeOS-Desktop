@@ -275,7 +275,8 @@ const availableWidgets = {
   'widget-clock': { name: '時計', element: document.getElementById('widget-clock') },
   'media_player_widget': { name: 'メディアプレイヤー', element: document.getElementById('media_player_widget') },
   'github_contribution_widget': { name: 'GitHub Contributions', element: document.getElementById('github_contribution_widget') },
-  'google_calendar_widget': { name: 'Google Calendar', element: document.getElementById('google_calendar_widget') }
+  'google_calendar_widget': { name: 'Google Calendar', element: document.getElementById('google_calendar_widget') },
+  'weather_widget': { name: window.i18n ? window.i18n.t('weather') : 'Weather', element: document.getElementById('weather_widget') }
 };
 
 let widgetVisibility = {};
