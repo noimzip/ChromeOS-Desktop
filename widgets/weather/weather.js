@@ -242,14 +242,17 @@
       if (mode !== 'auto') return;
 
       console.log('Location updated from extension:', data);
-      localStorage.setItem('weather_lat', data.latitude);
-      localStorage.setItem('weather_lon', data.longitude);
+      // 位置情報の精度を下げて保存し、過度に詳細な位置情報が残らないようにする
+      const roundedLat = Number.parseFloat(data.latitude).toFixed(2);
+      const roundedLon = Number.parseFloat(data.longitude).toFixed(2);
+      localStorage.setItem('weather_lat', roundedLat);
+      localStorage.setItem('weather_lon', roundedLon);
       
       // 設定画面が開いている場合は入力値を更新
       const latInput = document.getElementById('weather_lat_input');
       const lonInput = document.getElementById('weather_lon_input');
-      if (latInput) latInput.value = data.latitude;
-      if (lonInput) lonInput.value = data.longitude;
+      if (latInput) latInput.value = roundedLat;
+      if (lonInput) lonInput.value = roundedLon;
       
       updateWeather();
     });
