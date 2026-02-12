@@ -2455,12 +2455,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const intervalSelect = document.getElementById('weather_location_interval_select');
         const modeSelect = document.getElementById('weather_location_mode_select');
         const providerSelect = document.getElementById('weather_provider_select');
+        const unitSelect = document.getElementById('weather_unit_select');
         
         const mode = localStorage.getItem('weather_location_mode') || 'auto';
         if (modeSelect) modeSelect.value = mode;
         
         const provider = localStorage.getItem('weather_provider') || 'open-meteo';
         if (providerSelect) providerSelect.value = provider;
+
+        const unit = localStorage.getItem('weather_unit') || 'c';
+        if (unitSelect) unitSelect.value = unit;
         
         if (latInput) {
           latInput.value = mode === 'auto' 
@@ -2502,9 +2506,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const interval = document.getElementById('weather_location_interval_select').value;
             const mode = document.getElementById('weather_location_mode_select').value;
             const provider = document.getElementById('weather_provider_select').value;
+            const unit = document.getElementById('weather_unit_select').value;
             
             localStorage.setItem('weather_location_mode', mode);
             localStorage.setItem('weather_provider', provider);
+            localStorage.setItem('weather_unit', unit);
             if (mode === 'manual') {
               localStorage.setItem('weather_lat_manual', lat);
               localStorage.setItem('weather_lon_manual', lon);
