@@ -124,6 +124,7 @@
   "window_count": "Window Count",
   "apply_restart": "Apply",
 
+  "refresh": "Refresh",
   "data_management": "Data Management",
   "folder_style": "Folder Style",
   "apply_to_all": "Apply to all",
@@ -152,5 +153,8 @@
   "gmail_api_desc": "Please enter an access token to use the Gmail API.",
   "access_token": "Access Token",
   "no_emails": "No emails found",
-  "fetch_error": "Failed to fetch emails"
+  "fetch_error": "Failed to fetch emails",
+  "login_success": "Login Successful!",
+  "login_failed": "Login Failed",
+  "credentials_required": "Client ID and Client Secret are required."
 }

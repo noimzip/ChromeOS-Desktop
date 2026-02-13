@@ -203,7 +203,7 @@ if (gmailLoginBtn) {
     const clientSecret = gmailClientSecretInput?.value?.trim();
 
     if (!clientId || !clientSecret) {
-      if (window.UIUtils) window.UIUtils.showAlertDialog('Client ID and Client Secret are required.');
+      if (window.UIUtils) window.UIUtils.showAlertDialog(i18n.t('credentials_required'));
       return;
     }
 
@@ -221,14 +221,14 @@ if (gmailLoginBtn) {
         localStorage.setItem(LS_KEYS.GMAIL_REFRESH_TOKEN, tokens.refresh_token);
         localStorage.setItem(LS_KEYS.GMAIL_TOKEN_EXPIRES_AT, Date.now() + (tokens.expires_in * 1000));
         
-        if (window.UIUtils) window.UIUtils.showAlertDialog('Login Successful!');
+        if (window.UIUtils) window.UIUtils.showAlertDialog(i18n.t('login_success'));
         updateGmailWidget();
       } else {
-        const errorMsg = tokens?.error || 'Failed to exchange code for tokens.';
-        if (window.UIUtils) window.UIUtils.showAlertDialog(`Login Failed: ${errorMsg}`);
+        const errorMsg = tokens?.error || i18n.t('fetch_error');
+        if (window.UIUtils) window.UIUtils.showAlertDialog(`${i18n.t('login_failed')}: ${errorMsg}`);
       }
     } else if (result && result.error && result.error !== 'closed') {
-      if (window.UIUtils) window.UIUtils.showAlertDialog(`Authentication Error: ${result.error}`);
+      if (window.UIUtils) window.UIUtils.showAlertDialog(`${i18n.t('login_failed')}: ${result.error}`);
     }
   };
 }

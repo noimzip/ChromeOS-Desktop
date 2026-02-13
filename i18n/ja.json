@@ -124,6 +124,7 @@
   "window_count": "ウィンドウ数",
   "apply_restart": "適用",
 
+  "refresh": "更新",
   "data_management": "データ管理",
   "folder_style": "フォルダーのスタイル",
   "apply_to_all": "適用",
@@ -151,5 +152,8 @@
   "gmail_api_desc": "Gmail APIを使用するためのアクセストークンを入力してください。",
   "access_token": "アクセストークン",
   "no_emails": "メールはありません",
-  "fetch_error": "データの取得に失敗しました"
+  "fetch_error": "データの取得に失敗しました",
+  "login_success": "ログインに成功しました！",
+  "login_failed": "ログインに失敗しました",
+  "credentials_required": "Client ID と Client Secret が必要です。"
 }
