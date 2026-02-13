@@ -1,0 +1,146 @@
+/* ========================================
+   Gmail Widget
+   ======================================== */
+
+.gmail-widget {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  right: 20px;
+  top: 420px;
+  transition: box-shadow var(--transition-normal), background var(--transition-normal),
+              color 0.3s ease, border-color 0.3s ease;
+}
+
+.gmail-widget:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+.gmail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
+  color: white;
+}
+
+.gmail-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.gmail-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gmail-settings-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+
+.gmail-settings-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.gmail-content {
+  padding: 8px 0;
+  background: var(--surface-color);
+  min-height: 100px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.gmail-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--on-surface-variant);
+  gap: 8px;
+}
+
+.gmail-loading m3e-icon {
+  font-size: 24px;
+  animation: spin 1.5s linear infinite;
+}
+
+.gmail-item {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--outline-variant);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.gmail-item:last-child {
+  border-bottom: none;
+}
+
+.gmail-item:hover {
+  background: var(--surface-variant);
+}
+
+.gmail-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.gmail-item-from {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.gmail-item-date {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+}
+
+.gmail-item-subject {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gmail-empty, .gmail-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--on-surface-variant);
+  text-align: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.gmail-error {
+  color: var(--error-color);
+}

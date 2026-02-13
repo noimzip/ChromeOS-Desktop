@@ -145,5 +145,12 @@
   "reset_widget_sizes_label": "Reset widget sizes",
   "reset": "Reset",
   "extract_color_from_image": "Extract color from image",
-  "upload_image_generic": "Upload image"
+  "upload_image_generic": "Upload image",
+  "gmail": "Gmail",
+  "gmail_settings": "Gmail Settings",
+  "gmail_oauth_desc": "Enter the credentials created in Google Cloud Console and log in.",
+  "gmail_api_desc": "Please enter an access token to use the Gmail API.",
+  "access_token": "Access Token",
+  "no_emails": "No emails found",
+  "fetch_error": "Failed to fetch emails"
 }

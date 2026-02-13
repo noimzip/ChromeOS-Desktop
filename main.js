@@ -511,6 +511,94 @@ ipcMain.handle('open-google-login', async () => {
   loginWin.loadURL('https://accounts.google.com/ServiceLogin?continue=https://calendar.google.com/');
 });
 
+// Gmail OAuth2 Flow
+ipcMain.handle('gmail-start-auth', async (event, { clientId }) => {
+  const redirectUri = 'http://localhost';
+  const scope = 'https://www.googleapis.com/auth/gmail.readonly';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
+
+  const authWin = new BrowserWindow({
+    width: 600,
+    height: 700,
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    const handleNavigation = (url) => {
+      if (url.startsWith(redirectUri)) {
+        const urlParams = new URL(url).searchParams;
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        if (code || error) {
+          resolve({ code, error });
+          authWin.close();
+          return true;
+        }
+      }
+      return false;
+    };
+
+    authWin.webContents.on('will-navigate', (event, url) => {
+      if (handleNavigation(url)) {
+        event.preventDefault();
+      }
+    });
+
+    authWin.webContents.on('will-redirect', (event, url) => {
+      if (handleNavigation(url)) {
+        event.preventDefault();
+      }
+    });
+
+    authWin.on('closed', () => {
+      resolve({ error: 'closed' });
+    });
+
+    authWin.loadURL(authUrl);
+  });
+});
+
+ipcMain.handle('gmail-exchange-code', async (event, { clientId, clientSecret, code }) => {
+  try {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: 'http://localhost',
+        grant_type: 'authorization_code'
+      })
+    });
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
+ipcMain.handle('gmail-refresh-token', async (event, { clientId, clientSecret, refreshToken }) => {
+  try {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token'
+      })
+    });
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
 const windows = [];
 
 app.whenReady().then(() => {

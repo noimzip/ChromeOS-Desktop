@@ -276,6 +276,7 @@ const availableWidgets = {
   'media_player_widget': { name: 'メディアプレイヤー', element: document.getElementById('media_player_widget') },
   'github_contribution_widget': { name: 'GitHub Contributions', element: document.getElementById('github_contribution_widget') },
   'google_calendar_widget': { name: 'Google Calendar', element: document.getElementById('google_calendar_widget') },
+  'gmail_widget': { name: 'Gmail', element: document.getElementById('gmail_widget') },
   'weather_widget': { name: window.i18n ? window.i18n.t('weather') : 'Weather', element: document.getElementById('weather_widget') }
 };
 
@@ -2444,6 +2445,22 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (widgetId === 'media_player_widget') {
       mediaContent.style.display = 'block';
       title.textContent = i18n.t('media_player_settings') || 'メディアプレーヤー設定';
+    } else if (widgetId === 'gmail_widget') {
+      // Gmailは専用のモーダルがあるのでそちらを開く
+      if (typeof gmailSettingsBtn?.onclick === 'function') {
+        gmailSettingsBtn.onclick(new MouseEvent('click'));
+      }
+      return; // 共通モーダルは開かない
+    } else if (widgetId === 'google_calendar_widget') {
+      if (typeof googleCalendarSettingsBtn?.onclick === 'function') {
+        googleCalendarSettingsBtn.onclick(new MouseEvent('click'));
+      }
+      return;
+    } else if (widgetId === 'github_contribution_widget') {
+      if (typeof githubSettingsBtn?.onclick === 'function') {
+        githubSettingsBtn.onclick(new MouseEvent('click'));
+      }
+      return;
     } else if (widgetId === 'weather_widget') {
       if (weatherContent) {
         weatherContent.style.display = 'block';

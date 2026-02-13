@@ -144,5 +144,12 @@
   "reset_widget_sizes_label": "ウィジェットサイズをリセット",
   "reset": "リセット",
   "extract_color_from_image": "画像から抽出",
-  "upload_image_generic": "画像をアップロード"
+  "upload_image_generic": "画像をアップロード",
+  "gmail": "Gmail",
+  "gmail_settings": "Gmail設定",
+  "gmail_oauth_desc": "Google Cloud Consoleで作成した認証情報を入力し、ログインしてください。",
+  "gmail_api_desc": "Gmail APIを使用するためのアクセストークンを入力してください。",
+  "access_token": "アクセストークン",
+  "no_emails": "メールはありません",
+  "fetch_error": "データの取得に失敗しました"
 }

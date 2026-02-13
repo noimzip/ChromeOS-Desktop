@@ -27,6 +27,10 @@ window.WidgetLoader = {
     'weather_widget': {
       js: './widgets/weather/weather.js',
       css: './widgets/weather/weather.css'
+    },
+    'gmail_widget': {
+      js: './widgets/gmail/gmail.js',
+      css: './widgets/gmail/gmail.css'
     }
   },
 

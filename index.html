@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.open-meteo.com https://api.weather.gov ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.open-meteo.com https://api.weather.gov https://gmail.googleapis.com ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
     <link rel="stylesheet" href="./desktop.css">
     <script src="./constants.js" defer></script>
     <script src="./modules/ui_utils.js" defer></script>
@@ -258,6 +258,56 @@
         <div class="modal-buttons">
           <m3e-button variant="outlined" id="close_google_calendar_settings_modal" data-i18n="close">とじる</m3e-button>
           <m3e-button variant="filled" id="save_google_calendar_settings" data-i18n="save">保存</m3e-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gmail Widget -->
+    <div id="gmail_widget" class="gmail-widget widget">
+      <div class="gmail-header">
+        <m3e-icon name="mail" class="gmail-icon"></m3e-icon>
+        <span class="gmail-title">Gmail</span>
+        <button id="gmail_refresh_btn" class="gmail-settings-btn" title="更新" style="margin-right: 4px;">
+          <m3e-icon name="refresh"></m3e-icon>
+        </button>
+        <button id="gmail_settings_btn" class="gmail-settings-btn" title="設定">
+          <m3e-icon name="settings"></m3e-icon>
+        </button>
+      </div>
+      <div id="gmail_content" class="gmail-content">
+        <div class="gmail-loading">
+          <m3e-icon name="hourglass_empty"></m3e-icon>
+          <span data-i18n="loading">読み込み中...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gmail Settings Modal -->
+    <div id="gmail_settings_modal_overlay" class="modal_overlay">
+      <div id="gmail_settings_modal" class="modal">
+        <h3 data-i18n="gmail_settings">Gmail設定</h3>
+        <p class="modal-description" data-i18n="gmail_oauth_desc">Google Cloud Consoleで作成した認証情報を入力し、ログインしてください。</p>
+        
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="gmail_client_id_input">Client ID</label>
+          <input id="gmail_client_id_input" placeholder="000000000000-xxxx.apps.googleusercontent.com" />
+        </m3e-form-field>
+        
+        <m3e-form-field variant="outlined">
+          <label slot="label" for="gmail_client_secret_input">Client Secret</label>
+          <input id="gmail_client_secret_input" type="password" placeholder="GOCSPX-xxxx" />
+        </m3e-form-field>
+
+        <div style="margin: 8px 0; width: 100%;">
+          <m3e-button variant="filled" id="gmail_login_btn" style="width: 100%;">
+            <m3e-icon slot="icon" name="login"></m3e-icon>
+            <span data-i18n="google_login">Googleアカウントにログイン</span>
+          </m3e-button>
+        </div>
+
+        <div class="modal-buttons">
+          <m3e-button variant="outlined" id="close_gmail_settings_modal" data-i18n="close">とじる</m3e-button>
+          <m3e-button variant="filled" id="save_gmail_settings" data-i18n="save">保存</m3e-button>
         </div>
       </div>
     </div>
