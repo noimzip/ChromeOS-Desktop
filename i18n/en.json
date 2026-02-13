@@ -93,6 +93,9 @@
   "media_player_settings": "Media Player Settings",
   "weather_settings": "Weather Settings",
   "weather_provider": "Weather Provider",
+  "temperature_unit": "Temperature Unit",
+  "celsius": "Celsius (°C)",
+  "fahrenheit": "Fahrenheit (°F)",
   "open_meteo": "Open-Meteo (Global)",
   "nws": "NWS (US Only)",
   "clock_shape": "Clock Shape",
@@ -121,6 +124,7 @@
   "window_count": "Window Count",
   "apply_restart": "Apply",
 
+  "refresh": "Refresh",
   "data_management": "Data Management",
   "folder_style": "Folder Style",
   "apply_to_all": "Apply to all",
@@ -142,5 +146,15 @@
   "reset_widget_sizes_label": "Reset widget sizes",
   "reset": "Reset",
   "extract_color_from_image": "Extract color from image",
-  "upload_image_generic": "Upload image"
+  "upload_image_generic": "Upload image",
+  "gmail": "Gmail",
+  "gmail_settings": "Gmail Settings",
+  "gmail_oauth_desc": "Enter the credentials created in Google Cloud Console and log in.",
+  "gmail_api_desc": "Please enter an access token to use the Gmail API.",
+  "access_token": "Access Token",
+  "no_emails": "No emails found",
+  "fetch_error": "Failed to fetch emails",
+  "login_success": "Login Successful!",
+  "login_failed": "Login Failed",
+  "credentials_required": "Client ID and Client Secret are required."
 }

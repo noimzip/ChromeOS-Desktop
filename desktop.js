@@ -276,6 +276,7 @@ const availableWidgets = {
   'media_player_widget': { name: 'メディアプレイヤー', element: document.getElementById('media_player_widget') },
   'github_contribution_widget': { name: 'GitHub Contributions', element: document.getElementById('github_contribution_widget') },
   'google_calendar_widget': { name: 'Google Calendar', element: document.getElementById('google_calendar_widget') },
+  'gmail_widget': { name: 'Gmail', element: document.getElementById('gmail_widget') },
   'weather_widget': { name: window.i18n ? window.i18n.t('weather') : 'Weather', element: document.getElementById('weather_widget') }
 };
 
@@ -2444,6 +2445,22 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (widgetId === 'media_player_widget') {
       mediaContent.style.display = 'block';
       title.textContent = i18n.t('media_player_settings') || 'メディアプレーヤー設定';
+    } else if (widgetId === 'gmail_widget') {
+      // Gmailは専用のモーダルがあるのでそちらを開く
+      if (typeof gmailSettingsBtn?.onclick === 'function') {
+        gmailSettingsBtn.onclick(new MouseEvent('click'));
+      }
+      return; // 共通モーダルは開かない
+    } else if (widgetId === 'google_calendar_widget') {
+      if (typeof googleCalendarSettingsBtn?.onclick === 'function') {
+        googleCalendarSettingsBtn.onclick(new MouseEvent('click'));
+      }
+      return;
+    } else if (widgetId === 'github_contribution_widget') {
+      if (typeof githubSettingsBtn?.onclick === 'function') {
+        githubSettingsBtn.onclick(new MouseEvent('click'));
+      }
+      return;
     } else if (widgetId === 'weather_widget') {
       if (weatherContent) {
         weatherContent.style.display = 'block';
@@ -2455,12 +2472,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const intervalSelect = document.getElementById('weather_location_interval_select');
         const modeSelect = document.getElementById('weather_location_mode_select');
         const providerSelect = document.getElementById('weather_provider_select');
+        const unitSelect = document.getElementById('weather_unit_select');
         
         const mode = localStorage.getItem('weather_location_mode') || 'auto';
         if (modeSelect) modeSelect.value = mode;
         
         const provider = localStorage.getItem('weather_provider') || 'open-meteo';
         if (providerSelect) providerSelect.value = provider;
+
+        const unit = localStorage.getItem('weather_unit') || 'c';
+        if (unitSelect) unitSelect.value = unit;
         
         if (latInput) {
           latInput.value = mode === 'auto' 
@@ -2502,9 +2523,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const interval = document.getElementById('weather_location_interval_select').value;
             const mode = document.getElementById('weather_location_mode_select').value;
             const provider = document.getElementById('weather_provider_select').value;
+            const unit = document.getElementById('weather_unit_select').value;
             
             localStorage.setItem('weather_location_mode', mode);
             localStorage.setItem('weather_provider', provider);
+            localStorage.setItem('weather_unit', unit);
             if (mode === 'manual') {
               localStorage.setItem('weather_lat_manual', lat);
               localStorage.setItem('weather_lon_manual', lon);

@@ -93,6 +93,9 @@
   "media_player_settings": "メディアプレーヤー設定",
   "weather_settings": "天気設定",
   "weather_provider": "天気情報の提供元",
+  "temperature_unit": "気温の単位",
+  "celsius": "摂氏 (°C)",
+  "fahrenheit": "華氏 (°F)",
   "open_meteo": "Open-Meteo (世界対応)",
   "nws": "NWS (米国のみ)",
   "clock_shape": "時計の形",
@@ -121,6 +124,7 @@
   "window_count": "ウィンドウ数",
   "apply_restart": "適用",
 
+  "refresh": "更新",
   "data_management": "データ管理",
   "folder_style": "フォルダーのスタイル",
   "apply_to_all": "適用",
@@ -141,5 +145,15 @@
   "reset_widget_sizes_label": "ウィジェットサイズをリセット",
   "reset": "リセット",
   "extract_color_from_image": "画像から抽出",
-  "upload_image_generic": "画像をアップロード"
+  "upload_image_generic": "画像をアップロード",
+  "gmail": "Gmail",
+  "gmail_settings": "Gmail設定",
+  "gmail_oauth_desc": "Google Cloud Consoleで作成した認証情報を入力し、ログインしてください。",
+  "gmail_api_desc": "Gmail APIを使用するためのアクセストークンを入力してください。",
+  "access_token": "アクセストークン",
+  "no_emails": "メールはありません",
+  "fetch_error": "データの取得に失敗しました",
+  "login_success": "ログインに成功しました！",
+  "login_failed": "ログインに失敗しました",
+  "credentials_required": "Client ID と Client Secret が必要です。"
 }

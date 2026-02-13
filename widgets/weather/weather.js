@@ -115,9 +115,21 @@
     const isDay = current.is_day === 1;
     const isDarkMode = document.body.classList.contains('dark-mode');
     const theme = isDarkMode ? 'dark' : 'light';
+    const targetUnit = (localStorage.getItem('weather_unit') || 'c').toUpperCase();
     
     if (weatherTemp) {
-      weatherTemp.textContent = `${Math.round(current.temperature)}°`;
+      let temp = current.temperature;
+      const currentUnit = current.unit ? current.unit.toUpperCase() : 'C';
+
+      if (currentUnit !== targetUnit) {
+        if (targetUnit === 'F' && currentUnit === 'C') {
+          temp = (temp * 9/5) + 32;
+        } else if (targetUnit === 'C' && currentUnit === 'F') {
+          temp = (temp - 32) * 5/9;
+        }
+      }
+
+      weatherTemp.textContent = `${Math.round(temp)}°`;
     }
     
     if (weatherIcon && weatherMap[current.weathercode]) {
@@ -139,6 +151,7 @@
     try {
       const mode = localStorage.getItem('weather_location_mode') || 'auto';
       const provider = localStorage.getItem('weather_provider') || 'open-meteo';
+      const unit = localStorage.getItem('weather_unit') || 'c';
       let lat, lon;
 
       if (mode === 'auto') {
@@ -150,9 +163,12 @@
       }
       
       if (provider === 'open-meteo') {
-        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const unitParam = unit === 'f' ? '&temperature_unit=fahrenheit' : '';
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true${unitParam}`);
         if (!response.ok) throw new Error('Open-Meteo fetch failed');
         lastWeatherData = await response.json();
+        // Add unit info for display
+        lastWeatherData.current_weather.unit = unit.toUpperCase();
       } else if (provider === 'nws') {
         // NWS requires two steps: get grid point then get forecast
         const pointsRes = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
@@ -168,6 +184,7 @@
         lastWeatherData = {
           current_weather: {
             temperature: current.temperature,
+            unit: current.temperatureUnit, // 'F' or 'C'
             weathercode: mapNWSToWMO(current.shortForecast, current.isDaytime),
             is_day: current.isDaytime ? 1 : 0
           }

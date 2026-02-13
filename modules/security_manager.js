@@ -17,6 +17,7 @@ window.SecurityManager = (() => {
 
   const DEFAULT_ALLOWLIST_DOMAINS = [
     'calendar.google.com',
+    'gmail.googleapis.com',
     'github-contributions-api.jogruber.de',
     'github.com'
   ];
