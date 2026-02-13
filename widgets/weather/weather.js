@@ -142,6 +142,7 @@
       }
       
       weatherIcon.src = `./assets/weather/${theme}/${iconName}`;
+      weatherIcon.style.display = 'block';
     }
   }
 
