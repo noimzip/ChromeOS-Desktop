@@ -11,7 +11,7 @@
   // WMO Weather interpretation codes (WW)
   const weatherMap = {
     0: { day: 'clear_day.svg', night: 'clear_night.svg' },
-    1: { day: 'mostly_clear_day.svg', night: 'mostly_clear_night.svg' },
+    1: { day: 'clear_with_cloudy.svg', night: 'mostly_clear_night.svg' },
     2: { day: 'partly_cloudy_day.svg', night: 'partly_cloudy_night.svg' },
     3: { day: 'cloudy.svg', night: 'cloudy.svg' },
     45: { day: 'haze_fog_dust_smoke.svg', night: 'haze_fog_dust_smoke.svg' },
@@ -19,24 +19,25 @@
     51: { day: 'drizzle.svg', night: 'drizzle.svg' },
     53: { day: 'drizzle.svg', night: 'drizzle.svg' },
     55: { day: 'drizzle.svg', night: 'drizzle.svg' },
-    61: { 
-      day: { light: 'sunny_with_rain_light.svg', dark: 'sunny_with_rain_dark.svg' }, 
-      night: { light: 'cloudy_with_rain_light.svg', dark: 'cloudy_with_rain_dark.svg' } 
-    },
+    56: { day: 'icy.svg', night: 'icy.svg' },
+    57: { day: 'icy.svg', night: 'icy.svg' },
+    61: { day: 'clear_with_rain.svg', night: 'cloudy_with_rain.svg' },
     63: { day: 'showers_rain.svg', night: 'showers_rain.svg' },
     65: { day: 'heavy_rain.svg', night: 'heavy_rain.svg' },
-    71: { 
-      day: { light: 'sunny_with_snow_light.svg', dark: 'sunny_with_snow_dark.svg' }, 
-      night: { light: 'cloudy_with_snow_light.svg', dark: 'cloudy_with_snow_dark.svg' } 
-    },
-    73: { day: 'showers_snow.svg', night: 'showers_snow.svg' },
+    66: { day: 'icy.svg', night: 'icy.svg' },
+    67: { day: 'icy.svg', night: 'icy.svg' },
+    71: { day: 'clear_with_snow.svg', night: 'cloudy_with_snow.svg' },
+    73: { day: 'snow_showers_snow.svg', night: 'snow_showers_snow.svg' },
     75: { day: 'heavy_snow.svg', night: 'heavy_snow.svg' },
+    77: { day: 'snow_showers_snow.svg', night: 'snow_showers_snow.svg' },
     80: { day: 'scattered_showers_day.svg', night: 'scattered_showers_night.svg' },
     81: { day: 'showers_rain.svg', night: 'showers_rain.svg' },
     82: { day: 'heavy_rain.svg', night: 'heavy_rain.svg' },
-    95: { day: 'isolated_scattered_thunderstorms_day.svg', night: 'isolated_scattered_thunderstorms_night.svg' },
-    96: { day: 'strong_thunderstorms.svg', night: 'strong_thunderstorms.svg' },
-    99: { day: 'strong_thunderstorms.svg', night: 'strong_thunderstorms.svg' },
+    85: { day: 'snow_showers_snow.svg', night: 'snow_showers_snow.svg' },
+    86: { day: 'heavy_snow.svg', night: 'heavy_snow.svg' },
+    95: { day: 'isolated_scattered_tstorms_day.svg', night: 'isolated_scattered_tstorms_night.svg' },
+    96: { day: 'strong_tstorms.svg', night: 'strong_tstorms.svg' },
+    99: { day: 'strong_tstorms.svg', night: 'strong_tstorms.svg' },
   };
 
   let lastWeatherData = null;
@@ -135,12 +136,12 @@
     if (weatherIcon && weatherMap[current.weathercode]) {
       let iconName = isDay ? weatherMap[current.weathercode].day : weatherMap[current.weathercode].night;
       
-      // テーマ分岐がある場合
+      // テーマ分岐がある場合（互換性のため残す）
       if (typeof iconName === 'object') {
         iconName = iconName[theme];
       }
       
-      weatherIcon.src = `./assets/weather/${iconName}`;
+      weatherIcon.src = `./assets/weather/${theme}/${iconName}`;
     }
   }
 
