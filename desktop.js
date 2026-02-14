@@ -1166,7 +1166,7 @@ if (applyFolderStyleAllBtn) {
 const newAppImageTrigger = document.getElementById('new_app_image_trigger');
 const newAppFileInput = document.getElementById('new_app_image_file');
 const newAppImagePreview = document.getElementById('new_app_image_preview');
-let newAppIconDataUrl = './assets/settings.webp'; // Default icon
+let newAppIconDataUrl = './assets/app.png'; // Default icon
 
 if (newAppImageTrigger && newAppFileInput) {
   newAppImageTrigger.onclick = () => newAppFileInput.click();
@@ -1252,7 +1252,7 @@ if (saveNewAppBtn) {
     document.getElementById('new_app_name').value = '';
     document.getElementById('new_app_url').value = '';
     newAppImagePreview.style.display = 'none';
-    newAppIconDataUrl = './assets/settings.webp';
+    newAppIconDataUrl = './assets/app.png';
   };
 }
 
@@ -1272,7 +1272,7 @@ savedCustomApps.forEach(app => {
 const linuxAppImageInput = document.getElementById('linux_app_image_file');
 const linuxAppImageTrigger = document.getElementById('linux_app_image_trigger');
 const linuxAppImagePreview = document.getElementById('linux_app_image_preview');
-let linuxAppIconDataUrl = './assets/settings.webp';
+let linuxAppIconDataUrl = './assets/linux.png';
 
 if (linuxAppImageTrigger && linuxAppImageInput) {
   linuxAppImageTrigger.onclick = () => linuxAppImageInput.click();
@@ -1343,7 +1343,7 @@ if (saveLinuxAppBtn) {
     document.getElementById('linux_app_command').value = '';
     document.getElementById('linux_app_run_in_terminal').checked = false;
     linuxAppImagePreview.style.display = 'none';
-    linuxAppIconDataUrl = './assets/settings.webp';
+    linuxAppIconDataUrl = './assets/linux.png';
   };
 }
 
@@ -2015,8 +2015,8 @@ function openEditLinuxappModal() {
   document.getElementById('edit_linuxapp_name').value = currentEditingApp.name;
   document.getElementById('edit_linuxapp_command').value = currentEditingApp.command;
   document.getElementById('edit_linuxapp_run_in_terminal').checked = currentEditingApp.runInTerminal || false;
-  editLinuxappImagePreview.src = currentEditingApp.icon || './assets/settings.webp';
-  editLinuxappIconDataUrl = currentEditingApp.icon || './assets/settings.webp';
+  editLinuxappImagePreview.src = currentEditingApp.icon || './assets/linux.png';
+  editLinuxappIconDataUrl = currentEditingApp.icon || './assets/linux.png';
   
   document.getElementById('edit_linuxapp_modal_overlay').style.display = 'flex';
 }
@@ -2323,7 +2323,7 @@ function resetWidgetSizes() {
 }
 
 // アイコン形状選択UIの生成
-function setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc = './assets/settings.webp') {
+function setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc = './assets/app.png') {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
