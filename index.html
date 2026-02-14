@@ -185,6 +185,18 @@
           <label slot="label" for="github_username_input" data-i18n="github_username">GitHubユーザー名</label>
           <input id="github_username_input" placeholder="例: octocat" data-i18n="username_placeholder" />
         </m3e-form-field>
+        <div class="settings-item" style="width: 100%;">
+          <div class="settings-item-label">
+            <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+          </div>
+          <div class="settings-item-control">
+            <select id="select_github_header_mode" class="header-display-mode-selector">
+              <option value="always" data-i18n="header_always_show">常に表示</option>
+              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+              <option value="hide" data-i18n="header_always_hide">表示しない</option>
+            </select>
+          </div>
+        </div>
         <div class="modal-buttons">
           <m3e-button variant="outlined" id="close_github_settings_modal" data-i18n="close">とじる</m3e-button>
           <m3e-button variant="filled" id="save_github_settings" data-i18n="save">保存</m3e-button>
@@ -250,6 +262,18 @@
             <option value="AGENDA" data-i18n="agenda">スケジュール (Agenda)</option>
           </select>
         </div>
+        <div class="settings-item" style="width: 100%;">
+          <div class="settings-item-label">
+            <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+          </div>
+          <div class="settings-item-control">
+            <select id="select_google_calendar_header_mode" class="header-display-mode-selector">
+              <option value="always" data-i18n="header_always_show">常に表示</option>
+              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+              <option value="hide" data-i18n="header_always_hide">表示しない</option>
+            </select>
+          </div>
+        </div>
         <div style="margin: 16px 0; text-align: center;">
           <p style="font-size: 12px; color: var(--on-surface-variant); margin-bottom: 8px;" data-i18n="google_login_help">
             カレンダーが表示されない場合はログインしてください
@@ -298,6 +322,19 @@
           <label slot="label" for="gmail_client_secret_input">Client Secret</label>
           <input id="gmail_client_secret_input" type="password" placeholder="GOCSPX-xxxx" />
         </m3e-form-field>
+
+        <div class="settings-item" style="width: 100%;">
+          <div class="settings-item-label">
+            <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+          </div>
+          <div class="settings-item-control">
+            <select id="select_gmail_header_mode" class="header-display-mode-selector">
+              <option value="always" data-i18n="header_always_show">常に表示</option>
+              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+              <option value="hide" data-i18n="header_always_hide">表示しない</option>
+            </select>
+          </div>
+        </div>
 
         <div style="margin: 8px 0; width: 100%;">
           <m3e-button variant="filled" id="gmail_login_btn" style="width: 100%;">
@@ -533,6 +570,21 @@
             </div>
           </div>
           <m3e-button variant="filled" id="save_weather_settings" style="width: 100%; margin-top: 16px;" data-i18n="save">保存</m3e-button>
+        </div>
+
+        <div id="common_widget_settings" style="width: 100%; border-top: 1px solid var(--outline-variant); padding-top: 16px; margin-top: 16px; display: none;">
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+            </div>
+            <div class="settings-item-control">
+              <select class="header-display-mode-selector" id="select_widget_header_mode">
+                <option value="always" data-i18n="header_always_show">常に表示</option>
+                <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+                <option value="hide" data-i18n="header_always_hide">表示しない</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="modal-buttons">

@@ -316,6 +316,15 @@ async function applyWidgetVisibility() {
           await window.WidgetLoader.load(widgetId);
         }
         widget.style.display = '';
+        
+        // ヘッダー表示設定を適用
+        const headerMode = localStorage.getItem(`widgetHeaderMode:${widgetId}`) || 'always';
+        widget.classList.remove('header-hover-show', 'header-always-hide');
+        if (headerMode === 'hover') {
+          widget.classList.add('header-hover-show');
+        } else if (headerMode === 'hide') {
+          widget.classList.add('header-always-hide');
+        }
       } else {
         widget.style.display = 'none';
       }
@@ -2509,18 +2518,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  function setupHeaderModeSelector(selectId, widgetId, widgetEl) {
+    const modeSelector = document.getElementById(selectId);
+    if (modeSelector && widgetEl) {
+      const savedMode = localStorage.getItem(`widgetHeaderMode:${widgetId}`) || 'always';
+      modeSelector.value = savedMode;
+
+      modeSelector.onchange = (e) => {
+        const newMode = e.target.value;
+        localStorage.setItem(`widgetHeaderMode:${widgetId}`, newMode);
+        
+        // クラスのリセット
+        widgetEl.classList.remove('header-hover-show', 'header-always-hide');
+        
+        if (newMode === 'hover') {
+          widgetEl.classList.add('header-hover-show');
+        } else if (newMode === 'hide') {
+          widgetEl.classList.add('header-always-hide');
+        }
+      };
+    }
+  }
+
   function openWidgetSettingsModal(widgetEl) {
     const clockContent = document.getElementById('clock_settings_content');
     const mediaContent = document.getElementById('media_player_settings_content');
     const weatherContent = document.getElementById('weather_widget_settings_content');
+    const commonSettings = document.getElementById('common_widget_settings');
     const title = document.getElementById('widget_settings_title');
     
     // 全て非表示にリセット
     clockContent.style.display = 'none';
     mediaContent.style.display = 'none';
     if (weatherContent) weatherContent.style.display = 'none';
+    if (commonSettings) commonSettings.style.display = 'none';
     
     const widgetId = widgetEl.id;
+
+    // ヘッダーを持つウィジェットの場合、共通設定を表示 (Clock/Weather以外)
+    const hasHeader = !!widgetEl.querySelector('[class$="-header"]');
+    if (hasHeader && commonSettings) {
+      commonSettings.style.display = 'block';
+      setupHeaderModeSelector('select_widget_header_mode', widgetId, widgetEl);
+    }
+
     if (widgetId === 'widget-clock') {
       clockContent.style.display = 'block';
       title.textContent = i18n.t('clock_settings') || '時計設定';
@@ -2530,16 +2571,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (widgetId === 'gmail_widget') {
       // Gmailは専用のモーダルがあるのでそちらを開く
       if (typeof gmailSettingsBtn?.onclick === 'function') {
+        setupHeaderModeSelector('select_gmail_header_mode', widgetId, widgetEl);
         gmailSettingsBtn.onclick(new MouseEvent('click'));
       }
       return; // 共通モーダルは開かない
     } else if (widgetId === 'google_calendar_widget') {
       if (typeof googleCalendarSettingsBtn?.onclick === 'function') {
+        setupHeaderModeSelector('select_google_calendar_header_mode', widgetId, widgetEl);
         googleCalendarSettingsBtn.onclick(new MouseEvent('click'));
       }
       return;
     } else if (widgetId === 'github_contribution_widget') {
       if (typeof githubSettingsBtn?.onclick === 'function') {
+        setupHeaderModeSelector('select_github_header_mode', widgetId, widgetEl);
         githubSettingsBtn.onclick(new MouseEvent('click'));
       }
       return;

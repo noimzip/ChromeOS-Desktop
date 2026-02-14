@@ -115,6 +115,11 @@
   "show_seekbar": "Show Seekbar",
   "show_shuffle": "Show Shuffle Button",
   "show_repeat": "Show Repeat Button",
+  "show_header_on_hover": "Show header only on hover",
+  "header_always_show": "Always show",
+  "header_hover_show": "Show on hover",
+  "header_always_hide": "Hide always",
+  "widget_header_mode": "Header Display Settings",
 
   "system_settings": "System",
   "settings_button_label": "Settings Button",

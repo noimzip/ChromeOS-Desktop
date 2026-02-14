@@ -116,6 +116,11 @@
   "show_seekbar": "シークバーを表示",
   "show_shuffle": "シャッフルボタンを表示",
   "show_repeat": "リピートボタンを表示",
+  "show_header_on_hover": "ヘッダーをホバー時のみ表示",
+  "header_always_show": "常に表示",
+  "header_hover_show": "ホバー時のみ表示",
+  "header_always_hide": "表示しない",
+  "widget_header_mode": "ヘッダーの表示設定",
 
   "system_settings": "システム設定",
   "settings_button_label": "設定ボタン",
