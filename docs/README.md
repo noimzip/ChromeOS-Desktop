@@ -1,11 +1,11 @@
 <div align="center">
 
-<img src="chrome_extension/assets/soul-128.png" width="128px" height="128px">
+<img src="../chrome_extension/assets/soul-128.png" width="128px" height="128px">
 
 # Soul Widgets Manager
 ## A Windows-like desktop experience for ChromeOS
 
-[English](docs/README.md) | [日本語](docs/README_JA.md)
+[English](README.md) | [日本語](README_JA.md)
 
 ---
 
@@ -141,12 +141,12 @@ For debugging, setting `autoOpenDevTools: true` in the settings menu or `setting
 ---
 
 ## 🤝 Contribution
-Contributions, bug reports, and feature requests are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get involved.
+Contributions, bug reports, and feature requests are welcome! Please see [CONTRIBUTING.md](../CONTRIBUTING.md) for details on how to get involved.
 
 ---
 
 ## 📜 License
-This project is licensed under the **GPL-3.0 License**. See the [LICENSE](LICENSE) file for details. For security concerns, please refer to [SECURITY.md](SECURITY.md).
+This project is licensed under the **GPL-3.0 License**. See the [LICENSE](../LICENSE) file for details. For security concerns, please refer to [SECURITY.md](../SECURITY.md).
 
 ---
 

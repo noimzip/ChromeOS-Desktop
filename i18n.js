@@ -19,8 +19,12 @@
     }
   }
 
-  function t(key){
-    return translations[key] || key;
+  function t(key, params = {}){
+    let text = translations[key] || key;
+    Object.keys(params).forEach(k => {
+      text = text.replace(new RegExp(`{{${k}}}`, 'g'), params[k]);
+    });
+    return text;
   }
 
   function applyTranslations(root=document){

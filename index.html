@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.open-meteo.com https://api.weather.gov https://gmail.googleapis.com ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: file: https:; connect-src 'self' https://api.github.com https://github-contributions-api.jogruber.de https://api.open-meteo.com https://api.weather.gov https://gmail.googleapis.com ws://127.0.0.1:25600; frame-src https://calendar.google.com;">
     <link rel="stylesheet" href="./desktop.css">
     <script src="./constants.js" defer></script>
     <script src="./modules/ui_utils.js" defer></script>
@@ -14,6 +14,7 @@
     <script src="./modules/context_menu.js" defer></script>
     <script src="./modules/style_manager.js" defer></script>
     <script src="./modules/system_settings.js" defer></script>
+    <script src="./modules/update_manager.js" defer></script>
     <script src="./i18n.js" defer></script>
     <script src="./desktop.js" defer></script>
 
@@ -184,6 +185,18 @@
           <label slot="label" for="github_username_input" data-i18n="github_username">GitHubユーザー名</label>
           <input id="github_username_input" placeholder="例: octocat" data-i18n="username_placeholder" />
         </m3e-form-field>
+        <div class="settings-item" style="width: 100%;">
+          <div class="settings-item-label">
+            <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+          </div>
+          <div class="settings-item-control">
+            <select id="select_github_header_mode" class="header-display-mode-selector">
+              <option value="always" data-i18n="header_always_show">常に表示</option>
+              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+              <option value="hide" data-i18n="header_always_hide">表示しない</option>
+            </select>
+          </div>
+        </div>
         <div class="modal-buttons">
           <m3e-button variant="outlined" id="close_github_settings_modal" data-i18n="close">とじる</m3e-button>
           <m3e-button variant="filled" id="save_github_settings" data-i18n="save">保存</m3e-button>
@@ -249,6 +262,18 @@
             <option value="AGENDA" data-i18n="agenda">スケジュール (Agenda)</option>
           </select>
         </div>
+        <div class="settings-item" style="width: 100%;">
+          <div class="settings-item-label">
+            <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+          </div>
+          <div class="settings-item-control">
+            <select id="select_google_calendar_header_mode" class="header-display-mode-selector">
+              <option value="always" data-i18n="header_always_show">常に表示</option>
+              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+              <option value="hide" data-i18n="header_always_hide">表示しない</option>
+            </select>
+          </div>
+        </div>
         <div style="margin: 16px 0; text-align: center;">
           <p style="font-size: 12px; color: var(--on-surface-variant); margin-bottom: 8px;" data-i18n="google_login_help">
             カレンダーが表示されない場合はログインしてください
@@ -297,6 +322,19 @@
           <label slot="label" for="gmail_client_secret_input">Client Secret</label>
           <input id="gmail_client_secret_input" type="password" placeholder="GOCSPX-xxxx" />
         </m3e-form-field>
+
+        <div class="settings-item" style="width: 100%;">
+          <div class="settings-item-label">
+            <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+          </div>
+          <div class="settings-item-control">
+            <select id="select_gmail_header_mode" class="header-display-mode-selector">
+              <option value="always" data-i18n="header_always_show">常に表示</option>
+              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+              <option value="hide" data-i18n="header_always_hide">表示しない</option>
+            </select>
+          </div>
+        </div>
 
         <div style="margin: 8px 0; width: 100%;">
           <m3e-button variant="filled" id="gmail_login_btn" style="width: 100%;">
@@ -532,6 +570,21 @@
             </div>
           </div>
           <m3e-button variant="filled" id="save_weather_settings" style="width: 100%; margin-top: 16px;" data-i18n="save">保存</m3e-button>
+        </div>
+
+        <div id="common_widget_settings" style="width: 100%; border-top: 1px solid var(--outline-variant); padding-top: 16px; margin-top: 16px; display: none;">
+          <div class="settings-item">
+            <div class="settings-item-label">
+              <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
+            </div>
+            <div class="settings-item-control">
+              <select class="header-display-mode-selector" id="select_widget_header_mode">
+                <option value="always" data-i18n="header_always_show">常に表示</option>
+                <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
+                <option value="hide" data-i18n="header_always_hide">表示しない</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="modal-buttons">
@@ -952,6 +1005,35 @@
               </div>
               <div class="settings-item-control">
                 <m3e-button variant="filled" id="delete_all_data_btn" class="danger-button" data-i18n="delete">削除</m3e-button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4 class="settings-section-title" data-i18n="about">バージョン情報</h4>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span>Soul Widgets Manager</span>
+                <small id="app_version_display">v0.1</small>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="update_channel">アップデートチャンネル</span>
+              </div>
+              <div class="settings-item-control">
+                <select id="update_channel_selector">
+                  <option value="stable">Stable</option>
+                  <option value="develop">Develop</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="check_updates">アップデートの確認</span>
+              </div>
+              <div class="settings-item-control">
+                <m3e-button variant="outlined" id="check_updates_btn" data-i18n="check_now">今すぐ確認</m3e-button>
               </div>
             </div>
           </div>

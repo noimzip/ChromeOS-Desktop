@@ -679,6 +679,41 @@ body.no-blur .appicon.folder .folder-preview {
 .widget.resizing .widget-resizer {
   opacity: 1;
 }
+
+/* ヘッダーの表示設定 */
+.widget.header-hover-show [class$="-header"],
+.widget.header-always-hide [class$="-header"] {
+  max-height: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  opacity: 0;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  pointer-events: none;
+}
+
+.widget.header-hover-show:hover [class$="-header"] {
+  max-height: 160px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ヘッダー非表示時にコンテンツを広げる */
+.widget.header-hover-show [class$="-content"],
+.widget.header-always-hide [class$="-content"] {
+  flex: 1;
+  max-height: none !important;
+}
+
+/* GitHub等の特定のウィジェットでの微調整 */
+.widget.header-hover-show .github-contribution-content,
+.widget.header-always-hide .github-contribution-content {
+  display: block;
+}
 .widget-resizer:after {
   content: '';
   width: 8px;

@@ -115,6 +115,11 @@
   "show_seekbar": "Show Seekbar",
   "show_shuffle": "Show Shuffle Button",
   "show_repeat": "Show Repeat Button",
+  "show_header_on_hover": "Show header only on hover",
+  "header_always_show": "Always show",
+  "header_hover_show": "Show on hover",
+  "header_always_hide": "Hide always",
+  "widget_header_mode": "Header Display Settings",
 
   "system_settings": "System",
   "settings_button_label": "Settings Button",
@@ -156,5 +161,12 @@
   "fetch_error": "Failed to fetch emails",
   "login_success": "Login Successful!",
   "login_failed": "Login Failed",
-  "credentials_required": "Client ID and Client Secret are required."
+  "credentials_required": "Client ID and Client Secret are required.",
+  "update_available": "Update Available",
+  "new_version_desc": "A new version ({{version}}) is available. Please check the details on GitHub and update.",
+  "check_now": "Check Now",
+  "up_to_date": "Already up to date",
+  "update_check_failed": "Update check failed",
+  "update_channel": "Update Channel",
+  "check_updates": "Check Updates"
 }

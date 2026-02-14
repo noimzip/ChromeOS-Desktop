@@ -116,6 +116,11 @@
   "show_seekbar": "シークバーを表示",
   "show_shuffle": "シャッフルボタンを表示",
   "show_repeat": "リピートボタンを表示",
+  "show_header_on_hover": "ヘッダーをホバー時のみ表示",
+  "header_always_show": "常に表示",
+  "header_hover_show": "ホバー時のみ表示",
+  "header_always_hide": "表示しない",
+  "widget_header_mode": "ヘッダーの表示設定",
 
   "system_settings": "システム設定",
   "settings_button_label": "設定ボタン",
@@ -156,5 +161,12 @@
   "fetch_error": "データの取得に失敗しました",
   "login_success": "ログインに成功しました！",
   "login_failed": "ログインに失敗しました",
-  "credentials_required": "Client ID と Client Secret が必要です。"
+  "credentials_required": "Client ID と Client Secret が必要です。",
+  "update_available": "アップデートが利用可能です",
+  "new_version_desc": "新しいバージョン ({{version}}) がリリースされました。GitHubで詳細を確認し、アップデートしてください。",
+  "check_now": "今すぐ確認",
+  "up_to_date": "最新バージョンです",
+  "update_check_failed": "アップデートの確認に失敗しました",
+  "update_channel": "アップデートチャンネル",
+  "check_updates": "アップデートの確認"
 }
