@@ -43,7 +43,7 @@ const { showAlertDialog, showConfirmDialog, resizeImage, hexToRgb, getContrastCo
 // ========================================
 // アイコン形状の設定
 window.getCurrentIconShape = function() {
-  return localStorage.getItem(LS_KEYS.ICON_SHAPE) || 'square';
+  return localStorage.getItem(LS_KEYS.ICON_SHAPE) || 'circle';
 };
 
 window.getCurrentClockShape = function() {
@@ -191,19 +191,30 @@ window.applyShapeToAll = function(shape) {
 
 // 時計に形状を適用する
 window.applyClockShape = function(shape) {
-  const clockBg = document.querySelector('.clock-background');
+  let clockBg = document.querySelector('.clock-background');
   if (!clockBg) return;
 
-  // square/circle は CSS の border-radius で処理する — m3e-shape が不要
+  // 初期化
+  clockBg.style.clipPath = '';
+  clockBg.style.borderRadius = '';
+
   if (shape === 'square' || shape === 'circle') {
     if (clockBg.tagName === 'M3E-SHAPE' || clockBg.classList.contains('custom-shape-wrapper')) {
       const surface = clockBg.querySelector('.clock-surface');
       if (surface) {
         const newDiv = document.createElement('div');
         newDiv.className = 'clock-background';
+        newDiv.style.overflow = 'hidden';
         newDiv.appendChild(surface);
         clockBg.replaceWith(newDiv);
+        clockBg = newDiv;
       }
+    }
+    
+    if (shape === 'circle') {
+      clockBg.style.setProperty('border-radius', '50%', 'important');
+    } else {
+      clockBg.style.setProperty('border-radius', 'var(--radius-md)', 'important');
     }
     return;
   }
@@ -286,7 +297,8 @@ function loadWidgetVisibility() {
   const saved = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_VISIBILITY) || '{}');
   const defaults = {};
   Object.keys(availableWidgets).forEach(id => {
-    defaults[id] = true; // デフォルトはすべて表示
+    // 時計と天気のみデフォルトで表示
+    defaults[id] = (id === 'widget-clock' || id === 'weather_widget');
   });
   widgetVisibility = { ...defaults, ...saved };
 }
@@ -325,6 +337,43 @@ async function setWidgetVisibility(widgetId, isVisible) {
     localStorage.setItem(LS_KEYS.WIDGET_VISIBILITY, JSON.stringify(widgetVisibility));
   }
 }
+
+// デフォルトアイコン表示設定
+function setDefaultIconVisibility(iconId, isVisible, key) {
+  const icon = document.getElementById(iconId);
+  if (icon) {
+    icon.style.display = isVisible ? 'flex' : 'none';
+    localStorage.setItem(key, isVisible);
+  }
+}
+
+function loadDefaultIconVisibility() {
+  const icons = {
+    'appicon-chrome': LS_KEYS.SHOW_CHROME_ICON,
+    'appicon-files': LS_KEYS.SHOW_FILES_ICON,
+    'appicon-settings': LS_KEYS.SHOW_SETTINGS_ICON
+  };
+
+  for (const iconId in icons) {
+    const key = icons[iconId];
+    const isVisible = localStorage.getItem(key) !== 'false'; // Default to true
+    const toggle = document.getElementById(`toggle_${iconId.split('-')[1]}_icon`);
+
+    const icon = document.getElementById(iconId);
+    if (icon) {
+      icon.style.display = isVisible ? 'flex' : 'none';
+    }
+
+    if (toggle) {
+      if (typeof toggle.selected !== 'undefined') {
+        toggle.selected = isVisible;
+      } else {
+        toggle.checked = isVisible;
+      }
+    }
+  }
+}
+
 
 // すべてのモーダルを閉じる関数
 
@@ -968,8 +1017,8 @@ function updateSettingsFabVisibility(isVisible) {
 }
 
 if (toggleSettingsFabBtn) {
-  // 保存された設定を復元（デフォルトは表示）
-  const showFab = localStorage.getItem(LS_KEYS.SHOW_SETTINGS_FAB) !== 'false';
+  // 保存された設定を復元（デフォルトは非表示）
+  const showFab = localStorage.getItem(LS_KEYS.SHOW_SETTINGS_FAB) === 'true';
   updateSettingsFabVisibility(showFab);
   
   toggleSettingsFabBtn.addEventListener('change', (e) => {
@@ -983,8 +1032,8 @@ const toggleBlurEffectBtn = document.getElementById('toggle_blur_effect');
 const updateBlurEffect = window.StyleManager.updateBlurEffect.bind(window.StyleManager);
 
 if (toggleBlurEffectBtn) {
-  // 保存された設定を復元（デフォルトは有効）
-  const blurEnabled = localStorage.getItem(LS_KEYS.BLUR_EFFECT_ENABLED) !== 'false';
+  // 保存された設定を復元（デフォルトは無効）
+  const blurEnabled = localStorage.getItem(LS_KEYS.BLUR_EFFECT_ENABLED) === 'true';
   updateBlurEffect(blurEnabled);
   
   toggleBlurEffectBtn.addEventListener('change', (e) => {
@@ -1029,16 +1078,7 @@ if (darkModeSelector) {
   });
 }
 
-// アイコン形状の設定: DOM 準備後に要素を取得して初期化する
-iconShapeSelector = document.getElementById('icon_shape_selector');
-if (iconShapeSelector) {
-  const savedShape = getCurrentIconShape();
-  updateIconShape(savedShape);
-  iconShapeSelector.onchange = () => {
-    updateIconShape(iconShapeSelector.value);
-  };
-}
-
+// アイコン形状の設定: 初期状態を適用
 // ウィンドウ数の設定
 const windowCountSelector = document.getElementById('window_count_selector');
 const applyWindowCountBtn = document.getElementById('apply_window_count');
@@ -1307,6 +1347,27 @@ if (mediaPlayerWidgetEl && !mediaPlayerWidgetEl.id) mediaPlayerWidgetEl.id = 'wi
 
 function restoreWidgetPositions() {
   const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
+  
+  // デフォルト位置の設定 (保存されたデータがない場合)
+  if (Object.keys(positions).length === 0) {
+    const screenWidth = window.innerWidth;
+    const padding = 20;
+    
+    // 時計ウィジェットのデフォルト位置
+    positions['widget-clock'] = {
+      left: (screenWidth - 220 - padding) + 'px',
+      top: padding + 'px',
+      position: 'absolute'
+    };
+    
+    // 天気ウィジェットのデフォルト位置 (時計の下)
+    positions['weather_widget'] = {
+      left: (screenWidth - 220 - padding) + 'px',
+      top: (padding + 260) + 'px',
+      position: 'absolute'
+    };
+  }
+
   Object.keys(positions).forEach(key => {
     let el = document.getElementById(key);
     if (!el) {
@@ -1335,8 +1396,8 @@ try {
     }
   });
 
-  applyShapeToAll(getCurrentIconShape());
-  applyClockShape(getCurrentClockShape());
+  window.StyleManager.updateIconShape(getCurrentIconShape());
+  window.StyleManager.updateClockShape(getCurrentClockShape());
 } catch (e) {
   console.warn('Failed to apply shapes on init:', e);
 }
@@ -1428,8 +1489,8 @@ function openAddWidgetModal() {
     btn.disabled = widgetVisibility[widgetId]; // 既に表示されている場合は無効化
     btn.style.width = '100%';
 
-    btn.onclick = () => {
-      setWidgetVisibility(widgetId, true);
+    btn.onclick = async () => {
+      await setWidgetVisibility(widgetId, true);
       addWidgetModalOverlay.style.display = 'none';
     };
     widgetListContainer.appendChild(btn);
@@ -2353,7 +2414,7 @@ function openAddCustomShapeModal(onSaved) {
 }
 
 // 設定画面のリセットボタンにハンドラを追加
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const btn = document.getElementById('reset_widget_sizes_btn');
   if (btn) {
     btn.addEventListener('click', async () => {
@@ -2407,13 +2468,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ウィジェット非表示ボタンの処理
-  document.getElementById('widget_context_hide').onclick = (e) => {
+  document.getElementById('widget_context_hide').onclick = async (e) => {
     e.stopPropagation();
     hideContextMenu();
     if (currentEditingWidget) {
       const widgetId = currentEditingWidget.id;
       if (widgetId) {
-        setWidgetVisibility(widgetId, false);
+        await setWidgetVisibility(widgetId, false);
       }
     }
   };
@@ -2554,5 +2615,31 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   loadWidgetVisibility();
-  applyWidgetVisibility();
+  await applyWidgetVisibility();
+
+  loadDefaultIconVisibility();
+
+  const chromeToggle = document.getElementById('toggle_chrome_icon');
+  if (chromeToggle) {
+    chromeToggle.addEventListener('change', (e) => {
+      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      setDefaultIconVisibility('appicon-chrome', isVisible, LS_KEYS.SHOW_CHROME_ICON);
+    });
+  }
+
+  const filesToggle = document.getElementById('toggle_files_icon');
+  if (filesToggle) {
+    filesToggle.addEventListener('change', (e) => {
+      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      setDefaultIconVisibility('appicon-files', isVisible, LS_KEYS.SHOW_FILES_ICON);
+    });
+  }
+
+  const settingsToggle = document.getElementById('toggle_settings_icon');
+  if (settingsToggle) {
+    settingsToggle.addEventListener('change', (e) => {
+      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      setDefaultIconVisibility('appicon-settings', isVisible, LS_KEYS.SHOW_SETTINGS_ICON);
+    });
+  }
 });
