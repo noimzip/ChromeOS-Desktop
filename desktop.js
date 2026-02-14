@@ -326,6 +326,43 @@ async function setWidgetVisibility(widgetId, isVisible) {
   }
 }
 
+// デフォルトアイコン表示設定
+function setDefaultIconVisibility(iconId, isVisible, key) {
+  const icon = document.getElementById(iconId);
+  if (icon) {
+    icon.style.display = isVisible ? 'flex' : 'none';
+    localStorage.setItem(key, isVisible);
+  }
+}
+
+function loadDefaultIconVisibility() {
+  const icons = {
+    'appicon-chrome': LS_KEYS.SHOW_CHROME_ICON,
+    'appicon-files': LS_KEYS.SHOW_FILES_ICON,
+    'appicon-settings': LS_KEYS.SHOW_SETTINGS_ICON
+  };
+
+  for (const iconId in icons) {
+    const key = icons[iconId];
+    const isVisible = localStorage.getItem(key) !== 'false'; // Default to true
+    const toggle = document.getElementById(`toggle_${iconId.split('-')[1]}_icon`);
+
+    const icon = document.getElementById(iconId);
+    if (icon) {
+      icon.style.display = isVisible ? 'flex' : 'none';
+    }
+
+    if (toggle) {
+      if (typeof toggle.selected !== 'undefined') {
+        toggle.selected = isVisible;
+      } else {
+        toggle.checked = isVisible;
+      }
+    }
+  }
+}
+
+
 // すべてのモーダルを閉じる関数
 
 window.closeAllModals = function() {
@@ -1428,8 +1465,8 @@ function openAddWidgetModal() {
     btn.disabled = widgetVisibility[widgetId]; // 既に表示されている場合は無効化
     btn.style.width = '100%';
 
-    btn.onclick = () => {
-      setWidgetVisibility(widgetId, true);
+    btn.onclick = async () => {
+      await setWidgetVisibility(widgetId, true);
       addWidgetModalOverlay.style.display = 'none';
     };
     widgetListContainer.appendChild(btn);
@@ -2353,7 +2390,7 @@ function openAddCustomShapeModal(onSaved) {
 }
 
 // 設定画面のリセットボタンにハンドラを追加
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const btn = document.getElementById('reset_widget_sizes_btn');
   if (btn) {
     btn.addEventListener('click', async () => {
@@ -2407,13 +2444,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ウィジェット非表示ボタンの処理
-  document.getElementById('widget_context_hide').onclick = (e) => {
+  document.getElementById('widget_context_hide').onclick = async (e) => {
     e.stopPropagation();
     hideContextMenu();
     if (currentEditingWidget) {
       const widgetId = currentEditingWidget.id;
       if (widgetId) {
-        setWidgetVisibility(widgetId, false);
+        await setWidgetVisibility(widgetId, false);
       }
     }
   };
@@ -2554,5 +2591,31 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   loadWidgetVisibility();
-  applyWidgetVisibility();
+  await applyWidgetVisibility();
+
+  loadDefaultIconVisibility();
+
+  const chromeToggle = document.getElementById('toggle_chrome_icon');
+  if (chromeToggle) {
+    chromeToggle.addEventListener('change', (e) => {
+      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      setDefaultIconVisibility('appicon-chrome', isVisible, LS_KEYS.SHOW_CHROME_ICON);
+    });
+  }
+
+  const filesToggle = document.getElementById('toggle_files_icon');
+  if (filesToggle) {
+    filesToggle.addEventListener('change', (e) => {
+      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      setDefaultIconVisibility('appicon-files', isVisible, LS_KEYS.SHOW_FILES_ICON);
+    });
+  }
+
+  const settingsToggle = document.getElementById('toggle_settings_icon');
+  if (settingsToggle) {
+    settingsToggle.addEventListener('change', (e) => {
+      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      setDefaultIconVisibility('appicon-settings', isVisible, LS_KEYS.SHOW_SETTINGS_ICON);
+    });
+  }
 });
