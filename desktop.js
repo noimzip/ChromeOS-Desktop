@@ -43,7 +43,7 @@ const { showAlertDialog, showConfirmDialog, resizeImage, hexToRgb, getContrastCo
 // ========================================
 // アイコン形状の設定
 window.getCurrentIconShape = function() {
-  return localStorage.getItem(LS_KEYS.ICON_SHAPE) || 'square';
+  return localStorage.getItem(LS_KEYS.ICON_SHAPE) || 'circle';
 };
 
 window.getCurrentClockShape = function() {
@@ -1067,16 +1067,7 @@ if (darkModeSelector) {
   });
 }
 
-// アイコン形状の設定: DOM 準備後に要素を取得して初期化する
-iconShapeSelector = document.getElementById('icon_shape_selector');
-if (iconShapeSelector) {
-  const savedShape = getCurrentIconShape();
-  updateIconShape(savedShape);
-  iconShapeSelector.onchange = () => {
-    updateIconShape(iconShapeSelector.value);
-  };
-}
-
+// アイコン形状の設定: 初期状態を適用
 // ウィンドウ数の設定
 const windowCountSelector = document.getElementById('window_count_selector');
 const applyWindowCountBtn = document.getElementById('apply_window_count');
@@ -1394,8 +1385,8 @@ try {
     }
   });
 
-  applyShapeToAll(getCurrentIconShape());
-  applyClockShape(getCurrentClockShape());
+  window.StyleManager.updateIconShape(getCurrentIconShape());
+  window.StyleManager.updateClockShape(getCurrentClockShape());
 } catch (e) {
   console.warn('Failed to apply shapes on init:', e);
 }
