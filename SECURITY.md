@@ -41,6 +41,15 @@ Settings are configurable from the Settings dialog under **Security & Privacy**.
 - Linux command execution is gated by an allowlist in **Strict** and **Standard** modes.
 - File and folder opening uses Electron's `shell.openPath` (no shell interpolation).
 
+## Data Privacy & Storage
+
+### Sensitive Information
+- **OAuth Tokens:** For widgets like Gmail, OAuth2 access and refresh tokens are stored in the browser's `localStorage`. These are used to communicate with Google APIs on your behalf.
+- **Client Credentials:** Your Google Cloud Client ID and Secret are also stored in `localStorage`.
+- **Location Data:** The Weather widget stores your latitude and longitude. To protect your privacy, these coordinates are rounded to two decimal places (approx. 1km accuracy) before being saved.
+
+Ensure your Chromebook and the Linux container are kept secure, as anyone with access to your `userData` directory can theoretically retrieve these tokens.
+
 ## Chrome Extension
 
 - The extension is loaded in "Developer Mode" (unpacked). 

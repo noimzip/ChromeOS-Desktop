@@ -24,6 +24,8 @@ Soul Widgets Manager aims to bridge the gap between the web-centric ChromeOS and
 ### Key Features
 - **Interactive Widgets:**
   - **Clock:** Modern 12-sided design.
+  - **Weather:** Real-time updates with multiple providers (e.g., NWS), geolocation, and unit conversion (C/F).
+  - **Gmail:** Check your unread emails and stay updated directly from your desktop.
   - **Media Player:** Unified control for Linux (via playerctl) and Chrome browser media.
   - **GitHub:** Contribution graph and streak display.
   - **Google Calendar:** Embedded schedule view.

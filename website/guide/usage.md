@@ -43,3 +43,21 @@ Open **Settings → Security & Privacy** to select a security mode:
 - **None:** No restrictions (for trusted environments only).
 
 When you add or edit a Linux app, its command is automatically added to the allowlist so apps still run in Strict mode.
+
+## Setting up Widgets
+
+### Weather Widget
+After adding the weather widget, right-click it and select **Settings** to:
+- Choose your preferred weather provider.
+- Set your location (Automatic or Manual).
+- Change temperature units.
+
+### Gmail Widget
+To use the Gmail widget, you need to provide your own Google Cloud credentials:
+1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2.  Create a new project and enable the **Gmail API**.
+3.  Configure the **OAuth consent screen** (Internal or External).
+4.  Create **OAuth 2.0 Client IDs** (Application type: "Web application" or "Desktop app" depending on your preference, but the widget handles the flow).
+5.  In the widget's settings on your desktop, enter the **Client ID** and **Client Secret**.
+6.  Click **Login** and follow the authentication steps in your browser.
+

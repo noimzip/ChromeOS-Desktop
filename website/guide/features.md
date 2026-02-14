@@ -7,6 +7,19 @@ Soul Widgets Manager comes with several built-in widgets to enhance your product
 ### Clock Widget
 A stylish, modern clock with a unique 12-sided design. It provides a clean way to check the time at a glance.
 
+### Weather Widget
+Stay updated with real-time weather information.
+- **Data Providers:** Supports multiple providers including the National Weather Service (NWS).
+- **Geolocation:** Automatically detects your location for accurate local forecasts.
+- **Customization:** Choose between Celsius and Fahrenheit units.
+- **Visuals:** Beautiful icons that adapt to light and dark themes.
+
+### Gmail Widget
+Monitor your inbox without opening a browser tab.
+- **Unread Count:** See how many unread emails you have at a glance.
+- **Quick Refresh:** Update your inbox status with a single click.
+- **Integration:** Securely connects to your Google account.
+
 ### Media Player
 A fully functional media controller. It supports:
 - **Linux Apps:** Controls players like Spotify, VLC, etc., via `playerctl`.
