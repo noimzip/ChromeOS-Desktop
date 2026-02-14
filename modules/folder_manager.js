@@ -28,8 +28,8 @@ window.FolderManager = {
     folderEl.style.left = icon1.style.left || (icon1.offsetLeft + 'px');
     folderEl.style.top = icon1.style.top || (icon1.offsetTop + 'px');
     
-    icon1.style.display = 'none';
-    icon2.style.display = 'none';
+    if (icon1Data.isBuiltin) icon1.style.display = 'none'; else icon1.remove();
+    if (icon2Data.isBuiltin) icon2.style.display = 'none'; else icon2.remove();
     
     const desktopIcons = document.getElementById('desktop_icons');
     if (desktopIcons) {
@@ -416,7 +416,14 @@ window.FolderManager = {
       if (app.isDirectory) created = window.AppManager.createFolderShortcutIcon(app);
       else created = window.AppManager.createFileShortcutIcon(app);
     } else if (app.isBuiltin && app.id) {
-      created = document.getElementById(app.id); if (created) created.style.display = '';
+      created = document.getElementById(app.id);
+      if (created) {
+        const key = app.id === 'appicon-chrome' ? LS_KEYS.SHOW_CHROME_ICON :
+                    app.id === 'appicon-files' ? LS_KEYS.SHOW_FILES_ICON :
+                    app.id === 'appicon-settings' ? LS_KEYS.SHOW_SETTINGS_ICON : null;
+        const isVisible = !key || localStorage.getItem(key) !== 'false';
+        created.style.display = isVisible ? 'flex' : 'none';
+      }
     } else if (app.id) {
       created = document.querySelector(`[data-save-key="${app.id}"]`);
       if (created) created.style.display = '';
@@ -428,7 +435,14 @@ window.FolderManager = {
         const remaining = folderData.apps[0];
         if (remaining.command || remaining.isLinuxApp) window.AppManager.createLinuxAppIcon(remaining);
         else if (remaining.isBuiltin && remaining.id) {
-          const el = document.getElementById(remaining.id); if (el) el.style.display = '';
+          const el = document.getElementById(remaining.id);
+          if (el) {
+            const key = remaining.id === 'appicon-chrome' ? LS_KEYS.SHOW_CHROME_ICON :
+                        remaining.id === 'appicon-files' ? LS_KEYS.SHOW_FILES_ICON :
+                        remaining.id === 'appicon-settings' ? LS_KEYS.SHOW_SETTINGS_ICON : null;
+            const isVisible = !key || localStorage.getItem(key) !== 'false';
+            el.style.display = isVisible ? 'flex' : 'none';
+          }
         } else if (remaining.id) {
           const el = document.querySelector(`[data-save-key="${remaining.id}"]`);
           if (el) {

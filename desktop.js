@@ -342,7 +342,12 @@ async function setWidgetVisibility(widgetId, isVisible) {
 function setDefaultIconVisibility(iconId, isVisible, key) {
   const icon = document.getElementById(iconId);
   if (icon) {
-    icon.style.display = isVisible ? 'flex' : 'none';
+    // フォルダ内にある場合は、設定に関わらず非表示を維持する
+    if (isVisible && typeof isAppInFolder === 'function' && isAppInFolder(app => app.isBuiltin && app.id === iconId)) {
+      icon.style.display = 'none';
+    } else {
+      icon.style.display = isVisible ? 'flex' : 'none';
+    }
     localStorage.setItem(key, isVisible);
   }
 }
@@ -361,7 +366,12 @@ function loadDefaultIconVisibility() {
 
     const icon = document.getElementById(iconId);
     if (icon) {
-      icon.style.display = isVisible ? 'flex' : 'none';
+      // フォルダ内にある場合は常に非表示にする
+      if (typeof isAppInFolder === 'function' && isAppInFolder(app => app.isBuiltin && app.id === iconId)) {
+        icon.style.display = 'none';
+      } else {
+        icon.style.display = isVisible ? 'flex' : 'none';
+      }
     }
 
     if (toggle) {
@@ -1328,6 +1338,14 @@ if (saveLinuxAppBtn) {
 
 // Load saved folders first (to know which apps are in folders)
 loadFolders();
+
+// Hide builtin icons if they are already in folders
+['appicon-chrome', 'appicon-files', 'appicon-settings'].forEach(id => {
+  if (isAppInFolder(app => app.isBuiltin && app.id === id)) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+});
 
 // Load saved Linux apps (skip those in folders)
 const savedLinuxApps = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS) || '[]');
