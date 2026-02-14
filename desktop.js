@@ -65,6 +65,7 @@ window.wrapIconWithShape = function(appiconEl, shape) {
     if (parentTag === 'm3e-shape' || (parent && parent.classList.contains('custom-shape-wrapper'))) {
       parent.replaceWith(img);
     }
+    img.style.borderRadius = shape === 'circle' ? '50%' : 'var(--radius-sm)';
     return;
   }
 
@@ -126,6 +127,7 @@ window.wrapImageWithShape = function(img, shape) {
     if (parentTag === 'm3e-shape' || (parent && parent.classList.contains('custom-shape-wrapper'))) {
       parent.replaceWith(img);
     }
+    img.style.borderRadius = shape === 'circle' ? '50%' : 'var(--radius-sm)';
     return;
   }
 

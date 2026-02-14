@@ -353,12 +353,14 @@ window.FolderManager = {
       };
       
       contents.appendChild(div);
-      if (!app.path && typeof window.wrapIconWithShape === 'function') {
+      if (typeof window.wrapIconWithShape === 'function') {
         window.wrapIconWithShape(div, app.shape || window.getCurrentIconShape());
-        const wrapper = div.querySelector('m3e-shape');
-        if (wrapper) {
-          wrapper.style.width = '50px'; wrapper.style.height = '50px';
-          wrapper.style.display = 'inline-block';
+        // フォルダ内のアイコンサイズを調整
+        const target = div.querySelector('m3e-shape, .custom-shape-wrapper, img');
+        if (target) {
+          target.style.width = '50px';
+          target.style.height = '50px';
+          if (target.tagName === 'M3E-SHAPE') target.style.display = 'inline-block';
         }
       }
     });
