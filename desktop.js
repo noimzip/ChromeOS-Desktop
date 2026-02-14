@@ -1368,19 +1368,20 @@ if (mediaPlayerWidgetEl && !mediaPlayerWidgetEl.id) mediaPlayerWidgetEl.id = 'wi
 function restoreWidgetPositions() {
   const positions = JSON.parse(localStorage.getItem(LS_KEYS.WIDGET_POSITIONS) || '{}');
   
-  // デフォルト位置の設定 (保存されたデータがない場合)
-  if (Object.keys(positions).length === 0) {
-    const screenWidth = window.innerWidth;
-    const padding = 20;
-    
-    // 時計ウィジェットのデフォルト位置
+  const screenWidth = window.innerWidth;
+  const padding = 20;
+
+  // 時計ウィジェットのデフォルト位置 (データがない場合のみ設定)
+  if (!positions['widget-clock']) {
     positions['widget-clock'] = {
       left: (screenWidth - 220 - padding) + 'px',
       top: padding + 'px',
       position: 'absolute'
     };
-    
-    // 天気ウィジェットのデフォルト位置 (時計の下)
+  }
+  
+  // 天気ウィジェットのデフォルト位置 (データがない場合のみ設定)
+  if (!positions['weather_widget']) {
     positions['weather_widget'] = {
       left: (screenWidth - 220 - padding) + 'px',
       top: (padding + 260) + 'px',
