@@ -671,6 +671,13 @@ body.no-blur .appicon.folder .folder-preview {
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.widget:hover .widget-resizer,
+.widget.resizing .widget-resizer {
+  opacity: 1;
 }
 .widget-resizer:after {
   content: '';
