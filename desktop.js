@@ -2512,7 +2512,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupShapeButtons('weather_shape_buttons', currentShape, (s) => {
           localStorage.setItem('weather_shape', s);
           if (window.applyWeatherShape) window.applyWeatherShape(s);
-        });
+        }, './assets/weather/light/cloudy.svg');
         
         // 保存ボタンのイベント
         const saveBtn = document.getElementById('save_weather_settings');
