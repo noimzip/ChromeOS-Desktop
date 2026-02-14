@@ -2445,6 +2445,11 @@ function openAddCustomShapeModal(onSaved) {
 
 // 設定画面のリセットボタンにハンドラを追加
 document.addEventListener('DOMContentLoaded', async () => {
+  // データ管理（エクスポート/インポート）の初期化
+  if (window.DataManager) {
+    window.DataManager.initUI();
+  }
+
   const btn = document.getElementById('reset_widget_sizes_btn');
   if (btn) {
     btn.addEventListener('click', async () => {

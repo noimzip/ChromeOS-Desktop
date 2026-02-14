@@ -14,6 +14,7 @@
     <script src="./modules/context_menu.js" defer></script>
     <script src="./modules/style_manager.js" defer></script>
     <script src="./modules/system_settings.js" defer></script>
+    <script src="./modules/data_manager.js" defer></script>
     <script src="./modules/update_manager.js" defer></script>
     <script src="./i18n.js" defer></script>
     <script src="./desktop.js" defer></script>
@@ -978,6 +979,16 @@
 
           <div class="settings-section">
             <h4 class="settings-section-title" data-i18n="data_management">データ管理</h4>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="export_import">エクスポート / インポート</span>
+                <small data-i18n="export_desc">現在のすべての設定とウィジェットデータをファイルに保存します。</small>
+              </div>
+              <div class="settings-item-control" style="gap: 8px; flex-wrap: wrap;">
+                <m3e-button variant="outlined" id="export_settings_btn" data-i18n="export_settings">設定をエクスポート</m3e-button>
+                <m3e-button variant="outlined" id="import_settings_btn" data-i18n="import_settings">設定をインポート</m3e-button>
+              </div>
+            </div>
             <div class="settings-item">
               <div class="settings-item-label">
                 <span data-i18n="folder_style">フォルダーのスタイル</span>
