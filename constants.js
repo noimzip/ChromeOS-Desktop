@@ -47,9 +47,6 @@ const LS_KEYS = {
   LOCK_MOVEMENT: 'lockMovement',
   ICON_SIZE: 'iconSize',
   SECURITY_MODE: 'securityMode',
-  SHOW_CHROME_ICON: 'showChromeIcon',
-  SHOW_FILES_ICON: 'showFilesIcon',
-  SHOW_SETTINGS_ICON: 'showSettingsIcon',
 };
 
 const SHAPES = [
