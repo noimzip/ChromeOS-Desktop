@@ -1,11 +1,11 @@
 <div align="center">
 
-<img src="../chrome_extension/assets/soul-128.png" width="128px" height="128px">
+<img src="chrome_extension/assets/soul-128.png" width="128px" height="128px">
 
 # Soul Widgets Manager
 ## A Windows-like desktop experience for ChromeOS
 
-[English](README.md) | [日本語](README_JA.md)
+[English](docs/README.md) | [日本語](docs/README_JA.md)
 
 ---
 
@@ -99,6 +99,15 @@ Settings can be changed via the GUI (Right-click > Settings), but are stored in 
 | `targetDisplayId` | String | ID of the display to show the overlay on | `primary` |
 | `windowResizable` | Boolean | Allow window resizing | `true` |
 | `autoOpenDevTools` | Boolean | Automatically open DevTools on startup | `false` |
+| `securityMode` | String | Security mode: `strict`, `standard`, `none` | `standard` |
+| `allowedBinaries` | String[] | Allowlist for Linux app execution | `[]` |
+
+### Security Mode
+- **Strict:** Highest safety. Only allowlisted Linux commands are executable. Input is sanitized aggressively and external requests are limited to an allowlist.
+- **Standard:** Balanced. HTML-heavy input is sanitized and known-bad domains are blocked.
+- **None:** No restrictions. Intended for trusted environments only.
+
+The allowlist is maintained in the Settings UI under **Security & Privacy**. When you add or edit a Linux app, its command is automatically added to the allowlist so that apps can still run in Strict mode.
 
 ### Environment Variables
 - **Electron Flags:** `startup.sh` sets `--ozone-platform-hint=wayland`. This is mandatory for displaying transparent windows correctly on ChromeOS.
@@ -132,12 +141,12 @@ For debugging, setting `autoOpenDevTools: true` in the settings menu or `setting
 ---
 
 ## 🤝 Contribution
-Contributions, bug reports, and feature requests are welcome! Please see [CONTRIBUTING.md](../CONTRIBUTING.md) for details on how to get involved.
+Contributions, bug reports, and feature requests are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get involved.
 
 ---
 
 ## 📜 License
-This project is licensed under the **GPL-3.0 License**. See the [LICENSE](../LICENSE) file for details. For security concerns, please refer to [../SECURITY.md](../SECURITY.md).
+This project is licensed under the **GPL-3.0 License**. See the [LICENSE](LICENSE) file for details. For security concerns, please refer to [SECURITY.md](SECURITY.md).
 
 ---
 
