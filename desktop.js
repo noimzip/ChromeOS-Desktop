@@ -191,19 +191,30 @@ window.applyShapeToAll = function(shape) {
 
 // 時計に形状を適用する
 window.applyClockShape = function(shape) {
-  const clockBg = document.querySelector('.clock-background');
+  let clockBg = document.querySelector('.clock-background');
   if (!clockBg) return;
 
-  // square/circle は CSS の border-radius で処理する — m3e-shape が不要
+  // 初期化
+  clockBg.style.clipPath = '';
+  clockBg.style.borderRadius = '';
+
   if (shape === 'square' || shape === 'circle') {
     if (clockBg.tagName === 'M3E-SHAPE' || clockBg.classList.contains('custom-shape-wrapper')) {
       const surface = clockBg.querySelector('.clock-surface');
       if (surface) {
         const newDiv = document.createElement('div');
         newDiv.className = 'clock-background';
+        newDiv.style.overflow = 'hidden';
         newDiv.appendChild(surface);
         clockBg.replaceWith(newDiv);
+        clockBg = newDiv;
       }
+    }
+    
+    if (shape === 'circle') {
+      clockBg.style.setProperty('border-radius', '50%', 'important');
+    } else {
+      clockBg.style.setProperty('border-radius', 'var(--radius-md)', 'important');
     }
     return;
   }
