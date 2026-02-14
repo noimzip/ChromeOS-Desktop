@@ -1005,8 +1005,8 @@ function updateSettingsFabVisibility(isVisible) {
 }
 
 if (toggleSettingsFabBtn) {
-  // 保存された設定を復元（デフォルトは表示）
-  const showFab = localStorage.getItem(LS_KEYS.SHOW_SETTINGS_FAB) !== 'false';
+  // 保存された設定を復元（デフォルトは非表示）
+  const showFab = localStorage.getItem(LS_KEYS.SHOW_SETTINGS_FAB) === 'true';
   updateSettingsFabVisibility(showFab);
   
   toggleSettingsFabBtn.addEventListener('change', (e) => {
@@ -1020,8 +1020,8 @@ const toggleBlurEffectBtn = document.getElementById('toggle_blur_effect');
 const updateBlurEffect = window.StyleManager.updateBlurEffect.bind(window.StyleManager);
 
 if (toggleBlurEffectBtn) {
-  // 保存された設定を復元（デフォルトは有効）
-  const blurEnabled = localStorage.getItem(LS_KEYS.BLUR_EFFECT_ENABLED) !== 'false';
+  // 保存された設定を復元（デフォルトは無効）
+  const blurEnabled = localStorage.getItem(LS_KEYS.BLUR_EFFECT_ENABLED) === 'true';
   updateBlurEffect(blurEnabled);
   
   toggleBlurEffectBtn.addEventListener('change', (e) => {
