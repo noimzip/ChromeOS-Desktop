@@ -46,8 +46,12 @@
    * 天気形状を適用する
    */
   window.applyWeatherShape = function(shape) {
-    const weatherBg = document.querySelector('.weather-background');
+    let weatherBg = document.querySelector('.weather-background');
     if (!weatherBg) return;
+
+    // 初期化
+    weatherBg.style.clipPath = '';
+    weatherBg.style.borderRadius = '';
 
     if (shape === 'square' || shape === 'circle') {
       if (weatherBg.tagName === 'M3E-SHAPE' || weatherBg.classList.contains('custom-shape-wrapper')) {
@@ -55,10 +59,17 @@
         if (surface) {
           const newDiv = document.createElement('div');
           newDiv.className = 'weather-background';
-          if (shape === 'circle') newDiv.style.borderRadius = '50%';
+          newDiv.style.overflow = 'hidden';
           newDiv.appendChild(surface);
           weatherBg.replaceWith(newDiv);
+          weatherBg = newDiv;
         }
+      }
+      
+      if (shape === 'circle') {
+        weatherBg.style.setProperty('border-radius', '50%', 'important');
+      } else {
+        weatherBg.style.setProperty('border-radius', 'var(--radius-md)', 'important');
       }
       return;
     }
