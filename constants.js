@@ -50,6 +50,7 @@ const LS_KEYS = {
   SHOW_CHROME_ICON: 'showChromeIcon',
   SHOW_FILES_ICON: 'showFilesIcon',
   SHOW_SETTINGS_ICON: 'showSettingsIcon',
+  UPDATE_CHANNEL: 'updateChannel',
 };
 
 const SHAPES = [

@@ -2663,4 +2663,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       setDefaultIconVisibility('appicon-settings', isVisible, LS_KEYS.SHOW_SETTINGS_ICON);
     });
   }
+
+  // アップデートチェックの初期化
+  if (window.UpdateManager) {
+    // 起動時にチェック (3秒後)
+    setTimeout(() => window.UpdateManager.checkForUpdates(), 3000);
+
+    // 手動チェックボタン
+    const checkBtn = document.getElementById('check_updates_btn');
+    if (checkBtn) {
+      checkBtn.onclick = () => window.UpdateManager.checkForUpdates(true);
+    }
+    
+    // バージョン表示の更新
+    const versionDisplay = document.getElementById('app_version_display');
+    if (versionDisplay) {
+      versionDisplay.textContent = 'v' + window.UpdateManager.CURRENT_VERSION;
+    }
+
+    // チャンネルセレクターの初期化
+    const channelSelector = document.getElementById('update_channel_selector');
+    if (channelSelector) {
+      channelSelector.value = window.UpdateManager.getChannel();
+      channelSelector.addEventListener('change', (e) => {
+        localStorage.setItem(LS_KEYS.UPDATE_CHANNEL, e.target.value);
+      });
+    }
+  }
 });

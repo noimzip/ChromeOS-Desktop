@@ -156,5 +156,12 @@
   "fetch_error": "データの取得に失敗しました",
   "login_success": "ログインに成功しました！",
   "login_failed": "ログインに失敗しました",
-  "credentials_required": "Client ID と Client Secret が必要です。"
+  "credentials_required": "Client ID と Client Secret が必要です。",
+  "update_available": "アップデートが利用可能です",
+  "new_version_desc": "新しいバージョン ({{version}}) がリリースされました。GitHubで詳細を確認し、アップデートしてください。",
+  "check_now": "今すぐ確認",
+  "up_to_date": "最新バージョンです",
+  "update_check_failed": "アップデートの確認に失敗しました",
+  "update_channel": "アップデートチャンネル",
+  "check_updates": "アップデートの確認"
 }
