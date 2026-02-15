@@ -6,14 +6,14 @@
 
 window.AppManager = {
   _safeIconUrl(url) {
-    if (!url) return './assets/settings.webp';
+    if (!url) return './assets/app.png';
     try {
       const parsed = new URL(url, window.location.href);
       const allowed = ['http:', 'https:', 'data:', 'file:', 'blob:'];
-      if (!allowed.includes(parsed.protocol)) return './assets/settings.webp';
+      if (!allowed.includes(parsed.protocol)) return './assets/app.png';
       return parsed.href;
     } catch {
-      return './assets/settings.webp';
+      return './assets/app.png';
     }
   },
 
@@ -307,21 +307,35 @@ window.AppManager = {
 
   
 
-      const iconSrc = folderData.icon || './assets/folder.svg';
+            const iconSrc = folderData.icon || './assets/folder.png';
 
-      const icon = window.AppManager._createBaseIcon('folder-shortcut', { ...folderData, icon: iconSrc }, {
+  
 
-        onclick,
+            const icon = window.AppManager._createBaseIcon('folder-shortcut', { ...folderData, icon: iconSrc }, {
 
-        dataProps: { 
+  
 
-          _filePath: folderData.path,
+              onclick,
 
-          _fileData: { ...folderData }
+  
 
-        }
+              dataProps: { 
 
-      });
+  
+
+                _filePath: folderData.path,
+
+  
+
+                _fileData: { ...folderData }
+
+  
+
+              }
+
+  
+
+            });
 
   
 
@@ -351,7 +365,7 @@ window.AppManager = {
    * ファイルタイプに応じたアイコンを取得
    */
   getFileIcon(filePath, isDirectory) {
-    return isDirectory ? './assets/folder.svg' : './assets/file.svg';
+    return isDirectory ? './assets/folder.png' : './assets/file.png';
   },
 
   /**

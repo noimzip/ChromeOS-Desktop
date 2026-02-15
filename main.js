@@ -250,6 +250,44 @@ ipcMain.handle('set-auto-open-devtools', async (event, autoOpen) => {
   saveSettings(settings);
 });
 
+// 設定のエクスポート/インポート用
+ipcMain.handle('get-all-system-settings', async () => {
+  return loadSettings();
+});
+
+ipcMain.handle('save-settings-to-file', async (event, data) => {
+  const { filePath, canceled } = await dialog.showSaveDialog({
+    title: '設定をエクスポート',
+    defaultPath: 'soul-settings.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  });
+  if (canceled || !filePath) return { canceled: true };
+  
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  return { success: true };
+});
+
+ipcMain.handle('load-settings-from-file', async () => {
+  const { filePaths, canceled } = await dialog.showOpenDialog({
+    title: '設定をインポート',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    properties: ['openFile']
+  });
+  if (canceled || filePaths.length === 0) return { canceled: true };
+  
+  try {
+    const content = fs.readFileSync(filePaths[0], 'utf8');
+    return { success: true, data: JSON.parse(content) };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('import-system-settings', async (event, settings) => {
+  saveSettings(settings);
+  return { success: true };
+});
+
 // アプリを再起動するIPCハンドラ
 ipcMain.handle('restart-app', async () => {
   app.relaunch();

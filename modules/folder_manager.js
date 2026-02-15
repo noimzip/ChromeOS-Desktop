@@ -254,7 +254,7 @@ window.FolderManager = {
       div.className = 'appicon folder-item';
       div.dataset.folderItemIndex = index;
       const imgEl = document.createElement('img');
-      imgEl.src = window.AppManager?._safeIconUrl ? window.AppManager._safeIconUrl(app.icon) : (app.icon || './assets/settings.webp');
+      imgEl.src = window.AppManager?._safeIconUrl ? window.AppManager._safeIconUrl(app.icon) : (app.icon || './assets/app.png');
       const labelEl = document.createElement('p');
       labelEl.textContent = app.name || '';
       div.appendChild(imgEl);
