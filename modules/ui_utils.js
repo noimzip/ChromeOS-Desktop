@@ -78,7 +78,7 @@ window.UIUtils = {
     }
 
     cancelBtn.style.display = 'none';
-    okBtn.textContent = 'OK';
+    okBtn.textContent = i18n.t('ok');
     
     const handleOk = () => dialog.hide('ok');
     okBtn.onclick = handleOk;
@@ -114,7 +114,7 @@ window.UIUtils = {
     const okBtn = document.getElementById('global_dialog_ok');
     
     cancelBtn.textContent = i18n.t('cancel');
-    okBtn.textContent = 'OK';
+    okBtn.textContent = i18n.t('ok');
     
     dialogTitle.textContent = title;
     

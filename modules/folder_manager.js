@@ -10,8 +10,7 @@ window.FolderManager = {
    */
   createFolder(icon1, icon2) {
     const folderId = 'folder-' + Date.now();
-    const lang = getCurrentLanguage();
-    const folderName = lang === 'ja' ? '新規フォルダー' : 'New Folder';
+    const folderName = i18n.t('new_folder');
     
     const icon1Data = window.AppManager.getIconData(icon1);
     const icon2Data = window.AppManager.getIconData(icon2);
@@ -485,15 +484,13 @@ window.FolderManager = {
       if (app.runInTerminal) command = `xterm -hold -e "${app.command}"`;
       const result = await window.launchLinuxApp(command);
       if (!result.success) {
-        const lang = getCurrentLanguage();
-        const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
-        await window.UIUtils.showAlertDialog(errorMsg);
+        await window.UIUtils.showAlertDialog(i18n.t('launch_failed', { error: result.error }));
       }
       return;
     }
     if (app.path) {
       const result = await window.electronAPI.openFileOrFolder(app.path);
-      if (!result.success) await window.UIUtils.showAlertDialog(i18n.t('open_failed') + ': ' + result.error);
+      if (!result.success) await window.UIUtils.showAlertDialog(i18n.t('open_failed', { error: result.error }));
       return;
     }
     if (app.url) {

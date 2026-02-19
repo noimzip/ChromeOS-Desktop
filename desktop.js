@@ -882,10 +882,8 @@ function resetWidgetPositions() {
 
 document.getElementById('reset_widget_position').onclick = () => {
   (async () => {
-    const lang = getCurrentLanguage();
-    const confirmMsg = lang === 'ja' ? 'すべてのウィジェットとアイコンの位置をリセットしますか？' : 'Reset all widget and icon positions?';
-    if (await showConfirmDialog(confirmMsg)) {
-      resetWidgetPositions();
+      const confirmMsg = i18n.t('reset_positions_confirm');
+      if (await showConfirmDialog(confirmMsg)) {      resetWidgetPositions();
     }
   })();
 }
@@ -1156,8 +1154,7 @@ if (applyFolderStyleAllBtn) {
       applyFolderStyle(window.currentOpenFolderId);
     }
     
-    const lang = getCurrentLanguage();
-    await showAlertDialog(lang === 'ja' ? 'すべてのフォルダーに適用しました' : 'Applied to all folders');
+    await showAlertDialog(i18n.t('applied_to_all_folders'));
   };
 }
 
@@ -1315,8 +1312,7 @@ if (saveLinuxAppBtn) {
     const runInTerminal = document.getElementById('linux_app_run_in_terminal').checked;
     
     if (!name || !command) {
-      const lang = getCurrentLanguage();
-      await showAlertDialog(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
+      await showAlertDialog(i18n.t('enter_name_and_command'));
       return;
     }
     
@@ -1558,9 +1554,7 @@ document.getElementById('context_edit').onclick = async (e) => {
     openEditLinuxappModal();
   } else if (currentContextAppType === 'file' || currentContextAppType === 'folder-shortcut') {
     // ファイル/フォルダショートカットは編集不可（パスは変更できない）
-    const lang = getCurrentLanguage();
-    const msg = lang === 'ja' ? 'ファイル/フォルダのショートカットは編集できません。削除して再度追加してください。' : 'File/folder shortcuts cannot be edited. Please delete and add again.';
-    await showAlertDialog(msg);
+    await showAlertDialog(i18n.t('file_shortcut_edit_msg'));
   }
 };
 
@@ -1679,13 +1673,12 @@ document.getElementById('context_delete').onclick = async (e) => {
   
   if (!currentEditingIcon) return;
   
-  const lang = getCurrentLanguage();
   const appName = currentEditingApp?.name || currentEditingIcon._fileData?.name || 'Unknown';
-  const confirmMsg = lang === 'ja' ? `「${appName}」を削除しますか？` : `Delete "${appName}"?`;
+  const confirmMsg = i18n.t('confirm_delete_app', { name: appName });
   
   // フォルダー内アイテムの場合
   if (currentContextAppType && currentContextAppType.startsWith('folder-item')) {
-    const folderConfirmMsg = lang === 'ja' ? `「${appName}」をフォルダーから取り出しますか？` : `Remove "${appName}" from folder?`;
+    const folderConfirmMsg = i18n.t('confirm_remove_from_folder', { name: appName });
     if (await showConfirmDialog(folderConfirmMsg)) {
       const folderId = currentEditingIcon._folderId;
       const index = currentEditingIcon._folderIndex;
@@ -1795,8 +1788,7 @@ document.getElementById('save_edit_webapp').onclick = async () => {
   }
   
   if (!name || !url) {
-    const lang = getCurrentLanguage();
-    await showAlertDialog(lang === 'ja' ? '名前とURLを入力してください' : 'Please enter name and URL');
+    await showAlertDialog(i18n.t('enter_name_and_url'));
     return;
   }
   if (!url.startsWith('chrome://') && window.SecurityManager && !window.SecurityManager.isUrlAllowed(url)) {
@@ -2045,8 +2037,7 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
   const runInTerminal = document.getElementById('edit_linuxapp_run_in_terminal').checked;
   
   if (!name || !command) {
-    const lang = getCurrentLanguage();
-    await showAlertDialog(lang === 'ja' ? '名前とコマンドを入力してください' : 'Please enter name and command');
+    await showAlertDialog(i18n.t('enter_name_and_command'));
     return;
   }
     
@@ -2109,8 +2100,7 @@ document.getElementById('save_edit_linuxapp').onclick = async () => {
       console.log('Launching Linux app:', cmd);
       const result = await launchLinuxApp(cmd);
       if (!result.success) {
-        const lang = getCurrentLanguage();
-        const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
+        const errorMsg = i18n.t('launch_failed', { error: result.error });
         await showAlertDialog(errorMsg);
       }
     };
@@ -2359,9 +2349,9 @@ function setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc = 
       btn.appendChild(preview);
       
       // 右クリックで削除
-      btn.oncontextmenu = (e) => {
+      btn.oncontextmenu = async (e) => {
         e.preventDefault();
-        if (confirm(`Delete custom shape "${s}"?`)) {
+        if (await showConfirmDialog(i18n.t('confirm_delete_shape', { name: s }))) {
           delete customShapes[s];
           localStorage.setItem(LS_KEYS.CUSTOM_SHAPES, JSON.stringify(customShapes));
           setupShapeButtons(containerId, currentShape, onSelect, previewImgSrc);
@@ -2426,11 +2416,11 @@ function openAddCustomShapeModal(onSaved) {
     modal.style.display = 'none';
   };
 
-  saveBtn.onclick = () => {
+  saveBtn.onclick = async () => {
     const name = nameInput.value.trim();
     const path = pathInput.value.trim();
     if (!name || !path) {
-      alert('Please enter both name and path.');
+      await showAlertDialog(i18n.t('enter_name_and_clip_path'));
       return;
     }
     

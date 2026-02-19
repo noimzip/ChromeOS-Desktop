@@ -168,15 +168,8 @@ window.AppManager = {
         const result = await window.launchLinuxApp(command);
 
         if (!result.success) {
-
-          const lang = getCurrentLanguage();
-
-          const errorMsg = lang === 'ja' ? `アプリの起動に失敗しました: ${result.error}` : `Failed to launch app: ${result.error}`;
-
-          await window.UIUtils.showAlertDialog(errorMsg);
-
+          await window.UIUtils.showAlertDialog(i18n.t('launch_failed', { error: result.error }));
         }
-
       };
 
   
@@ -235,7 +228,7 @@ window.AppManager = {
 
         if (!result.success) {
 
-          await window.UIUtils.showAlertDialog(i18n.t('open_failed') + ': ' + result.error);
+          await window.UIUtils.showAlertDialog(i18n.t('open_failed', { error: result.error }));
 
         }
 
@@ -299,7 +292,7 @@ window.AppManager = {
 
         if (!result.success) {
 
-          await window.UIUtils.showAlertDialog(i18n.t('open_failed') + ': ' + result.error);
+          await window.UIUtils.showAlertDialog(i18n.t('open_failed', { error: result.error }));
 
         }
 

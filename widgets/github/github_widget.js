@@ -131,7 +131,7 @@ function showGitHubTooltip(targetEl, dateStr, count) {
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
   const formattedDate = date.toLocaleDateString(undefined, options);
   
-  const countText = count === 0 ? 'No contributions' : `${count} contribution${count !== 1 ? 's' : ''}`;
+  const countText = count === 0 ? i18n.t('no_contributions') : `${count} ${i18n.t(count !== 1 ? 'contributions' : 'contribution')}`;
   
   tooltip.innerHTML = '';
   const countEl = document.createElement('div');
@@ -189,7 +189,9 @@ function showGitHubDetailsModal(dateStr, count, level) {
   }
   
   if (githubDetailsCount) {
-    githubDetailsCount.textContent = `${count} contribution${count !== 1 ? 's' : ''}`;
+    githubDetailsCount.textContent = count === 0 
+      ? i18n.t('no_contributions')
+      : `${count} ${i18n.t(count !== 1 ? 'contributions' : 'contribution')}`;
   }
   
   let levelText = i18n.t('no_activity');
@@ -360,7 +362,7 @@ function populateGitHubYearSelect(data) {
   // Last Year
   const lastOption = document.createElement('option');
   lastOption.value = 'last';
-  lastOption.textContent = 'Last Year';
+  lastOption.textContent = i18n.t('last_year');
   githubYearSelect.appendChild(lastOption);
   
   // Years
