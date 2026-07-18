@@ -42,7 +42,7 @@ echo "Starting Soul Widgets Manager..."
 
 # バックグラウンドで起動
 # デバッグ用に /dev/null ではなく startup.log にログを出力するように変更
-nohup npm start > startup.log 2>&1 &
+nohup pnpm start > startup.log 2>&1 &
 
 # 起動に成功したか少し待って確認
 sleep 2

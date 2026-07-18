@@ -471,8 +471,37 @@ function updateMediaInfo() {
   });
 }
 
-// 1秒ごとにメディア情報を更新
-setInterval(updateMediaInfo, 1000);
+let mediaPollingInterval = 1000;
+let mediaPollingTimer = null;
+let isMediaPollingActive = true;
+
+function startMediaPolling() {
+  if (mediaPollingTimer) {
+    clearInterval(mediaPollingTimer);
+    mediaPollingTimer = null;
+  }
+  if (mediaPollingInterval > 0 && isMediaPollingActive) {
+    mediaPollingTimer = setInterval(updateMediaInfo, mediaPollingInterval);
+  }
+}
+
+// 起動時にポーリングを開始
+startMediaPolling();
+
+ipcMain.handle('set-media-polling-interval', async (event, interval) => {
+  mediaPollingInterval = parseInt(interval);
+  if (isNaN(mediaPollingInterval) || mediaPollingInterval < 0) {
+    mediaPollingInterval = 1000;
+  }
+  startMediaPolling();
+  return mediaPollingInterval;
+});
+
+ipcMain.handle('set-media-polling-active', async (event, active) => {
+  isMediaPollingActive = !!active;
+  startMediaPolling();
+  return isMediaPollingActive;
+});
 
 ipcMain.handle('get-media-info', async () => {
   return cachedMediaInfo;

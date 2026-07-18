@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   launchLinuxApp: (command) => ipcRenderer.invoke('launch-linux-app', command),
   getMediaInfo: () => ipcRenderer.invoke('get-media-info'),
   mediaControl: (action, value) => ipcRenderer.invoke('media-control', action, value),
+  setMediaPollingInterval: (interval) => ipcRenderer.invoke('set-media-polling-interval', interval),
+  setMediaPollingActive: (active) => ipcRenderer.invoke('set-media-polling-active', active),
   // ファイル/フォルダ用API
   openFileOrFolder: (filePath) => ipcRenderer.invoke('open-file-or-folder', filePath),
   selectFile: () => ipcRenderer.invoke('select-file'),

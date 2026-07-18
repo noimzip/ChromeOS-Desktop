@@ -60,7 +60,7 @@ Soul Widgets Manager aims to bridge the gap between the web-centric ChromeOS and
    ```
    This script automatically handles:
    - System packages (`nodejs`, `npm`, `playerctl`, `libnss3`, etc.).
-   - npm package installation.
+   - pnpm package installation.
    - (Optional) Setup of the Linux VM AutoStart extension.
 
 3. **Install the Chrome Extension:**
@@ -119,13 +119,13 @@ The allowlist is maintained in the Settings UI under **Security & Privacy**. Whe
 ### Setup
 ```shell
 # Install dependencies
-npm install
+pnpm install
 ```
 
 ### Running in Development Mode
 ```shell
 # Start the application (Logs output to terminal)
-npm start
+pnpm start
 ```
 For debugging, setting `autoOpenDevTools: true` in the settings menu or `settings.json` is useful.
 

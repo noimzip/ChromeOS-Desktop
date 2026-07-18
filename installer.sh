@@ -56,9 +56,12 @@ if [[ "$install_choice" =~ ^[yY]$ ]]; then
         git
 
     # Install Node.js dependencies
-    echo -e "${BLUE}Installing Node.js packages...${NC}"
+    echo -e "${BLUE}Installing pnpm globally...${NC}"
+    sudo npm install -g pnpm
+
+    echo -e "${BLUE}Installing Node.js packages with pnpm...${NC}"
     if [ -f "package.json" ]; then
-        npm install --production
+        pnpm install --prod
         echo -e "${GREEN}Node.js dependencies installed successfully.${NC}"
     else
         echo -e "${RED}Error: package.json not found!${NC}"

@@ -196,5 +196,16 @@
   "confirm_delete_app": "Delete \"{{name}}\"?",
   "confirm_remove_from_folder": "Remove \"{{name}}\" from folder?",
   "launch_failed": "Failed to launch app: {{error}}",
-  "confirm_delete_shape": "Delete custom shape \"{{name}}\"?"
+  "confirm_delete_shape": "Delete custom shape \"{{name}}\"?",
+  "disable_animations": "Disable Animation Effects",
+  "disable_animations_desc": "Disable animations and transitions for menus, icons, and clock to reduce CPU load.",
+  "media_polling_interval": "Media Polling Interval",
+  "media_polling_interval_desc": "Frequency of querying system media player info. Longer intervals reduce CPU load.",
+  "media_smart_polling": "Smart Media Polling",
+  "media_smart_polling_desc": "Only query media player information when the Media Player widget is visible.",
+  "performance_settings": "Performance",
+  "interval_1s": "1s (High)",
+  "interval_3s": "3s (Balanced)",
+  "interval_5s": "5s (Eco)",
+  "interval_off": "Off (Disabled)"
 }

@@ -196,5 +196,16 @@
   "confirm_delete_app": "「{{name}}」を削除しますか？",
   "confirm_remove_from_folder": "「{{name}}」をフォルダーから取り出しますか？",
   "launch_failed": "アプリの起動に失敗しました: {{error}}",
-  "confirm_delete_shape": "カスタムシェイプ「{{name}}」を削除しますか？"
+  "confirm_delete_shape": "カスタムシェイプ「{{name}}」を削除しますか？",
+  "disable_animations": "アニメーション効果を無効化",
+  "disable_animations_desc": "ウィンドウやアイコン、時計などの動きをなくし、動作を軽量化します",
+  "media_polling_interval": "メディア情報の更新間隔",
+  "media_polling_interval_desc": "システムの音楽情報などを確認する間隔です。間隔を長くすると負荷が下がります。",
+  "media_smart_polling": "スマートメディアポーリング",
+  "media_smart_polling_desc": "メディアプレイヤーウィジェットが表示されているときだけ動作情報を取得します",
+  "performance_settings": "パフォーマンス設定",
+  "interval_1s": "1秒 (高性能)",
+  "interval_3s": "3秒 (バランス)",
+  "interval_5s": "5秒 (省電力)",
+  "interval_off": "オフ (機能無効)"
 }

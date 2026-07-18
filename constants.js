@@ -51,6 +51,9 @@ const LS_KEYS = {
   SHOW_FILES_ICON: 'showFilesIcon',
   SHOW_SETTINGS_ICON: 'showSettingsIcon',
   UPDATE_CHANNEL: 'updateChannel',
+  ANIMATIONS_DISABLED: 'animationsDisabled',
+  MEDIA_POLLING_INTERVAL: 'mediaPollingInterval',
+  MEDIA_SMART_POLLING: 'mediaSmartPolling',
 };
 
 const SHAPES = [

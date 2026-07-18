@@ -60,7 +60,7 @@ Soul Widgets Manager は、Web 中心な ChromeOS と、Windows や macOS のよ
    ```
    このスクリプトは以下を自動的に行います：
    - システムパッケージ (`nodejs`, `npm`, `playerctl`, `libnss3` 等) のインストール。
-   - npm パッケージのインストール。
+   - pnpm パッケージのインストール。
    - (任意) Linux VM 自動起動用拡張機能のセットアップ。
 
 3. **Chrome 拡張機能のインストール:**
@@ -110,13 +110,13 @@ bash startup.sh
 ### セットアップ
 ```shell
 # 依存関係のインストール
-npm install
+pnpm install
 ```
 
 ### 開発モードでの実行
 ```shell
 # アプリケーションの起動（ログはターミナルに出力されます）
-npm start
+pnpm start
 ```
 デバッグ時は、設定メニューまたは `settings.json` で `autoOpenDevTools: true` に設定すると便利です。
 

@@ -330,6 +330,9 @@ async function applyWidgetVisibility() {
       }
     }
   }
+  if (typeof updateMediaPollingActiveState === 'function') {
+    await updateMediaPollingActiveState();
+  }
 }
 
 async function setWidgetVisibility(widgetId, isVisible) {
@@ -346,6 +349,9 @@ async function setWidgetVisibility(widgetId, isVisible) {
     }
     widgetVisibility[widgetId] = isVisible;
     localStorage.setItem(LS_KEYS.WIDGET_VISIBILITY, JSON.stringify(widgetVisibility));
+    if (widgetId === 'media_player_widget' && typeof updateMediaPollingActiveState === 'function') {
+      await updateMediaPollingActiveState();
+    }
   }
 }
 
@@ -1060,6 +1066,84 @@ if (toggleBlurEffectBtn) {
     updateBlurEffect(newState);
   });
 }
+
+// アニメーション効果無効化の設定
+const toggleDisableAnimationsBtn = document.getElementById('toggle_disable_animations');
+const updateAnimationsDisabled = window.StyleManager.updateAnimationsDisabled.bind(window.StyleManager);
+
+if (toggleDisableAnimationsBtn) {
+  const animationsDisabled = localStorage.getItem(LS_KEYS.ANIMATIONS_DISABLED) === 'true';
+  if (typeof toggleDisableAnimationsBtn.selected !== 'undefined') {
+    toggleDisableAnimationsBtn.selected = animationsDisabled;
+  } else {
+    toggleDisableAnimationsBtn.checked = animationsDisabled;
+  }
+  updateAnimationsDisabled(animationsDisabled);
+  
+  toggleDisableAnimationsBtn.addEventListener('change', (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    updateAnimationsDisabled(newState);
+  });
+} else {
+  // UIボタンが無い場合も初期設定を適用
+  const animationsDisabled = localStorage.getItem(LS_KEYS.ANIMATIONS_DISABLED) === 'true';
+  updateAnimationsDisabled(animationsDisabled);
+}
+
+// パフォーマンス設定: メディアポーリング間隔とスマートポーリング
+const mediaPollingIntervalSelector = document.getElementById('media_polling_interval_selector');
+const toggleMediaSmartPollingBtn = document.getElementById('toggle_media_smart_polling');
+
+async function updateMediaPollingActiveState() {
+  const smartPollingEnabled = localStorage.getItem(LS_KEYS.MEDIA_SMART_POLLING) !== 'false';
+  const isWidgetVisible = widgetVisibility['media_player_widget'] === true;
+  
+  let isActive = true;
+  if (smartPollingEnabled) {
+    isActive = isWidgetVisible;
+  }
+  
+  if (window.electronAPI && window.electronAPI.setMediaPollingActive) {
+    await window.electronAPI.setMediaPollingActive(isActive);
+  }
+}
+window.updateMediaPollingActiveState = updateMediaPollingActiveState;
+
+if (mediaPollingIntervalSelector) {
+  const savedInterval = localStorage.getItem(LS_KEYS.MEDIA_POLLING_INTERVAL) || '1000';
+  mediaPollingIntervalSelector.value = savedInterval;
+  
+  if (window.electronAPI && window.electronAPI.setMediaPollingInterval) {
+    window.electronAPI.setMediaPollingInterval(parseInt(savedInterval));
+  }
+  
+  mediaPollingIntervalSelector.addEventListener('change', async (e) => {
+    const val = e.target.value;
+    localStorage.setItem(LS_KEYS.MEDIA_POLLING_INTERVAL, val);
+    if (window.electronAPI && window.electronAPI.setMediaPollingInterval) {
+      await window.electronAPI.setMediaPollingInterval(parseInt(val));
+    }
+  });
+}
+
+if (toggleMediaSmartPollingBtn) {
+  const smartPollingEnabled = localStorage.getItem(LS_KEYS.MEDIA_SMART_POLLING) !== 'false';
+  if (typeof toggleMediaSmartPollingBtn.selected !== 'undefined') {
+    toggleMediaSmartPollingBtn.selected = smartPollingEnabled;
+  } else {
+    toggleMediaSmartPollingBtn.checked = smartPollingEnabled;
+  }
+  localStorage.setItem(LS_KEYS.MEDIA_SMART_POLLING, smartPollingEnabled);
+  
+  toggleMediaSmartPollingBtn.addEventListener('change', async (e) => {
+    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    localStorage.setItem(LS_KEYS.MEDIA_SMART_POLLING, newState);
+    await updateMediaPollingActiveState();
+  });
+}
+
+// 起動時にスマートポーリングの状態を評価
+setTimeout(updateMediaPollingActiveState, 1000);
 
 // テーマ設定
 const darkModeSelector = document.getElementById('dark_mode_selector');

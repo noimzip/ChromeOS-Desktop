@@ -173,6 +173,18 @@ window.StyleManager = {
     localStorage.setItem(LS_KEYS.BLUR_EFFECT_ENABLED, isEnabled);
   },
 
+  /**
+   * アニメーション無効化状態を更新
+   */
+  updateAnimationsDisabled(isDisabled) {
+    if (isDisabled) {
+      document.body.classList.add('no-animations');
+    } else {
+      document.body.classList.remove('no-animations');
+    }
+    localStorage.setItem(LS_KEYS.ANIMATIONS_DISABLED, isDisabled);
+  },
+
   // Color utilities
   rgbToHsl(r, g, b) {
     r /= 255; g /= 255; b /= 255;

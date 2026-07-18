@@ -859,6 +859,15 @@
                 <m3e-switch id="toggle_blur_effect"></m3e-switch>
               </div>
             </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="disable_animations">アニメーション効果を無効化</span>
+                <small data-i18n="disable_animations_desc">ウィンドウやアイコン、時計などの動きをなくし、動作を軽量化します</small>
+              </div>
+              <div class="settings-item-control">
+                <m3e-switch id="toggle_disable_animations"></m3e-switch>
+              </div>
+            </div>
           </div>
 
           <div class="settings-section">
@@ -947,6 +956,33 @@
                   <option value="8">8</option>
                 </select>
                 <m3e-button variant="outlined" id="apply_window_count" data-i18n="apply_restart">適用</m3e-button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4 class="settings-section-title" data-i18n="performance_settings">パフォーマンス設定</h4>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="media_polling_interval">メディア情報の更新間隔</span>
+                <small data-i18n="media_polling_interval_desc">システムの音楽情報などを確認する間隔です。間隔を長くすると負荷が下がります。</small>
+              </div>
+              <div class="settings-item-control">
+                <select id="media_polling_interval_selector">
+                  <option value="1000" data-i18n="interval_1s">1秒 (高性能)</option>
+                  <option value="3000" data-i18n="interval_3s">3秒 (バランス)</option>
+                  <option value="5000" data-i18n="interval_5s">5秒 (省電力)</option>
+                  <option value="0" data-i18n="interval_off">オフ (機能無効)</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="media_smart_polling">スマートメディアポーリング</span>
+                <small data-i18n="media_smart_polling_desc">メディアプレイヤーウィジェットが表示されているときだけ動作情報を取得します</small>
+              </div>
+              <div class="settings-item-control">
+                <m3e-switch id="toggle_media_smart_polling"></m3e-switch>
               </div>
             </div>
           </div>

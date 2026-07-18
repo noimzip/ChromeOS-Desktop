@@ -1738,3 +1738,13 @@ m3e-button:focus-visible {
     display: none !important;
   }
 }
+
+/* ========================================
+   Low performance / No animations overrides
+   ======================================== */
+body.no-animations *,
+body.no-animations *::before,
+body.no-animations *::after {
+  transition: none !important;
+  animation: none !important;
+}
