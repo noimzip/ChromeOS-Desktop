@@ -98,7 +98,7 @@ window.StyleManager = {
 
     const iconShapeSelector = document.getElementById('icon_shape_selector');
     if (iconShapeSelector) {
-      iconShapeSelector.value = shape;
+      window.setSelectValue(iconShapeSelector, shape);
     }
   },
 

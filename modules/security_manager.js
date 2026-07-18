@@ -264,7 +264,7 @@ window.SecurityManager = (() => {
     const selector = document.getElementById('security_mode_selector');
     if (!selector) return;
     await syncModeFromMain();
-    selector.value = currentMode;
+    window.setSelectValue(selector, currentMode);
     selector.addEventListener('change', (e) => {
       const mode = normalizeMode(e.target.value);
       persistMode(mode);

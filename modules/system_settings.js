@@ -13,7 +13,7 @@ window.SystemSettingsManager = {
     if (selector && window.electronAPI && window.electronAPI.getWindowCount) {
       try {
         const currentCount = await window.electronAPI.getWindowCount();
-        selector.value = currentCount.toString();
+        window.setSelectValue(selector, currentCount.toString());
       } catch (e) {
         console.error('Failed to get window count:', e);
       }
@@ -32,19 +32,19 @@ window.SystemSettingsManager = {
         
         selector.innerHTML = '';
         displays.forEach(display => {
-          const option = document.createElement('option');
+          const option = document.createElement('m3e-option');
           option.value = display.id;
           option.textContent = display.label;
           selector.appendChild(option);
         });
         
         if (targetId) {
-          selector.value = targetId;
+          window.setSelectValue(selector, targetId);
         }
         
-        selector.onchange = async (e) => {
+        selector.addEventListener('change', async (e) => {
           await window.electronAPI.setTargetDisplay(e.target.value);
-        };
+        });
       } catch (e) {
         console.error('Failed to init display selector:', e);
       }

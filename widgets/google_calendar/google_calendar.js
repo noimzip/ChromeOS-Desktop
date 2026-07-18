@@ -67,7 +67,7 @@ if (googleCalendarSettingsBtn) {
     let mode = 'MONTH';
     if (url.includes('mode=WEEK')) mode = 'WEEK';
     else if (url.includes('mode=AGENDA')) mode = 'AGENDA';
-    if (googleCalendarModeSelect) googleCalendarModeSelect.value = mode;
+    if (googleCalendarModeSelect) window.setSelectValue(googleCalendarModeSelect, mode);
     
     if (googleCalendarSettingsModal) googleCalendarSettingsModal.style.display = 'flex';
   };

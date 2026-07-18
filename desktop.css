@@ -278,11 +278,7 @@ body.dark-mode label {
   color: var(--on-surface);
 }
 
-body.dark-mode select {
-  background-color: var(--surface-variant);
-  color: var(--on-surface);
-  border-color: var(--outline);
-}
+/* Dark mode select styles are handled natively by M3E theme variables */
 
 body.dark-mode input[type="text"],
 body.dark-mode input[type="url"] {
@@ -1404,66 +1400,29 @@ body.no-blur #settings_fab {
    Context Menu
    ======================================== */
 
-.context-menu {
-  position: fixed;
-  background: rgba(45, 45, 45, 0.9);
+m3e-menu {
+  --m3e-menu-container-color: rgba(255, 255, 255, 0.9);
+  --m3e-menu-container-shape: var(--radius-md);
   backdrop-filter: blur(10px);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  min-width: 160px;
-  z-index: 1000;
-  overflow: hidden;
-  animation: contextMenuIn var(--transition-fast) ease-out;
-  transform-origin: top left;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transform: translateZ(0);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  --m3e-menu-item-color: var(--on-surface);
+  --m3e-menu-item-container-hover-color: var(--on-surface);
+  --m3e-menu-item-ripple-color: var(--on-surface);
 }
 
-@keyframes contextMenuIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+body.dark-mode m3e-menu {
+  --m3e-menu-container-color: rgba(45, 45, 45, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.context-menu-item {
-  padding: 12px 16px;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 14px;
-  font-weight: 450;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+m3e-menu-item[id="context_delete"] {
+  --m3e-menu-item-color: #ff6b6b;
+  --m3e-menu-item-container-hover-color: #ff6b6b;
 }
 
-.context-menu-item:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: white;
-}
-
-.context-menu-item:active {
-  background: rgba(255, 255, 255, 0.18);
-  transform: scale(0.98);
-}
-
-.context-menu-item.danger {
-  color: #ff6b6b;
-}
-
-.context-menu-item.danger:hover {
-  background: rgba(255, 107, 107, 0.15);
-}
-
-.context-menu-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: var(--space-xs) 0;
+m3e-menu-item m3e-icon {
+  font-size: 18px !important;
+  margin-right: 2px;
 }
 
 /* ========================================
@@ -1499,9 +1458,13 @@ body.no-blur #settings_fab {
 }
 
 /* ブラー無効時のコンテキストメニュー */
-body.no-blur .context-menu {
+body.no-blur m3e-menu {
   backdrop-filter: none;
-  background: rgba(40, 40, 45, 0.98);
+  --m3e-menu-container-color: #ffffff;
+}
+
+body.no-blur.dark-mode m3e-menu {
+  --m3e-menu-container-color: rgba(40, 40, 45, 0.98);
 }
 
 body.no-blur .folder-drag-clone {
@@ -1652,30 +1615,9 @@ m3e-form-field {
 }
 
 /* Select styling */
-select {
-  appearance: none;
-  background-color: var(--surface-variant);
-  border: 1px solid var(--outline);
-  border-radius: var(--radius-sm);
-  padding: 10px 36px 10px 12px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  color: var(--on-surface);
-  cursor: pointer;
-  transition: all var(--transition-fast), background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235f6368' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-}
-
-select:hover {
-  border-color: var(--primary-color);
-}
-
-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.15);
+m3e-select {
+  width: 100%;
+  --m3e-select-container-shape: var(--radius-sm);
 }
 
 /* Checkbox label styling */
@@ -1743,7 +1685,7 @@ m3e-button:focus-visible {
 @media print {
   .modal_overlay,
   #settings_fab,
-  .context-menu {
+  m3e-menu {
     display: none !important;
   }
 }

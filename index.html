@@ -120,7 +120,7 @@
       <div class="github-contribution-header">
         <m3e-icon name="code" class="github-icon"></m3e-icon>
         <span class="github-title">GitHub Contributions</span>
-        <select id="github_year_select" class="github-year-select" style="display: none;"></select>
+        <m3e-select id="github_year_select" class="github-year-select" style="display: none;"></m3e-select>
         <button id="github_refresh_btn" class="github-settings-btn" title="更新" style="margin-right: 4px;">
           <m3e-icon name="refresh"></m3e-icon>
         </button>
@@ -168,11 +168,11 @@
             <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
           </div>
           <div class="settings-item-control">
-            <select id="select_github_header_mode" class="header-display-mode-selector">
-              <option value="always" data-i18n="header_always_show">常に表示</option>
-              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
-              <option value="hide" data-i18n="header_always_hide">表示しない</option>
-            </select>
+            <m3e-select id="select_github_header_mode" class="header-display-mode-selector">
+              <m3e-option value="always" data-i18n="header_always_show">常に表示</m3e-option>
+              <m3e-option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</m3e-option>
+              <m3e-option value="hide" data-i18n="header_always_hide">表示しない</m3e-option>
+            </m3e-select>
           </div>
         </div>
         <div class="modal-buttons">
@@ -234,22 +234,22 @@
         </m3e-form-field>
         <div style="margin: 16px 0;">
           <label for="google_calendar_mode_select" style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--on-surface-variant);" data-i18n="display_mode">表示モード</label>
-          <select id="google_calendar_mode_select" style="width: 100%;">
-            <option value="MONTH" data-i18n="month">月 (Month)</option>
-            <option value="WEEK" data-i18n="week">週 (Week)</option>
-            <option value="AGENDA" data-i18n="agenda">スケジュール (Agenda)</option>
-          </select>
+          <m3e-select id="google_calendar_mode_select" style="width: 100%;">
+            <m3e-option value="MONTH" data-i18n="month">月 (Month)</m3e-option>
+            <m3e-option value="WEEK" data-i18n="week">週 (Week)</m3e-option>
+            <m3e-option value="AGENDA" data-i18n="agenda">スケジュール (Agenda)</m3e-option>
+          </m3e-select>
         </div>
         <div class="settings-item" style="width: 100%;">
           <div class="settings-item-label">
             <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
           </div>
           <div class="settings-item-control">
-            <select id="select_google_calendar_header_mode" class="header-display-mode-selector">
-              <option value="always" data-i18n="header_always_show">常に表示</option>
-              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
-              <option value="hide" data-i18n="header_always_hide">表示しない</option>
-            </select>
+            <m3e-select id="select_google_calendar_header_mode" class="header-display-mode-selector">
+              <m3e-option value="always" data-i18n="header_always_show">常に表示</m3e-option>
+              <m3e-option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</m3e-option>
+              <m3e-option value="hide" data-i18n="header_always_hide">表示しない</m3e-option>
+            </m3e-select>
           </div>
         </div>
         <div style="margin: 16px 0; text-align: center;">
@@ -306,11 +306,11 @@
             <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
           </div>
           <div class="settings-item-control">
-            <select id="select_gmail_header_mode" class="header-display-mode-selector">
-              <option value="always" data-i18n="header_always_show">常に表示</option>
-              <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
-              <option value="hide" data-i18n="header_always_hide">表示しない</option>
-            </select>
+            <m3e-select id="select_gmail_header_mode" class="header-display-mode-selector">
+              <m3e-option value="always" data-i18n="header_always_show">常に表示</m3e-option>
+              <m3e-option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</m3e-option>
+              <m3e-option value="hide" data-i18n="header_always_hide">表示しない</m3e-option>
+            </m3e-select>
           </div>
         </div>
 
@@ -397,11 +397,11 @@
     </div>
 
     <!-- アプリコンテキストメニュー -->
-    <div id="app_context_menu" class="context-menu" style="display: none;">
-      <div class="context-menu-item" id="context_edit" data-i18n="edit">編集</div>
-      <div class="context-menu-item" id="context_shape" data-i18n="icon_shape">アイコンの形</div>
-      <div class="context-menu-item" id="context_delete" data-i18n="delete">削除</div>
-    </div>
+    <m3e-menu id="app_context_menu" position-x="after" position-y="below">
+      <m3e-menu-item id="context_edit"><m3e-icon slot="icon" name="edit"></m3e-icon><span data-i18n="edit">編集</span></m3e-menu-item>
+      <m3e-menu-item id="context_shape"><m3e-icon slot="icon" name="category"></m3e-icon><span data-i18n="icon_shape">アイコンの形</span></m3e-menu-item>
+      <m3e-menu-item id="context_delete"><m3e-icon slot="icon" name="delete"></m3e-icon><span data-i18n="delete">削除</span></m3e-menu-item>
+    </m3e-menu>
 
     <!-- 個別アイコン形状設定モーダル -->
     <div id="icon_individual_shape_modal_overlay" class="modal_overlay">
@@ -416,19 +416,19 @@
     </div>
 
     <!-- デスクトップコンテキストメニュー -->
-    <div id="desktop_context_menu" class="context-menu" style="display: none;">
-      <div class="context-menu-item" id="desktop_context_add_app" data-i18n="add_app">アプリを追加</div>
-      <div class="context-menu-item" id="desktop_context_add_widget" data-i18n="add_widget">ウィジェットを追加</div>
-      <div class="context-menu-divider"></div>
-      <div class="context-menu-item" id="desktop_context_settings" data-i18n="settings">設定</div>
-      <div class="context-menu-item" id="desktop_context_change_position" data-i18n="change_position">位置の変更</div>
-    </div>
+    <m3e-menu id="desktop_context_menu" position-x="after" position-y="below">
+      <m3e-menu-item id="desktop_context_add_app"><m3e-icon slot="icon" name="add_to_home_screen"></m3e-icon><span data-i18n="add_app">アプリを追加</span></m3e-menu-item>
+      <m3e-menu-item id="desktop_context_add_widget"><m3e-icon slot="icon" name="widgets"></m3e-icon><span data-i18n="add_widget">ウィジェットを追加</span></m3e-menu-item>
+      <m3e-divider></m3e-divider>
+      <m3e-menu-item id="desktop_context_settings"><m3e-icon slot="icon" name="settings"></m3e-icon><span data-i18n="settings">設定</span></m3e-menu-item>
+      <m3e-menu-item id="desktop_context_change_position"><m3e-icon slot="icon" name="open_with"></m3e-icon><span data-i18n="change_position">位置の変更</span></m3e-menu-item>
+    </m3e-menu>
 
     <!-- ウィジェットコンテキストメニュー -->
-    <div id="widget_context_menu" class="context-menu" style="display: none;">
-      <div class="context-menu-item" id="widget_context_settings" data-i18n="widget_settings">ウィジェット設定</div>
-      <div class="context-menu-item" id="widget_context_hide" data-i18n="hide_widget">ウィジェットを非表示</div>
-    </div>
+    <m3e-menu id="widget_context_menu" position-x="after" position-y="below">
+      <m3e-menu-item id="widget_context_settings"><m3e-icon slot="icon" name="tune"></m3e-icon><span data-i18n="widget_settings">ウィジェット設定</span></m3e-menu-item>
+      <m3e-menu-item id="widget_context_hide"><m3e-icon slot="icon" name="visibility_off"></m3e-icon><span data-i18n="hide_widget">ウィジェットを非表示</span></m3e-menu-item>
+    </m3e-menu>
 
     <!-- ウィジェット設定モーダル -->
     <div id="widget_settings_modal_overlay" class="modal_overlay">
@@ -490,10 +490,10 @@
               <span data-i18n="weather_provider">天気情報の提供元</span>
             </div>
             <div class="settings-item-control">
-              <select id="weather_provider_select">
-                <option value="open-meteo" data-i18n="open_meteo">Open-Meteo (Global)</option>
-                <option value="nws" data-i18n="nws">National Weather Service (US Only)</option>
-              </select>
+              <m3e-select id="weather_provider_select">
+                <m3e-option value="open-meteo" data-i18n="open_meteo">Open-Meteo (Global)</m3e-option>
+                <m3e-option value="nws" data-i18n="nws">National Weather Service (US Only)</m3e-option>
+              </m3e-select>
             </div>
           </div>
           <div class="settings-item">
@@ -501,10 +501,10 @@
               <span data-i18n="temperature_unit">気温の単位</span>
             </div>
             <div class="settings-item-control">
-              <select id="weather_unit_select">
-                <option value="c" data-i18n="celsius">摂氏 (°C)</option>
-                <option value="f" data-i18n="fahrenheit">華氏 (°F)</option>
-              </select>
+              <m3e-select id="weather_unit_select">
+                <m3e-option value="c" data-i18n="celsius">摂氏 (°C)</m3e-option>
+                <m3e-option value="f" data-i18n="fahrenheit">華氏 (°F)</m3e-option>
+              </m3e-select>
             </div>
           </div>
           <div class="settings-item">
@@ -512,10 +512,10 @@
               <span data-i18n="location_mode">位置情報モード</span>
             </div>
             <div class="settings-item-control">
-              <select id="weather_location_mode_select">
-                <option value="auto" data-i18n="auto_location">自動 (位置情報)</option>
-                <option value="manual" data-i18n="manual_location">手動 (緯度・経度)</option>
-              </select>
+              <m3e-select id="weather_location_mode_select">
+                <m3e-option value="auto" data-i18n="auto_location">自動 (位置情報)</m3e-option>
+                <m3e-option value="manual" data-i18n="manual_location">手動 (緯度・経度)</m3e-option>
+              </m3e-select>
             </div>
           </div>
           <div class="settings-item">
@@ -539,14 +539,14 @@
               <span data-i18n="location_update_interval">位置情報の更新間隔</span>
             </div>
             <div class="settings-item-control">
-              <select id="weather_location_interval_select">
-                <option value="0" data-i18n="manual">手動のみ</option>
-                <option value="15" data-i18n="15_min">15分</option>
-                <option value="30" data-i18n="30_min">30分</option>
-                <option value="60" data-i18n="1_hour">1時間</option>
-                <option value="180" data-i18n="3_hours">3時間</option>
-                <option value="360" data-i18n="6_hours">6時間</option>
-              </select>
+              <m3e-select id="weather_location_interval_select">
+                <m3e-option value="0" data-i18n="manual">手動のみ</m3e-option>
+                <m3e-option value="15" data-i18n="15_min">15分</m3e-option>
+                <m3e-option value="30" data-i18n="30_min">30分</m3e-option>
+                <m3e-option value="60" data-i18n="1_hour">1時間</m3e-option>
+                <m3e-option value="180" data-i18n="3_hours">3時間</m3e-option>
+                <m3e-option value="360" data-i18n="6_hours">6時間</m3e-option>
+              </m3e-select>
             </div>
           </div>
           <m3e-button variant="filled" id="save_weather_settings" style="width: 100%; margin-top: 16px;" data-i18n="save">保存</m3e-button>
@@ -558,11 +558,11 @@
               <span data-i18n="widget_header_mode">ヘッダーの表示設定</span>
             </div>
             <div class="settings-item-control">
-              <select class="header-display-mode-selector" id="select_widget_header_mode">
-                <option value="always" data-i18n="header_always_show">常に表示</option>
-                <option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</option>
-                <option value="hide" data-i18n="header_always_hide">表示しない</option>
-              </select>
+              <m3e-select class="header-display-mode-selector" id="select_widget_header_mode">
+                <m3e-option value="always" data-i18n="header_always_show">常に表示</m3e-option>
+                <m3e-option value="hover" data-i18n="header_hover_show">ホバー時のみ表示</m3e-option>
+                <m3e-option value="hide" data-i18n="header_always_hide">表示しない</m3e-option>
+              </m3e-select>
             </div>
           </div>
         </div>
@@ -830,10 +830,10 @@
                 <span data-i18n="language">言語</span>
               </div>
               <div class="settings-item-control">
-                <select id="language_selector">
-                  <option value="ja">日本語</option>
-                  <option value="en">English</option>
-                </select>
+                <m3e-select id="language_selector">
+                  <m3e-option value="ja">日本語</m3e-option>
+                  <m3e-option value="en">English</m3e-option>
+                </m3e-select>
               </div>
             </div>
             <div class="settings-item">
@@ -870,11 +870,11 @@
                 <span data-i18n="theme">テーマ</span>
               </div>
               <div class="settings-item-control">
-                <select id="dark_mode_selector">
-                  <option value="system" data-i18n="system_default">システム設定に従う</option>
-                  <option value="light" data-i18n="light_mode">ライトモード</option>
-                  <option value="dark" data-i18n="dark_mode">ダークモード</option>
-                </select>
+                <m3e-select id="dark_mode_selector">
+                  <m3e-option value="system" data-i18n="system_default">システム設定に従う</m3e-option>
+                  <m3e-option value="light" data-i18n="light_mode">ライトモード</m3e-option>
+                  <m3e-option value="dark" data-i18n="dark_mode">ダークモード</m3e-option>
+                </m3e-select>
               </div>
             </div>
             <div class="settings-item">
@@ -953,7 +953,7 @@
                 <span data-i18n="target_display">ターゲットディスプレイ</span>
               </div>
               <div class="settings-item-control">
-                <select id="display_selector"></select>
+                <m3e-select id="display_selector"></m3e-select>
               </div>
             </div>
             <div class="settings-item">
@@ -971,16 +971,16 @@
                 <small data-i18n="window_count_desc">仮想デスクトップ用のウィンドウ数</small>
               </div>
               <div class="settings-item-control">
-                <select id="window_count_selector">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                  <option value="8">8</option>
-                </select>
+                <m3e-select id="window_count_selector">
+                  <m3e-option value="1">1</m3e-option>
+                  <m3e-option value="2">2</m3e-option>
+                  <m3e-option value="3">3</m3e-option>
+                  <m3e-option value="4">4</m3e-option>
+                  <m3e-option value="5">5</m3e-option>
+                  <m3e-option value="6">6</m3e-option>
+                  <m3e-option value="7">7</m3e-option>
+                  <m3e-option value="8">8</m3e-option>
+                </m3e-select>
                 <m3e-button variant="outlined" id="apply_window_count" data-i18n="apply_restart">適用</m3e-button>
               </div>
             </div>
@@ -994,12 +994,12 @@
                 <small data-i18n="media_polling_interval_desc">システムの音楽情報などを確認する間隔です。間隔を長くすると負荷が下がります。</small>
               </div>
               <div class="settings-item-control">
-                <select id="media_polling_interval_selector">
-                  <option value="1000" data-i18n="interval_1s">1秒 (高性能)</option>
-                  <option value="3000" data-i18n="interval_3s">3秒 (バランス)</option>
-                  <option value="5000" data-i18n="interval_5s">5秒 (省電力)</option>
-                  <option value="0" data-i18n="interval_off">オフ (機能無効)</option>
-                </select>
+                <m3e-select id="media_polling_interval_selector">
+                  <m3e-option value="1000" data-i18n="interval_1s">1秒 (高性能)</m3e-option>
+                  <m3e-option value="3000" data-i18n="interval_3s">3秒 (バランス)</m3e-option>
+                  <m3e-option value="5000" data-i18n="interval_5s">5秒 (省電力)</m3e-option>
+                  <m3e-option value="0" data-i18n="interval_off">オフ (機能無効)</m3e-option>
+                </m3e-select>
               </div>
             </div>
             <div class="settings-item">
@@ -1021,11 +1021,11 @@
                 <small data-i18n="security_mode_desc">入力・通信・セッションの保護レベルを設定</small>
               </div>
               <div class="settings-item-control">
-                <select id="security_mode_selector">
-                  <option value="strict" data-i18n="security_mode_strict">厳格</option>
-                  <option value="standard" data-i18n="security_mode_standard">標準</option>
-                  <option value="none" data-i18n="security_mode_none">保護なし</option>
-                </select>
+                <m3e-select id="security_mode_selector">
+                  <m3e-option value="strict" data-i18n="security_mode_strict">厳格</m3e-option>
+                  <m3e-option value="standard" data-i18n="security_mode_standard">標準</m3e-option>
+                  <m3e-option value="none" data-i18n="security_mode_none">保護なし</m3e-option>
+                </m3e-select>
               </div>
             </div>
             <div class="settings-item settings-item-column">
@@ -1097,13 +1097,13 @@
                 <span data-i18n="gemini_model">Geminiモデル</span>
               </div>
               <div class="settings-item-control">
-                <select id="gemini_model_selector" style="width: 100%;">
-                  <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (推奨・高速)</option>
-                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                  <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                  <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                  <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-                </select>
+                <m3e-select id="gemini_model_selector" style="width: 100%;">
+                  <m3e-option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (推奨・高速)</m3e-option>
+                  <m3e-option value="gemini-2.5-flash">gemini-2.5-flash</m3e-option>
+                  <m3e-option value="gemini-2.5-pro">gemini-2.5-pro</m3e-option>
+                  <m3e-option value="gemini-1.5-flash">gemini-1.5-flash</m3e-option>
+                  <m3e-option value="gemini-1.5-pro">gemini-1.5-pro</m3e-option>
+                </m3e-select>
               </div>
             </div>
             <div class="settings-item">
@@ -1111,11 +1111,11 @@
                 <span data-i18n="ai_default_mode">デフォルトモード</span>
               </div>
               <div class="settings-item-control">
-                <select id="gemini_default_mode_selector" style="width: 100%;">
-                  <option value="chat" data-i18n="ai_mode_chat">会話</option>
-                  <option value="trans_en" data-i18n="ai_mode_trans_en">翻訳 ➔ 英語</option>
-                  <option value="trans_ja" data-i18n="ai_mode_trans_ja">翻訳 ➔ 日本語</option>
-                </select>
+                <m3e-select id="gemini_default_mode_selector" style="width: 100%;">
+                  <m3e-option value="chat" data-i18n="ai_mode_chat">会話</m3e-option>
+                  <m3e-option value="trans_en" data-i18n="ai_mode_trans_en">翻訳 ➔ 英語</m3e-option>
+                  <m3e-option value="trans_ja" data-i18n="ai_mode_trans_ja">翻訳 ➔ 日本語</m3e-option>
+                </m3e-select>
               </div>
             </div>
           </div>
@@ -1133,10 +1133,10 @@
                 <span data-i18n="update_channel">アップデートチャンネル</span>
               </div>
               <div class="settings-item-control">
-                <select id="update_channel_selector">
-                  <option value="stable">Stable</option>
-                  <option value="develop">Develop</option>
-                </select>
+                <m3e-select id="update_channel_selector">
+                  <m3e-option value="stable">Stable</m3e-option>
+                  <m3e-option value="develop">Develop</m3e-option>
+                </m3e-select>
               </div>
             </div>
             <div class="settings-item">
@@ -1223,5 +1223,7 @@
         <div id="ai_response_content" class="ai-response-content"></div>
       </div>
     </div>
+    <!-- コンテキストメニュー用アンカー -->
+    <div id="context_menu_anchor" style="position: fixed; pointer-events: none; width: 0; height: 0;"></div>
   </body>
 </html>

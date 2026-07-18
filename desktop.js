@@ -16,6 +16,24 @@ window.__test_checkElementExists = function(id) {
 };
 
 // テスト用: localStorageデータ検証
+// テスト用: localStorageデータ検証
+window.setSelectValue = function(selectEl, value) {
+  if (!selectEl) return;
+  if (selectEl.tagName === 'M3E-SELECT') {
+    const options = selectEl.querySelectorAll('m3e-option');
+    options.forEach(opt => {
+      const optVal = opt.value || opt.getAttribute('value');
+      opt.selected = (optVal === value);
+    });
+    if (typeof selectEl.requestUpdate === 'function') {
+      selectEl.requestUpdate();
+    }
+  } else {
+    selectEl.value = value;
+  }
+};
+const setSelectValue = window.setSelectValue;
+
 window.__test_checkFoldersData = function() {
   try {
     const folders = JSON.parse(localStorage.getItem(LS_KEYS.APP_FOLDERS) || '{}');
@@ -488,7 +506,7 @@ document.getElementById('open_settingsmenu_modal').onclick = () => {
   if (apiKeyInput && modelSelector && window.electronAPI && window.electronAPI.getGeminiConfig) {
     window.electronAPI.getGeminiConfig().then(config => {
       apiKeyInput.value = config.geminiApiKey || '';
-      modelSelector.value = config.geminiModel || 'gemini-3.1-flash-lite';
+      setSelectValue(modelSelector, config.geminiModel || 'gemini-3.1-flash-lite');
     }).catch(e => console.error('Failed to get Gemini settings:', e));
   }
   showSettingsSection('design_style'); // 開くたびに最初のカテゴリーを表示
@@ -1100,7 +1118,7 @@ window.updateMediaPollingActiveState = updateMediaPollingActiveState;
 
 if (mediaPollingIntervalSelector) {
   const savedInterval = localStorage.getItem(LS_KEYS.MEDIA_POLLING_INTERVAL) || '1000';
-  mediaPollingIntervalSelector.value = savedInterval;
+  setSelectValue(mediaPollingIntervalSelector, savedInterval);
   
   if (window.electronAPI && window.electronAPI.setMediaPollingInterval) {
     window.electronAPI.setMediaPollingInterval(parseInt(savedInterval));
@@ -1150,7 +1168,7 @@ if (darkModeSelector) {
   }
   
   // セレクターの初期値を設定
-  darkModeSelector.value = savedMode;
+  setSelectValue(darkModeSelector, savedMode);
   applyTheme(savedMode);
   
   darkModeSelector.addEventListener('change', (e) => {
@@ -1525,20 +1543,7 @@ if (desktopIconsContainer && desktopContextMenu) {
       return;
     }
     e.preventDefault();
-    hideContextMenu(); // 他のメニューを隠す
-    
-    desktopContextMenu.style.display = 'block';
-    desktopContextMenu.style.left = e.clientX + 'px';
-    desktopContextMenu.style.top = e.clientY + 'px';
-
-    // 画面外にはみ出ないように調整
-    const rect = desktopContextMenu.getBoundingClientRect();
-    if (rect.right > window.innerWidth) {
-      desktopContextMenu.style.left = (e.clientX - rect.width) + 'px';
-    }
-    if (rect.bottom > window.innerHeight) {
-      desktopContextMenu.style.top = (e.clientY - rect.height) + 'px';
-    }
+    window.ContextMenuManager.showDesktopContextMenu(e);
   });
 
   document.getElementById('desktop_context_add_app').onclick = (e) => {
@@ -2625,9 +2630,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modeSelector = document.getElementById(selectId);
     if (modeSelector && widgetEl) {
       const savedMode = localStorage.getItem(`widgetHeaderMode:${widgetId}`) || 'always';
-      modeSelector.value = savedMode;
+      setSelectValue(modeSelector, savedMode);
 
-      modeSelector.onchange = (e) => {
+      modeSelector.addEventListener('change', (e) => {
         const newMode = e.target.value;
         localStorage.setItem(`widgetHeaderMode:${widgetId}`, newMode);
         
@@ -2639,7 +2644,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (newMode === 'hide') {
           widgetEl.classList.add('header-always-hide');
         }
-      };
+      });
     }
   }
 
@@ -2704,13 +2709,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const unitSelect = document.getElementById('weather_unit_select');
         
         const mode = localStorage.getItem('weather_location_mode') || 'auto';
-        if (modeSelect) modeSelect.value = mode;
+        if (modeSelect) setSelectValue(modeSelect, mode);
         
         const provider = localStorage.getItem('weather_provider') || 'open-meteo';
-        if (providerSelect) providerSelect.value = provider;
+        if (providerSelect) setSelectValue(providerSelect, provider);
 
         const unit = localStorage.getItem('weather_unit') || 'c';
-        if (unitSelect) unitSelect.value = unit;
+        if (unitSelect) setSelectValue(unitSelect, unit);
         
         if (latInput) {
           latInput.value = mode === 'auto' 
@@ -2723,7 +2728,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             : (localStorage.getItem('weather_lon_manual') || '139.6917');
         }
         
-        if (intervalSelect) intervalSelect.value = localStorage.getItem('weather_location_interval') || '60';
+        if (intervalSelect) setSelectValue(intervalSelect, localStorage.getItem('weather_location_interval') || '60');
         
         // モード変更時の入力可否切り替え
         const updateInputState = () => {
@@ -2733,7 +2738,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           latInput.style.opacity = isManual ? '1' : '0.5';
           lonInput.style.opacity = isManual ? '1' : '0.5';
         };
-        if (modeSelect) modeSelect.onchange = updateInputState;
+        if (modeSelect) modeSelect.addEventListener('change', updateInputState);
         updateInputState();
         
         // 形状選択ボタンの初期化
@@ -2831,7 +2836,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // チャンネルセレクターの初期化
     const channelSelector = document.getElementById('update_channel_selector');
     if (channelSelector) {
-      channelSelector.value = window.UpdateManager.getChannel();
+      setSelectValue(channelSelector, window.UpdateManager.getChannel());
       channelSelector.addEventListener('change', (e) => {
         localStorage.setItem(LS_KEYS.UPDATE_CHANNEL, e.target.value);
       });
@@ -2891,7 +2896,7 @@ async function setAIMode(mode) {
 
   const defaultModeSelector = document.getElementById('gemini_default_mode_selector');
   if (defaultModeSelector) {
-    defaultModeSelector.value = mode;
+    setSelectValue(defaultModeSelector, mode);
   }
 }
 
@@ -2905,8 +2910,8 @@ async function initGeminiSettings() {
     if (window.electronAPI && window.electronAPI.getGeminiConfig) {
       const config = await window.electronAPI.getGeminiConfig();
       apiKeyInput.value = config.geminiApiKey || '';
-      modelSelector.value = config.geminiModel || 'gemini-3.1-flash-lite';
-      defaultModeSelector.value = config.geminiDefaultMode || 'chat';
+      setSelectValue(modelSelector, config.geminiModel || 'gemini-3.1-flash-lite');
+      setSelectValue(defaultModeSelector, config.geminiDefaultMode || 'chat');
       
       // AIカードのモードを同期
       currentAIMode = config.geminiDefaultMode || 'chat';

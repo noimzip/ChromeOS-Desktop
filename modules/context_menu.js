@@ -11,55 +11,33 @@ window.ContextMenuManager = {
   currentContextAppType: null,
 
   /**
-   * コンテキストメニューを表示
+   * アプリ用コンテキストメニューを表示
    */
   showContextMenu(e, iconEl, appType) {
     const menu = document.getElementById('app_context_menu');
-    if (!menu) return;
+    const anchor = document.getElementById('context_menu_anchor');
+    if (!menu || !anchor) return;
 
     window.ContextMenuManager.currentEditingIcon = iconEl;
     window.ContextMenuManager.currentContextAppType = appType;
-    
-    // アイコンに保存されているデータを取得
     window.ContextMenuManager.currentEditingApp = iconEl._appData || null;
 
-    menu.style.display = 'block';
-    
-    // 位置調整
-    let x = e.clientX;
-    let y = e.clientY;
-    
-    // 画面端での回り込み
-    const menuWidth = menu.offsetWidth || 160;
-    const menuHeight = menu.offsetHeight || 100;
-    
-    if (x + menuWidth > window.innerWidth) x -= menuWidth;
-    if (y + menuHeight > window.innerHeight) y -= menuHeight;
-    
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-
-    // 削除メニューの制御（ビルトインは削除不可などのロジックがあればここで）
+    // 削除メニューの制御
     const deleteItem = document.getElementById('context_delete');
     if (deleteItem) {
       if (appType === 'builtin') {
         deleteItem.style.display = 'none';
       } else {
-        deleteItem.style.display = 'flex';
+        deleteItem.style.display = 'inline-block';
       }
     }
 
-    // イベントリスナーを一度だけ設定するためにグローバルなクリックで閉じる処理
-    const closeMenu = () => {
-      menu.style.display = 'none';
-      window.removeEventListener('click', closeMenu);
-      window.removeEventListener('contextmenu', closeMenu);
-    };
-    
-    setTimeout(() => {
-      window.addEventListener('click', closeMenu);
-      window.addEventListener('contextmenu', closeMenu);
-    }, 10);
+    this.hideContextMenu(); // 他のメニューを閉じる
+
+    // アンカー位置を設定してメニューを表示
+    anchor.style.left = e.clientX + 'px';
+    anchor.style.top = e.clientY + 'px';
+    menu.show(anchor);
   },
 
   /**
@@ -67,41 +45,38 @@ window.ContextMenuManager = {
    */
   showWidgetContextMenu(e, widgetEl) {
     const menu = document.getElementById('widget_context_menu');
-    if (!menu) return;
+    const anchor = document.getElementById('context_menu_anchor');
+    if (!menu || !anchor) return;
 
     window.ContextMenuManager.currentEditingWidget = widgetEl;
 
-    menu.style.display = 'block';
-    
-    let x = e.clientX;
-    let y = e.clientY;
-    
-    const menuWidth = menu.offsetWidth || 160;
-    const menuHeight = menu.offsetHeight || 50;
-    
-    if (x + menuWidth > window.innerWidth) x -= menuWidth;
-    if (y + menuHeight > window.innerHeight) y -= menuHeight;
-    
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-
-    // 設定項目があるウィジェットのみ「ウィジェット設定」を表示
+    // 設定項目があるウィジェットのみ表示
     const settingsItem = document.getElementById('widget_context_settings');
     if (settingsItem) {
       const hasSettings = ['widget-clock', 'media_player_widget', 'weather_widget', 'gmail_widget', 'google_calendar_widget', 'github_contribution_widget'].includes(widgetEl.id);
-      settingsItem.style.display = hasSettings ? 'flex' : 'none';
+      settingsItem.style.display = hasSettings ? 'inline-block' : 'none';
     }
 
-    const closeMenu = () => {
-      menu.style.display = 'none';
-      window.removeEventListener('click', closeMenu);
-      window.removeEventListener('contextmenu', closeMenu);
-    };
-    
-    setTimeout(() => {
-      window.addEventListener('click', closeMenu);
-      window.addEventListener('contextmenu', closeMenu);
-    }, 10);
+    this.hideContextMenu(); // 他のメニューを閉じる
+
+    anchor.style.left = e.clientX + 'px';
+    anchor.style.top = e.clientY + 'px';
+    menu.show(anchor);
+  },
+
+  /**
+   * デスクトップ用コンテキストメニューを表示
+   */
+  showDesktopContextMenu(e) {
+    const menu = document.getElementById('desktop_context_menu');
+    const anchor = document.getElementById('context_menu_anchor');
+    if (!menu || !anchor) return;
+
+    this.hideContextMenu(); // 他のメニューを閉じる
+
+    anchor.style.left = e.clientX + 'px';
+    anchor.style.top = e.clientY + 'px';
+    menu.show(anchor);
   },
 
   /**
@@ -111,8 +86,8 @@ window.ContextMenuManager = {
     const appMenu = document.getElementById('app_context_menu');
     const widgetMenu = document.getElementById('widget_context_menu');
     const desktopMenu = document.getElementById('desktop_context_menu');
-    if (appMenu) appMenu.style.display = 'none';
-    if (widgetMenu) widgetMenu.style.display = 'none';
-    if (desktopMenu) desktopMenu.style.display = 'none';
+    if (appMenu && typeof appMenu.hide === 'function') appMenu.hide();
+    if (widgetMenu && typeof widgetMenu.hide === 'function') widgetMenu.hide();
+    if (desktopMenu && typeof desktopMenu.hide === 'function') desktopMenu.hide();
   }
 };
