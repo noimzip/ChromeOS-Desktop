@@ -914,6 +914,15 @@ body.no-blur .modal_overlay {
   border-bottom: 1px solid var(--outline-variant);
 }
 
+#settings_content .settings-section {
+  display: none;
+  border-bottom: none;
+}
+
+#settings_content .settings-section.active {
+  display: flex;
+}
+
 .settings-section:last-of-type {
   border-bottom: none;
 }

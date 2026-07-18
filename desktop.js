@@ -486,6 +486,7 @@ document.getElementById('open_settingsmenu_modal').onclick = () => {
   initDisplaySelector(); // 設定メニューを開くたびにディスプレイ情報を更新
   initWindowResizableSwitch();
   initAutoOpenDevToolsSwitch();
+  showSettingsSection('design_style'); // 開くたびに最初のカテゴリーを表示
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
 
@@ -2517,8 +2518,48 @@ function openAddCustomShapeModal(onSaved) {
   };
 }
 
+// 設定画面のカテゴリーを表示切り替え
+function showSettingsSection(sectionId) {
+  const menuItems = document.querySelectorAll('#settings_sidebar m3e-nav-menu-item');
+  const sections = document.querySelectorAll('#settings_content .settings-section');
+
+  sections.forEach(sec => {
+    if (sec.getAttribute('data-section') === sectionId) {
+      sec.classList.add('active');
+    } else {
+      sec.classList.remove('active');
+    }
+  });
+
+  menuItems.forEach(item => {
+    if (item.getAttribute('data-section') === sectionId) {
+      item.setAttribute('active', '');
+    } else {
+      item.removeAttribute('active');
+    }
+  });
+}
+
+// 設定画面のサイドバーカテゴリー切り替え初期化
+function initSettingsSidebarNavigation() {
+  const menuItems = document.querySelectorAll('#settings_sidebar m3e-nav-menu-item');
+
+  menuItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const sectionId = item.getAttribute('data-section');
+      if (sectionId) {
+        showSettingsSection(sectionId);
+      }
+    });
+  });
+
+  // 初期表示（デザインとスタイル）
+  showSettingsSection('design_style');
+}
+
 // 設定画面のリセットボタンにハンドラを追加
 document.addEventListener('DOMContentLoaded', async () => {
+  initSettingsSidebarNavigation();
   // データ管理（エクスポート/インポート）の初期化
   if (window.DataManager) {
     window.DataManager.initUI();

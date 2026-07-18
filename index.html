@@ -760,44 +760,50 @@
     <div id="settingsmenu_modal_overlay" class="modal_overlay">
       <div id="settingsmenu_modal" class="modal">
         <div id="settings_sidebar">
-          <m3e-nav-menu>
+          <m3e-nav-menu id="settings_menu">
             <m3e-nav-menu-item-group>
               <m3e-heading slot="label" variant="label" size="large" data-i18n="general">一般</m3e-heading>
-              <m3e-nav-menu-item>
-                <m3e-icon slot="icon" name="keyboard"></m3e-icon>
-                <span slot="label" data-i18n="keyboard_shortcuts">キーボードショートカット</span>
-              </m3e-nav-menu-item>
-              <m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="design_style" active>
                 <m3e-icon slot="icon" name="palette"></m3e-icon>
                 <span slot="label" data-i18n="design_style">デザインとスタイル</span>
               </m3e-nav-menu-item>
-              <m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="icon_settings">
+                <m3e-icon slot="icon" name="category"></m3e-icon>
+                <span slot="label" data-i18n="icon_settings">アイコン設定</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="system_settings">
+                <m3e-icon slot="icon" name="settings"></m3e-icon>
+                <span slot="label" data-i18n="system_settings">システム設定</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="performance_settings">
+                <m3e-icon slot="icon" name="speed"></m3e-icon>
+                <span slot="label" data-i18n="performance_settings">パフォーマンス設定</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="security_privacy">
                 <m3e-icon slot="icon" name="shield"></m3e-icon>
                 <span slot="label" data-i18n="security_privacy">セキュリティとプライバシー</span>
               </m3e-nav-menu-item>
-              <m3e-nav-menu-item>
-                <m3e-icon slot="icon" name="account_circle"></m3e-icon>
-                <span slot="label" data-i18n="account">アカウント</span>
+              <m3e-nav-menu-item data-section="data_management">
+                <m3e-icon slot="icon" name="database"></m3e-icon>
+                <span slot="label" data-i18n="data_management">データ管理</span>
               </m3e-nav-menu-item>
-              <!-- Additional items omitted for brevity -->
             </m3e-nav-menu-item-group>
             <m3e-nav-menu-item-group>
-              <m3e-nav-menu-item>
-                <m3e-icon slot="icon" name="developer_board"></m3e-icon>
-                <span slot="label" data-i18n="debug">デバッグ</span>
-              </m3e-nav-menu-item>
               <m3e-heading slot="label" variant="label" size="large" data-i18n="dev_settings">開発者向け設定</m3e-heading>
-              <m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="developer_settings">
+                <m3e-icon slot="icon" name="developer_board"></m3e-icon>
+                <span slot="label" data-i18n="dev_settings">開発者向け設定</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="about">
                 <m3e-icon slot="icon" name="info"></m3e-icon>
                 <span slot="label" data-i18n="about">バージョン情報</span>
               </m3e-nav-menu-item>
-              <!-- Additional items omitted for brevity -->
             </m3e-nav-menu-item-group>
           </m3e-nav-menu>
         </div>
 
         <div id="settings_content">
-          <div class="settings-section">
+          <div class="settings-section" data-section="design_style">
             <h4 class="settings-section-title" data-i18n="design_style">デザインとスタイル</h4>
             <div class="settings-item">
               <div class="settings-item-label">
@@ -870,7 +876,7 @@
             </div>
           </div>
 
-          <div class="settings-section">
+          <div class="settings-section" data-section="icon_settings">
             <h4 class="settings-section-title" data-i18n="icon_settings">アイコン設定</h4>
             <div class="settings-item settings-item-column">
               <div class="settings-item-label">
@@ -911,7 +917,7 @@
             </div>
           </div>
 
-          <div class="settings-section">
+          <div class="settings-section" data-section="system_settings">
             <h4 class="settings-section-title" data-i18n="system_settings">システム設定</h4>
             <div class="settings-item">
               <div class="settings-item-label">
@@ -960,7 +966,7 @@
             </div>
           </div>
 
-          <div class="settings-section">
+          <div class="settings-section" data-section="performance_settings">
             <h4 class="settings-section-title" data-i18n="performance_settings">パフォーマンス設定</h4>
             <div class="settings-item">
               <div class="settings-item-label">
@@ -987,7 +993,7 @@
             </div>
           </div>
 
-          <div class="settings-section">
+          <div class="settings-section" data-section="security_privacy">
             <h4 class="settings-section-title" data-i18n="security_privacy">セキュリティとプライバシー</h4>
             <div class="settings-item">
               <div class="settings-item-label">
@@ -1013,7 +1019,7 @@
             </div>
           </div>
 
-          <div class="settings-section">
+          <div class="settings-section" data-section="data_management">
             <h4 class="settings-section-title" data-i18n="data_management">データ管理</h4>
             <div class="settings-item">
               <div class="settings-item-label">
@@ -1056,7 +1062,7 @@
             </div>
           </div>
 
-          <div class="settings-section">
+          <div class="settings-section" data-section="about">
             <h4 class="settings-section-title" data-i18n="about">バージョン情報</h4>
             <div class="settings-item">
               <div class="settings-item-label">
@@ -1085,7 +1091,8 @@
             </div>
           </div>
 
-          <div class="developer-settings" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--md-sys-color-outline-variant);">
+          <div class="settings-section" data-section="developer_settings">
+            <h4 class="settings-section-title" data-i18n="dev_settings">開発者向け設定</h4>
             <div class="settings-item">
               <div class="settings-item-label">
                 <span data-i18n="auto_open_devtools">起動時に開発者ツールを開く</span>
@@ -1102,9 +1109,13 @@
                  <m3e-button variant="outlined" id="open_devtools_btn" data-i18n="open">開く</m3e-button>
               </div>
             </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="user_agent">ユーザーエージェント</span>
+                <small id="developer_user_agent" style="word-break: break-all; max-width: 400px; margin-top: 4px;"></small>
+              </div>
+            </div>
           </div>
-
-          <p class="user-agent-display"><span data-i18n="user_agent">ユーザーエージェント:</span><span id="developer_user_agent"></span></p>
           <div style="margin-top: auto; align-self: flex-end;">
             <m3e-button variant="filled" id="close_settingsmenu_modal" data-i18n="close">とじる</m3e-button>
           </div>
