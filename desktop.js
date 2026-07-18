@@ -392,11 +392,7 @@ function loadDefaultIconVisibility() {
     }
 
     if (toggle) {
-      if (typeof toggle.selected !== 'undefined') {
-        toggle.selected = isVisible;
-      } else {
-        toggle.checked = isVisible;
-      }
+      toggle.checked = isVisible;
     }
   }
 }
@@ -486,6 +482,15 @@ document.getElementById('open_settingsmenu_modal').onclick = () => {
   initDisplaySelector(); // 設定メニューを開くたびにディスプレイ情報を更新
   initWindowResizableSwitch();
   initAutoOpenDevToolsSwitch();
+  // Load Gemini settings values from file
+  const apiKeyInput = document.getElementById('gemini_api_key_input');
+  const modelSelector = document.getElementById('gemini_model_selector');
+  if (apiKeyInput && modelSelector && window.electronAPI && window.electronAPI.getGeminiConfig) {
+    window.electronAPI.getGeminiConfig().then(config => {
+      apiKeyInput.value = config.geminiApiKey || '';
+      modelSelector.value = config.geminiModel || 'gemini-3.1-flash-lite';
+    }).catch(e => console.error('Failed to get Gemini settings:', e));
+  }
   showSettingsSection('design_style'); // 開くたびに最初のカテゴリーを表示
   document.getElementById('settingsmenu_modal_overlay').style.display = 'flex';
 }
@@ -509,11 +514,7 @@ window.currentFolderPage = 0;
 function updateLockMovementUI() {
   const toggle = document.getElementById('toggle_lock_movement_position_modal');
   if (toggle) {
-    if (typeof toggle.selected !== 'undefined') {
-      toggle.selected = window.isMovementLocked;
-    } else {
-      toggle.checked = window.isMovementLocked;
-    }
+    toggle.checked = window.isMovementLocked;
   }
 }
 
@@ -524,7 +525,7 @@ updateLockMovementUI();
 const lockMovementToggle = document.getElementById('toggle_lock_movement_position_modal');
 if (lockMovementToggle) {
   lockMovementToggle.addEventListener('change', (e) => {
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    const newState = e.target.checked;
     window.isMovementLocked = newState;
     localStorage.setItem(LS_KEYS.LOCK_MOVEMENT, newState);
   });
@@ -832,12 +833,7 @@ document.getElementById('open_change_widget_position_modal').onclick = () => {
 function updateGridModeSwitch() {
   const gridModeSwitch = document.getElementById('toggle_grid_mode');
   if (gridModeSwitch) {
-    // m3e-switch は 'selected' プロパティを使用するが、念のため 'checked' も考慮
-    if (typeof gridModeSwitch.selected !== 'undefined') {
-      gridModeSwitch.selected = window.isGridModeEnabled;
-    } else {
-      gridModeSwitch.checked = window.isGridModeEnabled;
-    }
+    gridModeSwitch.checked = window.isGridModeEnabled;
   }
 }
 
@@ -846,7 +842,7 @@ const gridModeSwitch = document.getElementById('toggle_grid_mode');
 if (gridModeSwitch) {
   gridModeSwitch.addEventListener('change', (e) => {
     // m3e-switch は 'selected' プロパティで状態を公開するが、念のため 'checked' も考慮
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    const newState = e.target.checked;
     window.isGridModeEnabled = newState;
     localStorage.setItem(LS_KEYS.GRID_MODE_ENABLED, window.isGridModeEnabled);
     
@@ -1033,11 +1029,7 @@ function updateSettingsFabVisibility(isVisible) {
     settingsFab.style.display = isVisible ? 'flex' : 'none';
   }
   if (toggleSettingsFabBtn) {
-    if (typeof toggleSettingsFabBtn.selected !== 'undefined') {
-      toggleSettingsFabBtn.selected = isVisible;
-    } else {
-      toggleSettingsFabBtn.checked = isVisible;
-    }
+    toggleSettingsFabBtn.checked = isVisible;
   }
   localStorage.setItem(LS_KEYS.SHOW_SETTINGS_FAB, isVisible);
 }
@@ -1048,7 +1040,7 @@ if (toggleSettingsFabBtn) {
   updateSettingsFabVisibility(showFab);
   
   toggleSettingsFabBtn.addEventListener('change', (e) => {
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    const newState = e.target.checked;
     updateSettingsFabVisibility(newState);
   });
 }
@@ -1063,7 +1055,7 @@ if (toggleBlurEffectBtn) {
   updateBlurEffect(blurEnabled);
   
   toggleBlurEffectBtn.addEventListener('change', (e) => {
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    const newState = e.target.checked;
     updateBlurEffect(newState);
   });
 }
@@ -1074,15 +1066,11 @@ const updateAnimationsDisabled = window.StyleManager.updateAnimationsDisabled.bi
 
 if (toggleDisableAnimationsBtn) {
   const animationsDisabled = localStorage.getItem(LS_KEYS.ANIMATIONS_DISABLED) === 'true';
-  if (typeof toggleDisableAnimationsBtn.selected !== 'undefined') {
-    toggleDisableAnimationsBtn.selected = animationsDisabled;
-  } else {
-    toggleDisableAnimationsBtn.checked = animationsDisabled;
-  }
+  toggleDisableAnimationsBtn.checked = animationsDisabled;
   updateAnimationsDisabled(animationsDisabled);
   
   toggleDisableAnimationsBtn.addEventListener('change', (e) => {
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    const newState = e.target.checked;
     updateAnimationsDisabled(newState);
   });
 } else {
@@ -1129,15 +1117,11 @@ if (mediaPollingIntervalSelector) {
 
 if (toggleMediaSmartPollingBtn) {
   const smartPollingEnabled = localStorage.getItem(LS_KEYS.MEDIA_SMART_POLLING) !== 'false';
-  if (typeof toggleMediaSmartPollingBtn.selected !== 'undefined') {
-    toggleMediaSmartPollingBtn.selected = smartPollingEnabled;
-  } else {
-    toggleMediaSmartPollingBtn.checked = smartPollingEnabled;
-  }
+  toggleMediaSmartPollingBtn.checked = smartPollingEnabled;
   localStorage.setItem(LS_KEYS.MEDIA_SMART_POLLING, smartPollingEnabled);
   
   toggleMediaSmartPollingBtn.addEventListener('change', async (e) => {
-    const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+    const newState = e.target.checked;
     localStorage.setItem(LS_KEYS.MEDIA_SMART_POLLING, newState);
     await updateMediaPollingActiveState();
   });
@@ -2595,14 +2579,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const toggle = document.getElementById(config.id);
       if (toggle) {
         const isVisible = localStorage.getItem(config.key) !== 'false';
-        if (typeof toggle.selected !== 'undefined') toggle.selected = isVisible;
-        else toggle.checked = isVisible;
+        toggle.checked = isVisible;
 
         // 初期状態適用
         window.StyleManager.updateMediaPlayerVisibility(config.part, isVisible);
 
         toggle.addEventListener('change', (e) => {
-          const newState = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+          const newState = e.target.checked;
           window.StyleManager.updateMediaPlayerVisibility(config.part, newState);
         });
       }
@@ -2807,7 +2790,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const chromeToggle = document.getElementById('toggle_chrome_icon');
   if (chromeToggle) {
     chromeToggle.addEventListener('change', (e) => {
-      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      const isVisible = e.target.checked;
       setDefaultIconVisibility('appicon-chrome', isVisible, LS_KEYS.SHOW_CHROME_ICON);
     });
   }
@@ -2815,7 +2798,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const filesToggle = document.getElementById('toggle_files_icon');
   if (filesToggle) {
     filesToggle.addEventListener('change', (e) => {
-      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      const isVisible = e.target.checked;
       setDefaultIconVisibility('appicon-files', isVisible, LS_KEYS.SHOW_FILES_ICON);
     });
   }
@@ -2823,7 +2806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const settingsToggle = document.getElementById('toggle_settings_icon');
   if (settingsToggle) {
     settingsToggle.addEventListener('change', (e) => {
-      const isVisible = typeof e.target.selected !== 'undefined' ? e.target.selected : e.target.checked;
+      const isVisible = e.target.checked;
       setDefaultIconVisibility('appicon-settings', isVisible, LS_KEYS.SHOW_SETTINGS_ICON);
     });
   }
@@ -2854,4 +2837,787 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
   }
+
+  // Initialize AI Settings, Gesture detection, and Prompt card events
+  initGeminiSettings();
+  initAIGesture();
+  initAIPromptCardEvents();
+
+  // Initialize Spotlight Search
+  initSpotlight();
 });
+
+// ========================================
+// AI Settings & Gesture & Prompt Management
+// ========================================
+
+let currentAIMode = 'chat';
+
+function updateAIModeUI() {
+  const modeButtons = document.querySelectorAll('.ai-mode-btn');
+  modeButtons.forEach(btn => {
+    if (btn.getAttribute('data-mode') === currentAIMode) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const input = document.getElementById('ai_prompt_input');
+  if (input && window.i18n) {
+    if (currentAIMode === 'chat') {
+      input.placeholder = window.i18n.t('ask_ai_placeholder');
+    } else if (currentAIMode === 'trans_en') {
+      input.placeholder = window.i18n.t('ai_mode_trans_en');
+    } else if (currentAIMode === 'trans_ja') {
+      input.placeholder = window.i18n.t('ai_mode_trans_ja');
+    }
+  }
+}
+
+async function setAIMode(mode) {
+  currentAIMode = mode;
+  updateAIModeUI();
+
+  try {
+    if (window.electronAPI && window.electronAPI.getGeminiConfig) {
+      const config = await window.electronAPI.getGeminiConfig();
+      config.geminiDefaultMode = mode;
+      await window.electronAPI.setGeminiConfig(config);
+    }
+  } catch (e) {
+    console.error('Failed to save AI mode config:', e);
+  }
+
+  const defaultModeSelector = document.getElementById('gemini_default_mode_selector');
+  if (defaultModeSelector) {
+    defaultModeSelector.value = mode;
+  }
+}
+
+async function initGeminiSettings() {
+  const apiKeyInput = document.getElementById('gemini_api_key_input');
+  const modelSelector = document.getElementById('gemini_model_selector');
+  const defaultModeSelector = document.getElementById('gemini_default_mode_selector');
+  if (!apiKeyInput || !modelSelector || !defaultModeSelector) return;
+
+  try {
+    if (window.electronAPI && window.electronAPI.getGeminiConfig) {
+      const config = await window.electronAPI.getGeminiConfig();
+      apiKeyInput.value = config.geminiApiKey || '';
+      modelSelector.value = config.geminiModel || 'gemini-3.1-flash-lite';
+      defaultModeSelector.value = config.geminiDefaultMode || 'chat';
+      
+      // AIカードのモードを同期
+      currentAIMode = config.geminiDefaultMode || 'chat';
+      updateAIModeUI();
+    }
+  } catch (e) {
+    console.error('Failed to get Gemini settings:', e);
+  }
+
+  const saveConfig = async () => {
+    try {
+      await window.electronAPI.setGeminiConfig({
+        geminiApiKey: apiKeyInput.value,
+        geminiModel: modelSelector.value,
+        geminiDefaultMode: defaultModeSelector.value
+      });
+      // AIカードのモードも同期
+      currentAIMode = defaultModeSelector.value;
+      updateAIModeUI();
+    } catch (e) {
+      console.error('Failed to save Gemini config:', e);
+    }
+  };
+
+  apiKeyInput.addEventListener('change', saveConfig);
+  modelSelector.addEventListener('change', saveConfig);
+  defaultModeSelector.addEventListener('change', saveConfig);
+}
+
+// AI Gesture variables
+let gestureMouseDown = false;
+let gestureMouseDownTime = 0;
+let gestureLongPressActive = false;
+let gestureLongPressTimeout = null;
+let gesturePath = [];
+
+function initAIGesture() {
+  const isGestureTarget = (element) => {
+    if (!element) return false;
+    const excluded = element.closest('.widget, .appicon, .modal_overlay, .modal, .context-menu, button, input, select, textarea, m3e-button, m3e-switch, m3e-slider, m3e-dialog, m3e-nav-menu');
+    return !excluded;
+  };
+
+  const detectShake = (path) => {
+    if (path.length < 5) return false;
+    
+    let reversalsX = 0;
+    let lastDirX = 0;
+    let lastReversalX = path[0].x;
+    const minStroke = 15; // 15px min stroke length
+    
+    for (let i = 1; i < path.length; i++) {
+      const dx = path[i].x - path[i - 1].x;
+      const totalDx = path[i].x - lastReversalX;
+      
+      if (dx > 0) {
+        if (lastDirX === -1 && Math.abs(totalDx) >= minStroke) {
+          reversalsX++;
+          lastReversalX = path[i].x;
+        }
+        if (lastDirX !== 1) lastDirX = 1;
+      } else if (dx < 0) {
+        if (lastDirX === 1 && Math.abs(totalDx) >= minStroke) {
+          reversalsX++;
+          lastReversalX = path[i].x;
+        }
+        if (lastDirX !== -1) lastDirX = -1;
+      }
+    }
+    
+    let reversalsY = 0;
+    let lastDirY = 0;
+    let lastReversalY = path[0].y;
+    
+    for (let i = 1; i < path.length; i++) {
+      const dy = path[i].y - path[i - 1].y;
+      const totalDy = path[i].y - lastReversalY;
+      
+      if (dy > 0) {
+        if (lastDirY === -1 && Math.abs(totalDy) >= minStroke) {
+          reversalsY++;
+          lastReversalY = path[i].y;
+        }
+        if (lastDirY !== 1) lastDirY = 1;
+      } else if (dy < 0) {
+        if (lastDirY === 1 && Math.abs(totalDy) >= minStroke) {
+          reversalsY++;
+          lastReversalY = path[i].y;
+        }
+        if (lastDirY !== -1) lastDirY = -1;
+      }
+    }
+    
+    return reversalsX >= 3 || reversalsY >= 3;
+  };
+
+  document.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // Left click only
+    if (!isGestureTarget(e.target)) return;
+    
+    gestureMouseDown = true;
+    gestureMouseDownTime = Date.now();
+    gestureLongPressActive = false;
+    gesturePath = [{ x: e.clientX, y: e.clientY, time: Date.now() }];
+    
+    if (gestureLongPressTimeout) clearTimeout(gestureLongPressTimeout);
+    gestureLongPressTimeout = setTimeout(() => {
+      if (gestureMouseDown) {
+        gestureLongPressActive = true;
+      }
+    }, 400);
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!gestureMouseDown) return;
+    
+    gesturePath.push({ x: e.clientX, y: e.clientY, time: Date.now() });
+    
+    const now = Date.now();
+    gesturePath = gesturePath.filter(p => now - p.time <= 800);
+    
+    if (gestureLongPressActive) {
+      if (detectShake(gesturePath)) {
+        gestureMouseDown = false;
+        gestureLongPressActive = false;
+        if (gestureLongPressTimeout) clearTimeout(gestureLongPressTimeout);
+        
+        e.preventDefault();
+        window.getSelection().removeAllRanges();
+        
+        showAIPromptCard(e.clientX, e.clientY);
+      }
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    gestureMouseDown = false;
+    gestureLongPressActive = false;
+    if (gestureLongPressTimeout) clearTimeout(gestureLongPressTimeout);
+  });
+
+  // Close prompt card if clicking outside it
+  document.addEventListener('mousedown', (e) => {
+    const card = document.getElementById('ai_prompt_card');
+    if (card && card.style.display === 'flex') {
+      if (!card.contains(e.target)) {
+        closeAIPromptCard();
+      }
+    }
+  });
+}
+
+function initAIPromptCardEvents() {
+  const input = document.getElementById('ai_prompt_input');
+  const submitBtn = document.getElementById('ai_prompt_submit');
+  const closeBtn = document.getElementById('ai_prompt_close');
+  
+  if (!input || !submitBtn || !closeBtn) return;
+  
+  submitBtn.addEventListener('click', submitAIPrompt);
+  closeBtn.addEventListener('click', closeAIPromptCard);
+  
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitAIPrompt();
+    }
+  });
+  
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = `${input.scrollHeight}px`;
+    repositionAIPromptCard();
+  });
+
+  // モードセレクターのイベントを追加
+  const modeButtons = document.querySelectorAll('.ai-mode-btn');
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode');
+      setAIMode(mode);
+    });
+  });
+
+  // i18n読み込み時にもUIを再更新
+  document.addEventListener('i18n:loaded', () => {
+    updateAIModeUI();
+  });
+}
+
+function showAIPromptCard(x, y) {
+  const card = document.getElementById('ai_prompt_card');
+  if (!card) return;
+  
+  card.style.display = 'flex';
+  card.style.left = `${x}px`;
+  card.style.top = `${y}px`;
+  
+  const input = document.getElementById('ai_prompt_input');
+  if (input) {
+    input.value = '';
+    input.style.height = 'auto';
+  }
+  
+  const panel = document.getElementById('ai_response_panel');
+  if (panel) panel.style.display = 'none';
+  
+  const content = document.getElementById('ai_response_content');
+  if (content) content.innerHTML = '';
+  
+  repositionAIPromptCard(x, y);
+  
+  setTimeout(() => {
+    card.classList.add('visible');
+    if (input) input.focus();
+  }, 10);
+}
+
+function closeAIPromptCard() {
+  const card = document.getElementById('ai_prompt_card');
+  if (!card) return;
+  card.classList.remove('visible');
+  setTimeout(() => {
+    if (!card.classList.contains('visible')) {
+      card.style.display = 'none';
+    }
+  }, 250);
+}
+
+function repositionAIPromptCard(x, y) {
+  const card = document.getElementById('ai_prompt_card');
+  if (!card || card.style.display === 'none') return;
+  
+  const cardWidth = card.offsetWidth || 380;
+  const cardHeight = card.offsetHeight || 100;
+  
+  let left = x !== undefined ? x + 10 : parseInt(card.style.left) || 0;
+  let top = y !== undefined ? y + 10 : parseInt(card.style.top) || 0;
+  
+  if (left + cardWidth > window.innerWidth) {
+    left = window.innerWidth - cardWidth - 15;
+  }
+  if (left < 15) left = 15;
+  
+  if (top + cardHeight > window.innerHeight) {
+    top = window.innerHeight - cardHeight - 15;
+  }
+  if (top < 15) top = 15;
+  
+  card.style.left = `${left}px`;
+  card.style.top = `${top}px`;
+}
+
+async function submitAIPrompt() {
+  const input = document.getElementById('ai_prompt_input');
+  if (!input) return;
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  const content = document.getElementById('ai_response_content');
+  const panel = document.getElementById('ai_response_panel');
+  if (!content || !panel) return;
+
+  panel.style.display = 'block';
+  content.innerHTML = `<div class="ai-thinking-spinner"><span>${window.i18n ? window.i18n.t('ai_thinking') : 'Thinking...'}</span></div>`;
+  
+  repositionAIPromptCard();
+
+  try {
+    let finalPrompt = prompt;
+    if (currentAIMode === 'trans_en') {
+      finalPrompt = `Translate the following text to English. Output ONLY the translated text, do not include any explanations, introduction, or markdown blocks unless necessary. Just the raw translation:\n\n${prompt}`;
+    } else if (currentAIMode === 'trans_ja') {
+      finalPrompt = `以下のテキストを日本語に翻訳してください。翻訳結果のみを出力し、解説や前置き、余計な文章は一切含めないでください。純粋な翻訳文のみを出力してください：\n\n${prompt}`;
+    }
+
+    const response = await window.electronAPI.askGemini(finalPrompt);
+    if (response.success) {
+      content.innerHTML = renderMarkdown(response.text);
+    } else {
+      let errMsg = window.i18n ? window.i18n.t('ai_error') : 'An error occurred.';
+      if (response.error && response.error.includes('not configured')) {
+        errMsg = window.i18n ? window.i18n.t('ai_key_missing') : 'Please configure Gemini API Key in settings.';
+      } else if (response.error) {
+        errMsg += `<br><small style="opacity:0.7;">${response.error}</small>`;
+      }
+      content.innerHTML = `<span style="color:var(--error-color);">${errMsg}</span>`;
+    }
+  } catch (e) {
+    const errMsg = window.i18n ? window.i18n.t('ai_error') : 'An error occurred.';
+    content.innerHTML = `<span style="color:var(--error-color);">${errMsg}<br><small style="opacity:0.7;">${e.message}</small></span>`;
+  }
+  
+  repositionAIPromptCard();
+}
+
+function escapeHTML(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderMarkdown(md) {
+  if (!md) return '';
+  
+  let html = escapeHTML(md);
+  
+  // Parse code blocks (```code```)
+  const codeBlocks = [];
+  html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+    codeBlocks.push(code.trim());
+    return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+  });
+  
+  // Parse inline code (`code`)
+  const inlineCodes = [];
+  html = html.replace(/`([^`\n]+)`/g, (match, code) => {
+    inlineCodes.push(code);
+    return `__INLINE_CODE_${inlineCodes.length - 1}__`;
+  });
+  
+  // Parse bold (**text**)
+  html = html.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Parse bullet lists (lines starting with - or *)
+  const lines = html.split('\n');
+  let inList = false;
+  let resultLines = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    const match = line.match(/^([-*]|\d+\.)\s+(.*)$/);
+    
+    if (match) {
+      if (!inList) {
+        inList = true;
+        resultLines.push('<ul>');
+      }
+      resultLines.push(`<li>${match[2]}</li>`);
+    } else {
+      if (inList) {
+        inList = false;
+        resultLines.push('</ul>');
+      }
+      resultLines.push(lines[i]);
+    }
+  }
+  if (inList) {
+    resultLines.push('</ul>');
+  }
+  
+  html = resultLines.join('\n');
+  
+  // Restore inline code
+  html = html.replace(/__INLINE_CODE_(\d+)__/g, (match, index) => {
+    return `<code>${inlineCodes[index]}</code>`;
+  });
+  
+  // Restore code blocks
+  html = html.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
+    return `<pre><code>${codeBlocks[index]}</code></pre>`;
+  });
+  
+  // Parse line breaks (except within pre tags)
+  const parts = html.split(/(<pre>[\s\S]*?<\/pre>)/);
+  for (let i = 0; i < parts.length; i++) {
+    if (!parts[i].startsWith('<pre>')) {
+      parts[i] = parts[i].replace(/\n/g, '<br>');
+    }
+  }
+  html = parts.join('');
+  
+  return html;
+}
+
+// ========================================
+// Spotlight Search
+// ========================================
+
+const SPOTLIGHT_SETTINGS_SECTIONS = [
+  { id: 'design_style',         icon: 'palette',       label_key: 'design_style' },
+  { id: 'icon_settings',        icon: 'category',      label_key: 'icon_settings' },
+  { id: 'system_settings',      icon: 'settings',      label_key: 'system_settings' },
+  { id: 'performance_settings', icon: 'speed',         label_key: 'performance_settings' },
+  { id: 'security_privacy',     icon: 'security',      label_key: 'security_privacy' },
+  { id: 'data_management',      icon: 'storage',       label_key: 'data_management' },
+  { id: 'ai_settings',          icon: 'auto_awesome',  label_key: 'ai_settings' },
+  { id: 'developer_settings',   icon: 'code',          label_key: 'developer_settings' },
+  { id: 'about',                icon: 'info',          label_key: 'about' },
+];
+
+function getSpotlightApps() {
+  const customApps    = JSON.parse(localStorage.getItem(LS_KEYS.CUSTOM_APPS)      || '[]');
+  const linuxApps     = JSON.parse(localStorage.getItem(LS_KEYS.LINUX_APPS)       || '[]');
+  const fileShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FILE_SHORTCUTS)   || '[]');
+  const folderShortcuts = JSON.parse(localStorage.getItem(LS_KEYS.FOLDER_SHORTCUTS) || '[]');
+  return [
+    ...customApps.map(a    => ({ ...a, _type: 'webapp'  })),
+    ...linuxApps.map(a     => ({ ...a, _type: 'linux'   })),
+    ...fileShortcuts.map(a => ({ ...a, _type: 'file'    })),
+    ...folderShortcuts.map(a => ({ ...a, _type: 'folder' })),
+  ];
+}
+
+function spotlightTypeIcon(type) {
+  switch (type) {
+    case 'webapp':  return '🌐';
+    case 'linux':   return '🖥️';
+    case 'file':    return '📄';
+    case 'folder':  return '📁';
+    default:        return '📌';
+  }
+}
+
+function spotlightTypeLabel(type) {
+  switch (type) {
+    case 'webapp':  return 'Web App';
+    case 'linux':   return 'Linux App';
+    case 'file':    return 'File';
+    case 'folder':  return 'Folder';
+    default:        return '';
+  }
+}
+
+function initSpotlight() {
+  const overlay     = document.getElementById('spotlight_overlay');
+  const input       = document.getElementById('spotlight_input');
+  const closeBtn    = document.getElementById('spotlight_close_btn');
+  const appsList    = document.getElementById('spotlight_apps_list');
+  const settingsList = document.getElementById('spotlight_settings_list');
+  const aiList      = document.getElementById('spotlight_ai_list');
+  const catApps     = document.getElementById('spotlight_cat_apps');
+  const catSettings = document.getElementById('spotlight_cat_settings');
+  const catAI       = document.getElementById('spotlight_cat_ai');
+  const aiResponse  = document.getElementById('spotlight_ai_response');
+  const aiResponseContent = document.getElementById('spotlight_ai_response_content');
+
+  if (!overlay || !input) return;
+
+  let keyboardIndex = -1;
+  let allItems = [];
+
+  // --- Open / Close ---
+  function openSpotlight() {
+    overlay.classList.remove('spotlight-hidden');
+    renderResults('');
+    setTimeout(() => {
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    }, 50);
+  }
+
+  function closeSpotlight() {
+    overlay.classList.add('spotlight-hidden');
+    if (input) input.value = '';
+    if (aiResponse) aiResponse.style.display = 'none';
+    if (aiResponseContent) aiResponseContent.innerHTML = '';
+    keyboardIndex = -1;
+    allItems = [];
+  }
+
+  // Alt+Space でSpotlightをトグル（ウィンドウフォーカス時のみ動作）
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ' && e.altKey && !e.ctrlKey && !e.metaKey) {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      e.preventDefault();
+      if (overlay.classList.contains('spotlight-hidden')) {
+        openSpotlight();
+      } else {
+        closeSpotlight();
+      }
+    }
+  });
+
+  // Close on overlay background click
+  overlay.addEventListener('mousedown', (e) => {
+    if (e.target === overlay) closeSpotlight();
+  });
+
+  // Close button
+  if (closeBtn) closeBtn.addEventListener('click', closeSpotlight);
+
+  // Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !overlay.classList.contains('spotlight-hidden')) {
+      e.stopPropagation();
+      closeSpotlight();
+    }
+  }, true);
+
+  // --- Rendering ---
+  function makeAppItem(app) {
+    const item = document.createElement('div');
+    item.className = 'spotlight-result-item';
+    item.setAttribute('tabindex', '-1');
+
+    let iconHTML;
+    if (app.image) {
+      iconHTML = `<img class="spotlight-result-icon" src="${escapeHTML(app.image)}" alt="" />`;
+    } else {
+      iconHTML = `<div class="spotlight-result-icon icon-symbol">${spotlightTypeIcon(app._type)}</div>`;
+    }
+
+    item.innerHTML = `
+      ${iconHTML}
+      <div class="spotlight-result-text">
+        <div class="spotlight-result-label">${escapeHTML(app.name || '')}</div>
+        <div class="spotlight-result-sublabel">${spotlightTypeLabel(app._type)}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => launchSpotlightApp(app));
+    return item;
+  }
+
+  function makeSettingsItem(section) {
+    const item = document.createElement('div');
+    item.className = 'spotlight-result-item';
+    item.setAttribute('tabindex', '-1');
+
+    const label = window.i18n ? window.i18n.t(section.label_key) : section.label_key;
+    item.innerHTML = `
+      <div class="spotlight-result-icon icon-symbol"><m3e-icon name="${section.icon}"></m3e-icon></div>
+      <div class="spotlight-result-text">
+        <div class="spotlight-result-label">${escapeHTML(label)}</div>
+        <div class="spotlight-result-sublabel">${window.i18n ? window.i18n.t('spotlight_cat_settings') : 'Settings'}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => {
+      openSettingsSection(section.id);
+      closeSpotlight();
+    });
+    return item;
+  }
+
+  function makeAIItem(query) {
+    const item = document.createElement('div');
+    item.className = 'spotlight-result-item';
+    item.setAttribute('tabindex', '-1');
+
+    const prefix = window.i18n ? window.i18n.t('spotlight_ask_ai') : 'Ask AI: ';
+    item.innerHTML = `
+      <div class="spotlight-result-icon icon-symbol"><m3e-icon name="auto_awesome"></m3e-icon></div>
+      <div class="spotlight-result-text">
+        <div class="spotlight-result-label">${escapeHTML(prefix)}${escapeHTML(query)}</div>
+        <div class="spotlight-result-sublabel">Gemini AI</div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => spotlightAskAI(query));
+    return item;
+  }
+
+  function renderResults(query) {
+    const q = query.trim().toLowerCase();
+    const apps = getSpotlightApps();
+
+    // Filter apps
+    const filteredApps = q
+      ? apps.filter(a => (a.name || '').toLowerCase().includes(q))
+      : apps;
+
+    // Filter settings
+    const filteredSettings = SPOTLIGHT_SETTINGS_SECTIONS.filter(s => {
+      if (!q) return false; // Only show settings when searching
+      const label = window.i18n ? window.i18n.t(s.label_key) : s.label_key;
+      return label.toLowerCase().includes(q) || s.id.toLowerCase().includes(q);
+    });
+
+    // Build app items
+    appsList.innerHTML = '';
+    filteredApps.slice(0, 8).forEach(app => {
+      const item = makeAppItem(app);
+      appsList.appendChild(item);
+    });
+    catApps.classList.toggle('visible', filteredApps.length > 0);
+
+    // Build settings items
+    settingsList.innerHTML = '';
+    filteredSettings.forEach(s => {
+      const item = makeSettingsItem(s);
+      settingsList.appendChild(item);
+    });
+    catSettings.classList.toggle('visible', filteredSettings.length > 0);
+
+    // AI item (only shown when there's a query)
+    aiList.innerHTML = '';
+    if (q) {
+      const aiItem = makeAIItem(query.trim());
+      aiList.appendChild(aiItem);
+      catAI.classList.add('visible');
+    } else {
+      catAI.classList.remove('visible');
+    }
+
+    // Reset AI response when query changes
+    if (aiResponse) aiResponse.style.display = 'none';
+    if (aiResponseContent) aiResponseContent.innerHTML = '';
+
+    // Rebuild keyboard nav index
+    allItems = Array.from(overlay.querySelectorAll('.spotlight-result-item'));
+    keyboardIndex = -1;
+  }
+
+  // --- Input event ---
+  input.addEventListener('input', () => {
+    renderResults(input.value);
+  });
+
+  // --- Keyboard navigation ---
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setKeyboardActive(keyboardIndex + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setKeyboardActive(keyboardIndex - 1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (keyboardIndex >= 0 && allItems[keyboardIndex]) {
+        allItems[keyboardIndex].click();
+      } else if (input.value.trim()) {
+        // Enter with no selection → ask AI
+        spotlightAskAI(input.value.trim());
+      }
+    }
+  });
+
+  function setKeyboardActive(idx) {
+    allItems.forEach(i => i.classList.remove('keyboard-active'));
+    if (idx < 0) {
+      keyboardIndex = -1;
+      input.focus();
+      return;
+    }
+    if (idx >= allItems.length) idx = 0;
+    keyboardIndex = idx;
+    allItems[keyboardIndex].classList.add('keyboard-active');
+    allItems[keyboardIndex].scrollIntoView({ block: 'nearest' });
+  }
+
+  // --- App launch ---
+  function launchSpotlightApp(app) {
+    closeSpotlight();
+    if (!window.electronAPI) return;
+
+    if (app._type === 'linux') {
+      window.electronAPI.launchLinuxApp(app.command).catch(e => console.error('Spotlight launch error:', e));
+    } else if (app._type === 'file' || app._type === 'folder') {
+      window.electronAPI.openFileOrFolder(app.path).catch(e => console.error('Spotlight open error:', e));
+    } else if (app._type === 'webapp') {
+      // Web apps open via the existing desktop icon click mechanism — find and click it
+      const saveKey = app.saveKey;
+      if (saveKey) {
+        const el = document.querySelector(`[data-savekey="${saveKey}"]`);
+        if (el) { el.click(); return; }
+      }
+      // Fallback: open URL externally if available
+      if (app.url && window.openURL) {
+        window.openURL(app.url);
+      }
+    }
+  }
+
+  // --- Settings navigation ---
+  function openSettingsSection(sectionId) {
+    const overlay = document.getElementById('settingsmenu_modal_overlay');
+    if (overlay) overlay.style.display = 'flex';
+    if (typeof showSettingsSection === 'function') showSettingsSection(sectionId);
+  }
+
+  // --- AI query ---
+  async function spotlightAskAI(query) {
+    if (!window.electronAPI || !window.electronAPI.askGemini) return;
+
+    // Show AI section and spinner
+    catAI.classList.add('visible');
+    if (aiResponse) aiResponse.style.display = 'block';
+    if (aiResponseContent) {
+      aiResponseContent.innerHTML = `<div class="ai-thinking-spinner"><m3e-icon name="autorenew"></m3e-icon><span>${window.i18n ? window.i18n.t('ai_thinking') : 'Thinking...'}</span></div>`;
+    }
+
+    // Scroll to AI response
+    if (aiResponse) aiResponse.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    try {
+      const response = await window.electronAPI.askGemini(query);
+      if (response.success) {
+        if (aiResponseContent) aiResponseContent.innerHTML = renderMarkdown(response.text);
+      } else {
+        let errMsg = window.i18n ? window.i18n.t('ai_error') : 'An error occurred.';
+        if (response.error && response.error.includes('not configured')) {
+          errMsg = window.i18n ? window.i18n.t('ai_key_missing') : 'Please configure Gemini API Key in settings.';
+        }
+        if (aiResponseContent) aiResponseContent.innerHTML = `<span style="color:var(--error-color);">${errMsg}</span>`;
+      }
+    } catch (e) {
+      const errMsg = window.i18n ? window.i18n.t('ai_error') : 'An error occurred.';
+      if (aiResponseContent) aiResponseContent.innerHTML = `<span style="color:var(--error-color);">${errMsg}<br><small style="opacity:0.7;">${e.message}</small></span>`;
+    }
+  }
+
+  // i18n re-render on language change
+  document.addEventListener('i18n:loaded', () => {
+    renderResults(input ? input.value : '');
+  });
+}

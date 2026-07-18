@@ -19,30 +19,7 @@
     <script src="./i18n.js" defer></script>
     <script src="./desktop.js" defer></script>
 
-    <script type="module" src="./node_modules/@m3e/button/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/switch/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/dialog/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/nav-menu/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/icon/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/divider/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/heading/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/form-field/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/shape/dist/index.min.js"></script>
-    <script type="module" src="./node_modules/@m3e/slider/dist/index.min.js"></script>
-    
-    <script type="importmap">
-      {
-        "imports": {
-          "lit": "https://cdn.jsdelivr.net/npm/lit@3.3.0/+esm",
-          "@m3e/core": "./node_modules/@m3e/core/dist/index.min.js",
-          "@m3e/core/a11y": "./node_modules/@m3e/core/dist/a11y.min.js",
-          "@m3e/core/anchoring": "./node_modules/@m3e/core/dist/anchoring.min.js",
-          "@m3e/core/bidi": "./node_modules/@m3e/core/dist/bidi.min.js",
-          "@m3e/core/layout": "./node_modules/@m3e/core/dist/layout.min.js",
-          "@m3e/core/platform": "./node_modules/@m3e/core/dist/platform.min.js"
-        }
-      }
-    </script>
+    <script type="module" src="./node_modules/@m3e/web/dist/all.min.js"></script>
     
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0"
@@ -406,10 +383,12 @@
           <label slot="label" for="linux_app_command" data-i18n="command">コマンド</label>
           <input id="linux_app_command" placeholder="例: code, firefox, gimp" />
         </m3e-form-field>
-        <label class="checkbox-label">
-          <input type="checkbox" id="linux_app_run_in_terminal" />
-          <span data-i18n="run_in_terminal">ターミナルで実行</span>
-        </label>
+        <div class="settings-item" style="width: 100%; padding: 8px 0; border: none; background: transparent; box-shadow: none;">
+          <div class="settings-item-label">
+            <span data-i18n="run_in_terminal">ターミナルで実行</span>
+          </div>
+          <m3e-switch id="linux_app_run_in_terminal"></m3e-switch>
+        </div>
         <div class="modal-buttons">
           <m3e-button variant="outlined" id="close_add_linuxapp_modal" data-i18n="close">とじる</m3e-button>
           <m3e-button variant="filled" data-i18n="add" id="save_linux_app">追加</m3e-button>
@@ -631,10 +610,12 @@
           <label slot="label" for="edit_linuxapp_command" data-i18n="command">コマンド</label>
           <input id="edit_linuxapp_command" />
         </m3e-form-field>
-        <label class="checkbox-label">
-          <input type="checkbox" id="edit_linuxapp_run_in_terminal" />
-          <span data-i18n="run_in_terminal">ターミナルで実行</span>
-        </label>
+        <div class="settings-item" style="width: 100%; padding: 8px 0; border: none; background: transparent; box-shadow: none;">
+          <div class="settings-item-label">
+            <span data-i18n="run_in_terminal">ターミナルで実行</span>
+          </div>
+          <m3e-switch id="edit_linuxapp_run_in_terminal"></m3e-switch>
+        </div>
         <div class="modal-buttons">
           <m3e-button variant="outlined" id="close_edit_linuxapp_modal" data-i18n="close">とじる</m3e-button>
           <m3e-button variant="filled" data-i18n="save" id="save_edit_linuxapp">保存</m3e-button>
@@ -645,9 +626,9 @@
     <!-- フォルダーモーダル -->
     <div id="folder_modal_overlay" class="modal_overlay">
       <div id="folder_modal" class="modal">
-        <button id="folder_style_btn" class="folder-header-btn" title="スタイル変更">
+        <m3e-icon-button id="folder_style_btn" class="folder-header-btn" title="スタイル変更">
           <m3e-icon name="palette"></m3e-icon>
-        </button>
+        </m3e-icon-button>
         <div id="folder_title_container">
           <h3 id="folder_title" title="クリックで名前を変更">フォルダー</h3>
           <input type="text" id="folder_title_input" style="display: none;" />
@@ -755,7 +736,42 @@
       </div>
     </m3e-dialog>
 
-    <div id="spotlight_overlay">
+    <!-- Spotlight Search Overlay -->
+    <div id="spotlight_overlay" class="spotlight-hidden">
+      <div id="spotlight_modal">
+        <div id="spotlight_search_bar">
+          <m3e-icon name="search" id="spotlight_search_icon"></m3e-icon>
+          <input
+            type="text"
+            id="spotlight_input"
+            data-i18n="spotlight_placeholder"
+            placeholder="アプリ・設定を検索、またはAIに質問..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <m3e-icon-button id="spotlight_close_btn" aria-label="Close">
+            <m3e-icon name="close"></m3e-icon>
+          </m3e-icon-button>
+        </div>
+        <div id="spotlight_results">
+          <div class="spotlight-category" id="spotlight_cat_apps">
+            <div class="spotlight-category-label" data-i18n="spotlight_cat_apps">アプリ</div>
+            <div id="spotlight_apps_list"></div>
+          </div>
+          <div class="spotlight-category" id="spotlight_cat_settings">
+            <div class="spotlight-category-label" data-i18n="spotlight_cat_settings">設定</div>
+            <div id="spotlight_settings_list"></div>
+          </div>
+          <div class="spotlight-category" id="spotlight_cat_ai">
+            <div class="spotlight-category-label" data-i18n="spotlight_cat_ai">AI</div>
+            <div id="spotlight_ai_list"></div>
+          </div>
+          <div id="spotlight_ai_response" style="display:none;">
+            <div id="spotlight_ai_response_content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="settingsmenu_modal_overlay" class="modal_overlay">
       <div id="settingsmenu_modal" class="modal">
@@ -786,6 +802,10 @@
               <m3e-nav-menu-item data-section="data_management">
                 <m3e-icon slot="icon" name="database"></m3e-icon>
                 <span slot="label" data-i18n="data_management">データ管理</span>
+              </m3e-nav-menu-item>
+              <m3e-nav-menu-item data-section="ai_settings">
+                <m3e-icon slot="icon" name="auto_awesome"></m3e-icon>
+                <span slot="label" data-i18n="ai_settings">AI設定</span>
               </m3e-nav-menu-item>
             </m3e-nav-menu-item-group>
             <m3e-nav-menu-item-group>
@@ -1062,6 +1082,44 @@
             </div>
           </div>
 
+          <div class="settings-section" data-section="ai_settings">
+            <h4 class="settings-section-title" data-i18n="ai_settings">AI設定</h4>
+            <div class="settings-item settings-item-column">
+              <div class="settings-item-label">
+                <span data-i18n="gemini_api_key">Gemini APIキー</span>
+              </div>
+              <div class="settings-item-control" style="width: 100%;">
+                <input type="password" id="gemini_api_key_input" style="width: 100%; box-sizing: border-box;" data-i18n="enter_api_key" placeholder="APIキーを入力してください" />
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="gemini_model">Geminiモデル</span>
+              </div>
+              <div class="settings-item-control">
+                <select id="gemini_model_selector" style="width: 100%;">
+                  <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (推奨・高速)</option>
+                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                  <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                  <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                  <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-label">
+                <span data-i18n="ai_default_mode">デフォルトモード</span>
+              </div>
+              <div class="settings-item-control">
+                <select id="gemini_default_mode_selector" style="width: 100%;">
+                  <option value="chat" data-i18n="ai_mode_chat">会話</option>
+                  <option value="trans_en" data-i18n="ai_mode_trans_en">翻訳 ➔ 英語</option>
+                  <option value="trans_ja" data-i18n="ai_mode_trans_ja">翻訳 ➔ 日本語</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div class="settings-section" data-section="about">
             <h4 class="settings-section-title" data-i18n="about">バージョン情報</h4>
             <div class="settings-item">
@@ -1144,5 +1202,26 @@
 
     <div id="github_tooltip" class="github-tooltip"></div>
     <div id="media_seek_tooltip" class="media-seek-tooltip"></div>
+
+    <!-- Floating AI Prompt Card -->
+    <div id="ai_prompt_card" class="ai-prompt-card" style="display: none;">
+      <div class="ai-mode-selector">
+        <button class="ai-mode-btn" data-mode="chat" data-i18n="ai_mode_chat">会話</button>
+        <button class="ai-mode-btn" data-mode="trans_en" data-i18n="ai_mode_trans_en">翻訳 ➔ 英語</button>
+        <button class="ai-mode-btn" data-mode="trans_ja" data-i18n="ai_mode_trans_ja">翻訳 ➔ 日本語</button>
+      </div>
+      <div class="ai-prompt-input-row">
+        <textarea id="ai_prompt_input" rows="1" data-i18n="ask_ai_placeholder" placeholder="何でも質問してください..."></textarea>
+        <m3e-icon-button id="ai_prompt_submit" title="送信">
+          <m3e-icon name="send"></m3e-icon>
+        </m3e-icon-button>
+        <m3e-icon-button id="ai_prompt_close" title="閉じる">
+          <m3e-icon name="close"></m3e-icon>
+        </m3e-icon-button>
+      </div>
+      <div id="ai_response_panel" class="ai-response-panel" style="display: none;">
+        <div id="ai_response_content" class="ai-response-content"></div>
+      </div>
+    </div>
   </body>
 </html>

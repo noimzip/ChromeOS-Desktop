@@ -112,7 +112,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Gmail OAuth API
   gmailStartAuth: (clientId) => ipcRenderer.invoke('gmail-start-auth', { clientId }),
   gmailExchangeCode: (clientId, clientSecret, code) => ipcRenderer.invoke('gmail-exchange-code', { clientId, clientSecret, code }),
-  gmailRefreshToken: (clientId, clientSecret, refreshToken) => ipcRenderer.invoke('gmail-refresh-token', { clientId, clientSecret, refreshToken })
+  gmailRefreshToken: (clientId, clientSecret, refreshToken) => ipcRenderer.invoke('gmail-refresh-token', { clientId, clientSecret, refreshToken }),
+
+  // Gemini API
+  getGeminiConfig: () => ipcRenderer.invoke('get-gemini-config'),
+  setGeminiConfig: (config) => ipcRenderer.invoke('set-gemini-config', config),
+  askGemini: (prompt) => ipcRenderer.invoke('ask-gemini', prompt),
 });
 
 window.addEventListener('DOMContentLoaded', () => {

@@ -101,14 +101,14 @@ function loadSettings() {
   try {
     if (fs.existsSync(settingsPath)) {
       const parsed = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      const defaults = { windowCount: 1, securityMode: 'standard', allowedBinaries: [], allowedDomains: [] };
+      const defaults = { windowCount: 1, securityMode: 'standard', allowedBinaries: [], allowedDomains: [], geminiApiKey: '', geminiModel: 'gemini-3.1-flash-lite', geminiDefaultMode: 'chat' };
       cachedSettings = { ...defaults, ...parsed };
       return cachedSettings;
     }
   } catch (e) {
     console.error('Failed to load settings:', e);
   }
-  cachedSettings = { windowCount: 1, securityMode: 'standard', allowedBinaries: [], allowedDomains: [] };
+  cachedSettings = { windowCount: 1, securityMode: 'standard', allowedBinaries: [], allowedDomains: [], geminiApiKey: '', geminiModel: 'gemini-3.1-flash-lite', geminiDefaultMode: 'chat' };
   return cachedSettings;
 }
 
@@ -121,6 +121,75 @@ function saveSettings(settings) {
     console.error('Failed to save settings:', e);
   }
 }
+
+// Gemini config and API request IPC handlers
+ipcMain.handle('get-gemini-config', async () => {
+  const settings = loadSettings();
+  return {
+    geminiApiKey: settings.geminiApiKey || '',
+    geminiModel: settings.geminiModel || 'gemini-3.1-flash-lite',
+    geminiDefaultMode: settings.geminiDefaultMode || 'chat'
+  };
+});
+
+ipcMain.handle('set-gemini-config', async (event, config) => {
+  const settings = loadSettings();
+  if (config) {
+    if (typeof config.geminiApiKey === 'string') {
+      settings.geminiApiKey = config.geminiApiKey.trim();
+    }
+    if (typeof config.geminiModel === 'string') {
+      settings.geminiModel = config.geminiModel.trim();
+    }
+    if (typeof config.geminiDefaultMode === 'string') {
+      settings.geminiDefaultMode = config.geminiDefaultMode.trim();
+    }
+    saveSettings(settings);
+  }
+  return {
+    geminiApiKey: settings.geminiApiKey || '',
+    geminiModel: settings.geminiModel || 'gemini-3.1-flash-lite',
+    geminiDefaultMode: settings.geminiDefaultMode || 'chat'
+  };
+});
+
+ipcMain.handle('ask-gemini', async (event, prompt) => {
+  const settings = loadSettings();
+  const apiKey = settings.geminiApiKey;
+  const model = settings.geminiModel || 'gemini-3.1-flash-lite';
+  if (!apiKey) {
+    return { success: false, error: 'Gemini API key is not configured' };
+  }
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `API error (${response.status}): ${errorText}` };
+    }
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      return { success: false, error: 'No response content found in Gemini API response' };
+    }
+    return { success: true, text };
+  } catch (e) {
+    console.error('Gemini API call failed:', e);
+    return { success: false, error: e.message };
+  }
+});
 
 // ウィンドウ数を取得するIPCハンドラ
 ipcMain.handle('get-window-count', async () => {

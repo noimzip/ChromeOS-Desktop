@@ -12,20 +12,12 @@
   "author": "SupeChicken666 & Noimzip",
   "license": "GPL3",
   "dependencies": {
-    "@m3e/button": "^1.2.2",
-    "@m3e/core": "^1.2.2",
-    "@m3e/dialog": "^1.2.2",
-    "@m3e/divider": "^1.2.2",
-    "@m3e/form-field": "^1.2.2",
-    "@m3e/heading": "^1.2.2",
-    "@m3e/icon": "^1.2.2",
-    "@m3e/nav-menu": "^1.2.2",
-    "@m3e/shape": "^1.2.2",
-    "@m3e/slider": "^1.2.2",
-    "@m3e/switch": "^1.2.2",
-    "electron": "^40.4.1",
-    "sanitize-html": "^2.17.0",
-    "ws": "^8.19.0"
+    "@m3e/icons": "^1.0.9",
+    "@m3e/react": "^2.6.1",
+    "@m3e/web": "^2.6.1",
+    "electron": "43.1.1",
+    "sanitize-html": "^2.17.6",
+    "ws": "^8.21.1"
   },
   "devDependencies": {
     "vitepress": "^1.6.4"
