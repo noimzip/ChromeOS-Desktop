@@ -12,7 +12,7 @@
   "author": "SupeChicken666 & Noimzip",
   "license": "GPL3",
   "dependencies": {
-    "@m3e/icons": "^1.0.9",
+    "@m3e/icons": "^1.0.10",
     "@m3e/react": "^2.6.1",
     "@m3e/web": "^2.6.1",
     "electron": "43.1.1",
