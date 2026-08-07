@@ -17,7 +17,7 @@
     "@m3e/web": "^2.6.1",
     "electron": "43.1.1",
     "sanitize-html": "^2.17.6",
-    "ws": "^8.21.1"
+    "ws": "^8.21.2"
   },
   "devDependencies": {
     "vitepress": "^1.6.4"
