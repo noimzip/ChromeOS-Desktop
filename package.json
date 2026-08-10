@@ -15,7 +15,7 @@
     "@m3e/icons": "^1.0.9",
     "@m3e/react": "^2.6.1",
     "@m3e/web": "^2.6.1",
-    "electron": "43.1.1",
+    "electron": "43.3.0",
     "sanitize-html": "^2.17.6",
     "ws": "^8.21.1"
   },
