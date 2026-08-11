@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@m3e/icons':
         specifier: ^1.0.9
-        version: 1.0.9(@m3e/web@2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))
+        version: 1.0.9(@m3e/web@2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))
       '@m3e/react':
         specifier: ^2.6.1
-        version: 2.6.1(@lit/react@1.0.8(@types/react@19.2.17))(@m3e/web@2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))(lit@3.3.2)(react@18.3.1)
+        version: 2.6.1(@lit/react@1.0.8(@types/react@19.2.17))(@m3e/web@2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))(lit@3.3.2)(react@18.3.1)
       '@m3e/web':
-        specifier: ^2.6.1
-        version: 2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)
+        specifier: ^2.7.4
+        version: 2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)
       electron:
         specifier: 43.1.1
         version: 43.1.1
@@ -313,8 +313,8 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@lit-labs/ssr-dom-shim@1.5.1':
-    resolution: {integrity: sha512-Aou5UdlSpr5whQe8AA/bZG0jMj96CoJIWbGfZ91qieWu5AWUMKw8VR/pAkQkJYvBNhmCcWnZlyyk5oze8JIqYA==}
+  '@lit-labs/ssr-dom-shim@1.6.0':
+    resolution: {integrity: sha512-VHb0ALPMTlgKjM6yIxxoQNnpKyUKLD04VzeQdsiXkMqkvYlAHxq9glGLmgbb889/1GsohSOAjvQYoiBppXFqrQ==}
 
   '@lit/react@1.0.8':
     resolution: {integrity: sha512-p2+YcF+JE67SRX3mMlJ1TKCSTsgyOVdAwd/nxp3NuV1+Cb6MWALbN6nT7Ld4tpmYofcE5kcaSY1YBB9erY+6fw==}
@@ -337,8 +337,8 @@ packages:
       lit: ^3.3.0
       react: '>=18'
 
-  '@m3e/web@2.6.1':
-    resolution: {integrity: sha512-QuJaObl7Xrn3IsMSYXgQk/tLE4vl496ylwdr0vOiZCYj4UAsk0fDXAjMJkw/pP5X0f+lmAFJsValBbeqzNfAQg==}
+  '@m3e/web@2.7.4':
+    resolution: {integrity: sha512-Yb79TRBy2TjOGxsuR0320EDLs5IjdOYoZLXjYvtuWeXXRGIj/EmdiZtP0plpSuClhEEMrM6g3zTJESg57eM16A==}
     peerDependencies:
       lit: ^3.3.0
       tslib: ^2.8.1
@@ -786,8 +786,8 @@ packages:
   lit-element@4.2.2:
     resolution: {integrity: sha512-aFKhNToWxoyhkNDmWZwEva2SlQia+jfG0fjIWV//YeTaWrVnOxD89dPKfigCUspXFmjzOEUQpOkejH5Ly6sG0w==}
 
-  lit-html@3.3.2:
-    resolution: {integrity: sha512-Qy9hU88zcmaxBXcc10ZpdK7cOLXvXpRoBxERdtqV9QOrfpMZZ6pSYP91LhpPtap3sFMUiL7Tw2RImbe0Al2/kw==}
+  lit-html@3.3.3:
+    resolution: {integrity: sha512-el8M6jK2o3RXBnrSHX3ZKrsN8zEV63pSExTO1wYJz7QndGYZ8353e2a5PPX+qHe2aGayfnchQmkAojaWAREOIA==}
 
   lit@3.3.2:
     resolution: {integrity: sha512-NF9zbsP79l4ao2SNrH3NkfmFgN/hBYSQo90saIVI1o5GpjAdCPVstVzO1MrLOakHoEhYkrtRjPK6Ob521aoYWQ==}
@@ -1286,7 +1286,7 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@lit-labs/ssr-dom-shim@1.5.1': {}
+  '@lit-labs/ssr-dom-shim@1.6.0': {}
 
   '@lit/react@1.0.8(@types/react@19.2.17)':
     dependencies:
@@ -1294,20 +1294,20 @@ snapshots:
 
   '@lit/reactive-element@2.1.2':
     dependencies:
-      '@lit-labs/ssr-dom-shim': 1.5.1
+      '@lit-labs/ssr-dom-shim': 1.6.0
 
-  '@m3e/icons@1.0.9(@m3e/web@2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))':
+  '@m3e/icons@1.0.9(@m3e/web@2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))':
     dependencies:
-      '@m3e/web': 2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)
+      '@m3e/web': 2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)
 
-  '@m3e/react@2.6.1(@lit/react@1.0.8(@types/react@19.2.17))(@m3e/web@2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))(lit@3.3.2)(react@18.3.1)':
+  '@m3e/react@2.6.1(@lit/react@1.0.8(@types/react@19.2.17))(@m3e/web@2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1))(lit@3.3.2)(react@18.3.1)':
     dependencies:
       '@lit/react': 1.0.8(@types/react@19.2.17)
-      '@m3e/web': 2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)
+      '@m3e/web': 2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)
       lit: 3.3.2
       react: 18.3.1
 
-  '@m3e/web@2.6.1(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)':
+  '@m3e/web@2.7.4(@floating-ui/utils@0.2.12)(lit@3.3.2)(tslib@2.8.1)':
     dependencies:
       '@floating-ui/dom': 1.8.0
       '@material/material-color-utilities': 0.4.0
@@ -1743,11 +1743,11 @@ snapshots:
 
   lit-element@4.2.2:
     dependencies:
-      '@lit-labs/ssr-dom-shim': 1.5.1
+      '@lit-labs/ssr-dom-shim': 1.6.0
       '@lit/reactive-element': 2.1.2
-      lit-html: 3.3.2
+      lit-html: 3.3.3
 
-  lit-html@3.3.2:
+  lit-html@3.3.3:
     dependencies:
       '@types/trusted-types': 2.0.7
 
@@ -1755,7 +1755,7 @@ snapshots:
     dependencies:
       '@lit/reactive-element': 2.1.2
       lit-element: 4.2.2
-      lit-html: 3.3.2
+      lit-html: 3.3.3
 
   loose-envify@1.4.0:
     dependencies:
