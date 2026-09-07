@@ -214,6 +214,7 @@
   "enter_api_key": "APIキーを入力してください",
   "model_placeholder": "例: gemini-3.1-flash-lite",
   "ask_ai_placeholder": "何でも質問してください...",
+  "magic_pointer_placeholder": "Point and select to ask Gemini",
   "ai_thinking": "考え中...",
   "ai_error": "エラーが発生しました。",
   "ai_key_missing": "設定でGemini APIキーを設定してください。",

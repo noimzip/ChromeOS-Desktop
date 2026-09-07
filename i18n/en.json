@@ -214,6 +214,7 @@
   "enter_api_key": "Enter API Key",
   "model_placeholder": "e.g. gemini-3.1-flash-lite",
   "ask_ai_placeholder": "Ask anything...",
+  "magic_pointer_placeholder": "Point and select to ask Gemini",
   "ai_thinking": "Thinking...",
   "ai_error": "An error occurred.",
   "ai_key_missing": "Please set the Gemini API Key in Settings.",

@@ -1203,24 +1203,38 @@
     <div id="github_tooltip" class="github-tooltip"></div>
     <div id="media_seek_tooltip" class="media-seek-tooltip"></div>
 
-    <!-- Floating AI Prompt Card -->
-    <div id="ai_prompt_card" class="ai-prompt-card" style="display: none;">
-      <div class="ai-mode-selector">
-        <button class="ai-mode-btn" data-mode="chat" data-i18n="ai_mode_chat">会話</button>
-        <button class="ai-mode-btn" data-mode="trans_en" data-i18n="ai_mode_trans_en">翻訳 ➔ 英語</button>
-        <button class="ai-mode-btn" data-mode="trans_ja" data-i18n="ai_mode_trans_ja">翻訳 ➔ 日本語</button>
+    <!-- Magic Pointer Card -->
+    <div id="ai_prompt_card" class="magic-pointer-container" style="display: none;">
+      <div class="magic-pointer-card">
+        <div class="magic-pointer-top-row">
+          <div id="magic_pointer_items_tray" class="magic-pointer-items-tray">
+            <!-- Selected context items inserted dynamically -->
+          </div>
+          <button id="magic_pointer_add_item_btn" class="magic-pointer-add-btn" title="Point & select context">
+            <m3e-icon name="add"></m3e-icon>
+          </button>
+          <div class="magic-pointer-top-actions">
+            <button id="magic_pointer_expand_btn" class="magic-pointer-icon-action" title="Expand">
+              <m3e-icon name="north_east"></m3e-icon>
+            </button>
+            <button id="ai_prompt_close" class="magic-pointer-icon-action" title="Close">
+              <m3e-icon name="close"></m3e-icon>
+            </button>
+          </div>
+        </div>
+        <div class="magic-pointer-input-row">
+          <textarea id="ai_prompt_input" rows="1" data-i18n="magic_pointer_placeholder" placeholder="Point and select to ask Gemini"></textarea>
+          <button id="ai_prompt_submit" class="magic-pointer-submit-btn" title="Send">
+            <m3e-icon name="send"></m3e-icon>
+          </button>
+        </div>
+        <div id="ai_response_panel" class="ai-response-panel" style="display: none;">
+          <div id="ai_response_content" class="ai-response-content"></div>
+        </div>
       </div>
-      <div class="ai-prompt-input-row">
-        <textarea id="ai_prompt_input" rows="1" data-i18n="ask_ai_placeholder" placeholder="何でも質問してください..."></textarea>
-        <m3e-icon-button id="ai_prompt_submit" title="送信">
-          <m3e-icon name="send"></m3e-icon>
-        </m3e-icon-button>
-        <m3e-icon-button id="ai_prompt_close" title="閉じる">
-          <m3e-icon name="close"></m3e-icon>
-        </m3e-icon-button>
-      </div>
-      <div id="ai_response_panel" class="ai-response-panel" style="display: none;">
-        <div id="ai_response_content" class="ai-response-content"></div>
+      <!-- Suggestion Chips Flow (Understand, Transform, Ideate, Execute) -->
+      <div id="magic_pointer_chips" class="magic-pointer-chips-tray">
+        <!-- Dynamically rendered chips (up to 3) -->
       </div>
     </div>
     <!-- コンテキストメニュー用アンカー -->

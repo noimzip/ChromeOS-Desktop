@@ -2870,12 +2870,12 @@ function updateAIModeUI() {
 
   const input = document.getElementById('ai_prompt_input');
   if (input && window.i18n) {
-    if (currentAIMode === 'chat') {
-      input.placeholder = window.i18n.t('ask_ai_placeholder');
-    } else if (currentAIMode === 'trans_en') {
+    if (currentAIMode === 'trans_en') {
       input.placeholder = window.i18n.t('ai_mode_trans_en');
     } else if (currentAIMode === 'trans_ja') {
       input.placeholder = window.i18n.t('ai_mode_trans_ja');
+    } else {
+      input.placeholder = window.i18n.t('magic_pointer_placeholder');
     }
   }
 }
@@ -2948,6 +2948,9 @@ let gestureLongPressActive = false;
 let gestureLongPressTimeout = null;
 let gesturePath = [];
 
+// Cursor wiggle tracking without mouse down
+let cursorWigglePath = [];
+
 function initAIGesture() {
   const isGestureTarget = (element) => {
     if (!element) return false;
@@ -2961,7 +2964,7 @@ function initAIGesture() {
     let reversalsX = 0;
     let lastDirX = 0;
     let lastReversalX = path[0].x;
-    const minStroke = 15; // 15px min stroke length
+    const minStroke = 20; // 20px min stroke length
     
     for (let i = 1; i < path.length; i++) {
       const dx = path[i].x - path[i - 1].x;
@@ -2982,31 +2985,23 @@ function initAIGesture() {
       }
     }
     
-    let reversalsY = 0;
-    let lastDirY = 0;
-    let lastReversalY = path[0].y;
-    
-    for (let i = 1; i < path.length; i++) {
-      const dy = path[i].y - path[i - 1].y;
-      const totalDy = path[i].y - lastReversalY;
-      
-      if (dy > 0) {
-        if (lastDirY === -1 && Math.abs(totalDy) >= minStroke) {
-          reversalsY++;
-          lastReversalY = path[i].y;
-        }
-        if (lastDirY !== 1) lastDirY = 1;
-      } else if (dy < 0) {
-        if (lastDirY === 1 && Math.abs(totalDy) >= minStroke) {
-          reversalsY++;
-          lastReversalY = path[i].y;
-        }
-        if (lastDirY !== -1) lastDirY = -1;
+    return reversalsX >= 3;
+  };
+
+  // Cursor wiggle (moving mouse quickly left and right across desktop)
+  document.addEventListener('mousemove', (e) => {
+    const now = Date.now();
+    cursorWigglePath.push({ x: e.clientX, y: e.clientY, time: now });
+    cursorWigglePath = cursorWigglePath.filter(p => now - p.time <= 600);
+
+    const card = document.getElementById('ai_prompt_card');
+    if ((!card || card.style.display !== 'flex') && isGestureTarget(e.target)) {
+      if (detectShake(cursorWigglePath)) {
+        cursorWigglePath = [];
+        showAIPromptCard(e.clientX, e.clientY);
       }
     }
-    
-    return reversalsX >= 3 || reversalsY >= 3;
-  };
+  });
 
   document.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return; // Left click only
@@ -3057,23 +3052,44 @@ function initAIGesture() {
   document.addEventListener('mousedown', (e) => {
     const card = document.getElementById('ai_prompt_card');
     if (card && card.style.display === 'flex') {
-      if (!card.contains(e.target)) {
+      if (!card.contains(e.target) && !magicPointerSelectingMode) {
         closeAIPromptCard();
       }
     }
   });
 }
 
+// Magic Pointer state
+let magicPointerContextItems = [];
+let magicPointerSelectingMode = false;
+let magicPointerLastPos = { x: 200, y: 200 };
+
 function initAIPromptCardEvents() {
   const input = document.getElementById('ai_prompt_input');
   const submitBtn = document.getElementById('ai_prompt_submit');
   const closeBtn = document.getElementById('ai_prompt_close');
+  const addBtn = document.getElementById('magic_pointer_add_item_btn');
+  const expandBtn = document.getElementById('magic_pointer_expand_btn');
+  const container = document.getElementById('ai_prompt_card');
   
-  if (!input || !submitBtn || !closeBtn) return;
+  if (!input || !submitBtn || !closeBtn || !container) return;
   
-  submitBtn.addEventListener('click', submitAIPrompt);
+  submitBtn.addEventListener('click', () => submitAIPrompt());
   closeBtn.addEventListener('click', closeAIPromptCard);
   
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      toggleSelectMode();
+    });
+  }
+
+  if (expandBtn) {
+    expandBtn.addEventListener('click', () => {
+      container.classList.toggle('expanded');
+      repositionAIPromptCard();
+    });
+  }
+
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -3087,43 +3103,302 @@ function initAIPromptCardEvents() {
     repositionAIPromptCard();
   });
 
-  // モードセレクターのイベントを追加
-  const modeButtons = document.querySelectorAll('.ai-mode-btn');
-  modeButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const mode = btn.getAttribute('data-mode');
-      setAIMode(mode);
-    });
+  // Global selection and shortcut listener
+  initMagicPointerTriggers();
+}
+
+function initMagicPointerTriggers() {
+  const container = document.getElementById('ai_prompt_card');
+
+  // 1. Shortcut: Meta (Command/Super) + G or Alt + G
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.altKey) && (e.key === 'g' || e.key === 'G')) {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      e.preventDefault();
+      if (container && container.style.display === 'flex') {
+        closeAIPromptCard();
+      } else {
+        // Collect current selection if exists
+        const sel = window.getSelection()?.toString()?.trim();
+        const items = [];
+        if (sel) {
+          items.push({ type: 'text', content: sel, label: sel });
+        }
+        showAIPromptCard(magicPointerLastPos.x, magicPointerLastPos.y, items);
+      }
+    }
   });
 
-  // i18n読み込み時にもUIを再更新
-  document.addEventListener('i18n:loaded', () => {
-    updateAIModeUI();
+  // 2. Track mouse position for shortcut invocation
+  document.addEventListener('mousemove', (e) => {
+    magicPointerLastPos.x = e.clientX;
+    magicPointerLastPos.y = e.clientY;
+  });
+
+  // 3. Selection popup trigger: when user selects text or release mouse after text selection
+  document.addEventListener('mouseup', (e) => {
+    if (magicPointerSelectingMode) {
+      handleContextElementSelect(e);
+      return;
+    }
+
+    // If selecting text on screen outside the Magic Pointer card
+    if (container && container.contains(e.target)) return;
+
+    setTimeout(() => {
+      const sel = window.getSelection();
+      const text = sel ? sel.toString().trim() : '';
+      if (text && text.length >= 2) {
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const x = rect.right > 0 ? rect.right : e.clientX;
+        const y = rect.bottom > 0 ? rect.bottom + 10 : e.clientY;
+        showAIPromptCard(x, y, [{ type: 'text', content: text, label: text }]);
+      }
+    }, 50);
   });
 }
 
-function showAIPromptCard(x, y) {
+function toggleSelectMode() {
+  const addBtn = document.getElementById('magic_pointer_add_item_btn');
+  magicPointerSelectingMode = !magicPointerSelectingMode;
+  if (magicPointerSelectingMode) {
+    if (addBtn) addBtn.classList.add('active');
+    document.body.style.cursor = 'crosshair';
+  } else {
+    if (addBtn) addBtn.classList.remove('active');
+    document.body.style.cursor = '';
+  }
+}
+
+function handleContextElementSelect(e) {
+  const target = e.target;
+  const container = document.getElementById('ai_prompt_card');
+  if (container && container.contains(target)) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  toggleSelectMode();
+
+  // Analyze clicked entity
+  let item = null;
+  const img = target.closest('img');
+  const appicon = target.closest('.appicon');
+  const widget = target.closest('.widget');
+
+  if (img && img.src) {
+    item = { type: 'image', content: img.src, label: img.alt || 'Image' };
+  } else if (appicon) {
+    const p = appicon.querySelector('p')?.textContent?.trim() || 'App';
+    const iconImg = appicon.querySelector('img')?.src;
+    item = { type: 'app', content: p, label: p, icon: iconImg };
+  } else if (widget) {
+    const title = widget.id || 'Widget';
+    const text = widget.innerText?.trim() || title;
+    item = { type: 'widget', content: text, label: title };
+  } else {
+    const text = (window.getSelection()?.toString() || target.innerText || '').trim();
+    if (text) {
+      item = { type: 'text', content: text, label: text.slice(0, 40) };
+    }
+  }
+
+  if (item) {
+    addMagicPointerItem(item);
+  }
+}
+
+function addMagicPointerItem(item) {
+  // Avoid duplicate items
+  const exists = magicPointerContextItems.some(i => i.type === item.type && i.content === item.content);
+  if (!exists) {
+    magicPointerContextItems.push(item);
+  }
+  renderMagicPointerContextItems();
+  updateSuggestionChips();
+  repositionAIPromptCard();
+}
+
+function removeMagicPointerItem(index) {
+  magicPointerContextItems.splice(index, 1);
+  renderMagicPointerContextItems();
+  updateSuggestionChips();
+  repositionAIPromptCard();
+}
+
+function renderMagicPointerContextItems() {
+  const tray = document.getElementById('magic_pointer_items_tray');
+  if (!tray) return;
+  tray.innerHTML = '';
+
+  magicPointerContextItems.forEach((item, index) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'magic-pointer-item-thumb';
+
+    if (item.type === 'image' || item.icon) {
+      const img = document.createElement('img');
+      img.src = item.type === 'image' ? item.content : item.icon;
+      thumb.appendChild(img);
+    } else {
+      const textSpan = document.createElement('div');
+      textSpan.className = 'thumb-text';
+      textSpan.textContent = item.label || item.content;
+      thumb.appendChild(textSpan);
+    }
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'thumb-remove-btn';
+    removeBtn.title = 'Remove item';
+    removeBtn.innerHTML = '<m3e-icon name="close"></m3e-icon>';
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeMagicPointerItem(index);
+    });
+
+    thumb.appendChild(removeBtn);
+    tray.appendChild(thumb);
+  });
+}
+
+// 4 Categories: Understand, Transform, Ideate, Execute
+function generateFallbackChips(contextItems) {
+  if (!contextItems || contextItems.length === 0) {
+    return [
+      { category: 'Understand', label: 'Summarize screen', prompt: 'Summarize what is on the screen right now.', icon: 'subject' },
+      { category: 'Ideate', label: 'Give suggestions & ideas', prompt: 'Give me creative ideas and next steps based on this context.', icon: 'lightbulb' },
+      { category: 'Execute', label: 'Draft reply or action', prompt: 'Help me draft an action or reply.', icon: 'reply' }
+    ];
+  }
+
+  const hasImage = contextItems.some(i => i.type === 'image' || i.icon);
+  const hasSchedule = contextItems.some(i => /schedule|meet|calendar|may|june|july|aug|sept|oct|nov|dec|月|日|時|予定/i.test(i.content));
+  const hasApp = contextItems.some(i => i.type === 'app');
+
+  if (hasSchedule) {
+    return [
+      { category: 'Understand', label: 'View my schedule', prompt: 'Check this date against my schedule and explain availability: ' + contextItems.map(i => i.content).join(' '), icon: 'calendar_month' },
+      { category: 'Transform', label: 'Draft a reply', prompt: 'Draft a friendly reply accepting or coordinating based on: ' + contextItems.map(i => i.content).join(' '), icon: 'reply' },
+      { category: 'Ideate', label: 'Suggest meetup spots', prompt: 'Suggest suitable meetup spots or cafe ideas for: ' + contextItems.map(i => i.content).join(' '), icon: 'location_on' }
+    ];
+  }
+
+  if (hasImage) {
+    return [
+      { category: 'Understand', label: 'Search with Lens', prompt: 'Identify and search what this image depicts in detail.', icon: 'search' },
+      { category: 'Transform', label: 'Create image variation', prompt: 'Create prompt descriptions to generate complementary images for this.', icon: 'auto_awesome' },
+      { category: 'Execute', label: 'Buy or find similar', prompt: 'Where can I find or purchase items similar to this?', icon: 'shopping_bag' }
+    ];
+  }
+
+  if (hasApp) {
+    return [
+      { category: 'Understand', label: 'Explain this app', prompt: 'Explain the main features and purpose of ' + contextItems.map(i => i.content).join(', '), icon: 'help_outline' },
+      { category: 'Transform', label: 'Quick shortcuts guide', prompt: 'Provide key shortcut keys and productivity tips for ' + contextItems.map(i => i.content).join(', '), icon: 'tips_and_updates' },
+      { category: 'Execute', label: 'Launch & perform task', prompt: 'Suggest helpful tasks I can run in ' + contextItems.map(i => i.content).join(', '), icon: 'play_arrow' }
+    ];
+  }
+
+  // Text context
+  return [
+    { category: 'Understand', label: 'Key points summary', prompt: 'Provide concise key points of the following text:\n\n' + contextItems.map(i => i.content).join('\n'), icon: 'subject' },
+    { category: 'Transform', label: 'Translate to Japanese/English', prompt: 'Translate this text fluently (English to Japanese or Japanese to English):\n\n' + contextItems.map(i => i.content).join('\n'), icon: 'translate' },
+    { category: 'Execute', label: 'Create actionable tasks', prompt: 'Extract todos and actionable items from:\n\n' + contextItems.map(i => i.content).join('\n'), icon: 'task_alt' }
+  ];
+}
+
+async function updateSuggestionChips() {
+  const chipsTray = document.getElementById('magic_pointer_chips');
+  if (!chipsTray) return;
+
+  // Use fallback chips first for instant responsiveness
+  const chips = generateFallbackChips(magicPointerContextItems);
+  renderChips(chips);
+
+  // If Gemini API is available, request dynamic context actions in background
+  if (magicPointerContextItems.length > 0 && window.electronAPI && window.electronAPI.askGemini) {
+    try {
+      const summaryContext = magicPointerContextItems.map(i => `[${i.type}]: ${i.content}`).join('\n');
+      const dynamicPrompt = `Based on the selected screen context below, predict up to 3 next actions the user likely wants to perform.
+Choose actions across the 4 categories: Understand, Transform, Ideate, Execute.
+Return ONLY a valid JSON array of objects, each with:
+"label": a short action label (under 30 characters),
+"category": one of "Understand", "Transform", "Ideate", "Execute",
+"icon": a Material icon name (e.g. search, reply, calendar_month, auto_awesome, shopping_bag, subject, translate),
+"prompt": the prompt to run.
+No explanation or markdown fence.
+
+Context:
+${summaryContext}`;
+
+      const res = await window.electronAPI.askGemini(dynamicPrompt);
+      if (res && res.success && res.text) {
+        const clean = res.text.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(clean);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          renderChips(parsed.slice(0, 3));
+        }
+      }
+    } catch (e) {
+      // Keep using fallback chips
+    }
+  }
+}
+
+function renderChips(chips) {
+  const chipsTray = document.getElementById('magic_pointer_chips');
+  if (!chipsTray) return;
+  chipsTray.innerHTML = '';
+
+  chips.forEach(chip => {
+    const btn = document.createElement('button');
+    btn.className = 'magic-pointer-chip';
+    btn.innerHTML = `<m3e-icon name="${chip.icon || 'auto_awesome'}"></m3e-icon><span>${escapeHTML(chip.label)}</span>`;
+    btn.addEventListener('click', () => {
+      executeChipAction(chip);
+    });
+    chipsTray.appendChild(btn);
+  });
+}
+
+async function executeChipAction(chip) {
+  const input = document.getElementById('ai_prompt_input');
+  if (input) {
+    input.value = chip.label;
+  }
+  await submitAIPrompt(chip.prompt);
+}
+
+function showAIPromptCard(x, y, initialItems = []) {
   const card = document.getElementById('ai_prompt_card');
   if (!card) return;
-  
+
+  if (initialItems && initialItems.length > 0) {
+    magicPointerContextItems = [...initialItems];
+  } else {
+    magicPointerContextItems = [];
+  }
+
   card.style.display = 'flex';
   card.style.left = `${x}px`;
   card.style.top = `${y}px`;
-  
+
   const input = document.getElementById('ai_prompt_input');
   if (input) {
     input.value = '';
     input.style.height = 'auto';
   }
-  
+
   const panel = document.getElementById('ai_response_panel');
   if (panel) panel.style.display = 'none';
-  
+
   const content = document.getElementById('ai_response_content');
   if (content) content.innerHTML = '';
-  
+
+  renderMagicPointerContextItems();
+  updateSuggestionChips();
   repositionAIPromptCard(x, y);
-  
+
   setTimeout(() => {
     card.classList.add('visible');
     if (input) input.focus();
@@ -3134,19 +3409,21 @@ function closeAIPromptCard() {
   const card = document.getElementById('ai_prompt_card');
   if (!card) return;
   card.classList.remove('visible');
+  if (magicPointerSelectingMode) toggleSelectMode();
   setTimeout(() => {
     if (!card.classList.contains('visible')) {
       card.style.display = 'none';
+      card.classList.remove('expanded');
     }
-  }, 250);
+  }, 230);
 }
 
 function repositionAIPromptCard(x, y) {
   const card = document.getElementById('ai_prompt_card');
   if (!card || card.style.display === 'none') return;
   
-  const cardWidth = card.offsetWidth || 380;
-  const cardHeight = card.offsetHeight || 100;
+  const cardWidth = card.offsetWidth || 340;
+  const cardHeight = card.offsetHeight || 140;
   
   let left = x !== undefined ? x + 10 : parseInt(card.style.left) || 0;
   let top = y !== undefined ? y + 10 : parseInt(card.style.top) || 0;
@@ -3165,10 +3442,10 @@ function repositionAIPromptCard(x, y) {
   card.style.top = `${top}px`;
 }
 
-async function submitAIPrompt() {
+async function submitAIPrompt(customPrompt) {
   const input = document.getElementById('ai_prompt_input');
-  if (!input) return;
-  const prompt = input.value.trim();
+  if (!input && !customPrompt) return;
+  const prompt = customPrompt || (input ? input.value.trim() : '');
   if (!prompt) return;
 
   const content = document.getElementById('ai_response_content');
@@ -3182,10 +3459,9 @@ async function submitAIPrompt() {
 
   try {
     let finalPrompt = prompt;
-    if (currentAIMode === 'trans_en') {
-      finalPrompt = `Translate the following text to English. Output ONLY the translated text, do not include any explanations, introduction, or markdown blocks unless necessary. Just the raw translation:\n\n${prompt}`;
-    } else if (currentAIMode === 'trans_ja') {
-      finalPrompt = `以下のテキストを日本語に翻訳してください。翻訳結果のみを出力し、解説や前置き、余計な文章は一切含めないでください。純粋な翻訳文のみを出力してください：\n\n${prompt}`;
+    if (magicPointerContextItems.length > 0) {
+      const contextStr = magicPointerContextItems.map(i => `[${i.type}]: ${i.content}`).join('\n');
+      finalPrompt = `Context:\n${contextStr}\n\nUser Request: ${prompt}`;
     }
 
     const response = await window.electronAPI.askGemini(finalPrompt);
